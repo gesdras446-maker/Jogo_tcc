@@ -3,72 +3,33 @@ import * as THREE from 'three';
 export function createDungeonRoom(scene) {
   const roomGroup = new THREE.Group();
 
-  // Floor Canvas with Isaac-style texture and control drawings on floor
+  // 1. Clean, Uniform Dungeon Floor (Smooth stone/wood texture without harsh lines or text)
   const floorCanvas = document.createElement('canvas');
   floorCanvas.width = 1024;
   floorCanvas.height = 640;
   const ctx = floorCanvas.getContext('2d');
 
-  // Fill dark earthy brown floor background
-  ctx.fillStyle = '#6e473b';
+  // Base warm earthy stone color
+  ctx.fillStyle = '#4e382d';
   ctx.fillRect(0, 0, 1024, 640);
 
-  // Floor grid / stone tile pattern
-  ctx.strokeStyle = '#5a382e';
-  ctx.lineWidth = 4;
-  const tileSize = 64;
-  for (let x = 0; x <= 1024; x += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, 640);
-    ctx.stroke();
-  }
-  for (let y = 0; y <= 640; y += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(1024, y);
-    ctx.stroke();
-  }
+  // Soft subtle gradient to give uniform depth without stripes/lines
+  const grad = ctx.createRadialGradient(512, 320, 100, 512, 320, 600);
+  grad.addColorStop(0, '#5a4235');
+  grad.addColorStop(1, '#3b291f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1024, 640);
 
-  // Add random floor speckles / cracks
-  ctx.fillStyle = '#4a2c23';
-  for (let i = 0; i < 150; i++) {
+  // Very fine, soft micro-texture for realism without any stripes or text
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+  for (let i = 0; i < 400; i++) {
     const rx = Math.random() * 1024;
     const ry = Math.random() * 640;
-    const rw = 4 + Math.random() * 12;
-    const rh = 4 + Math.random() * 12;
-    ctx.fillRect(rx, ry, rw, rh);
+    const r = Math.random() * 3 + 1;
+    ctx.beginPath();
+    ctx.arc(rx, ry, r, 0, Math.PI * 2);
+    ctx.fill();
   }
-
-  // Draw Isaac-style floor instructions ("MOVE", "ATTACK", "BOMB", "ITEM")
-  ctx.fillStyle = '#3a2018';
-  ctx.font = 'bold 36px monospace';
-  ctx.textAlign = 'center';
-
-  // MOVE
-  ctx.fillText('MOVE', 220, 220);
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('W A S D', 220, 260);
-  ctx.fillText('▲ ▼ ◄ ►', 220, 290);
-
-  // ATTACK
-  ctx.font = 'bold 36px monospace';
-  ctx.fillText('ATTACK', 420, 220);
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('ESPAÇO', 420, 260);
-  ctx.fillText('(Space)', 420, 290);
-
-  // BOMB
-  ctx.font = 'bold 36px monospace';
-  ctx.fillText('BOMB', 620, 220);
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('E / B', 620, 260);
-
-  // ITEM
-  ctx.font = 'bold 36px monospace';
-  ctx.fillText('ITEM', 820, 220);
-  ctx.font = 'bold 24px monospace';
-  ctx.fillText('Q / R', 820, 260);
 
   const floorTexture = new THREE.CanvasTexture(floorCanvas);
   floorTexture.colorSpace = THREE.SRGBColorSpace;
@@ -79,7 +40,7 @@ export function createDungeonRoom(scene) {
   const floorGeo = new THREE.PlaneGeometry(20, 12.5);
   const floorMat = new THREE.MeshStandardMaterial({
     map: floorTexture,
-    roughness: 0.85,
+    roughness: 0.7,
     metalness: 0.1,
   });
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -87,17 +48,17 @@ export function createDungeonRoom(scene) {
   floorMesh.receiveShadow = true;
   roomGroup.add(floorMesh);
 
-  // Brick Texture for Walls
+  // 2. Brick Texture for Walls (Cleaner & well-lit)
   const wallCanvas = document.createElement('canvas');
   wallCanvas.width = 512;
   wallCanvas.height = 512;
   const wctx = wallCanvas.getContext('2d');
-  wctx.fillStyle = '#54362b';
+  wctx.fillStyle = '#634438';
   wctx.fillRect(0, 0, 512, 512);
 
-  // Brick pattern
-  wctx.strokeStyle = '#3d251d';
-  wctx.lineWidth = 6;
+  // Brick pattern with soft contrast
+  wctx.strokeStyle = '#432a21';
+  wctx.lineWidth = 4;
   const brickH = 64;
   const brickW = 128;
   for (let y = 0; y < 512; y += brickH) {
@@ -121,11 +82,11 @@ export function createDungeonRoom(scene) {
 
   const wallMat = new THREE.MeshStandardMaterial({
     map: wallTexture,
-    roughness: 0.9,
+    roughness: 0.75,
   });
 
   const wallThickness = 1.2;
-  const wallHeight = 3.2;
+  const wallHeight = 3.4;
   const halfW = 10;
   const halfH = 6.25;
 
@@ -159,10 +120,10 @@ export function createDungeonRoom(scene) {
   wallEast.position.set(halfW + wallThickness / 2, wallHeight / 2, 0);
   roomGroup.add(wallEast);
 
-  // Wall Moldings / Borders (Isaac style chunky stone frames)
+  // Wall Moldings / Borders
   const frameMat = new THREE.MeshStandardMaterial({
-    color: 0x3b241c,
-    roughness: 0.95,
+    color: 0x4a3026,
+    roughness: 0.8,
   });
   const borderTop = new THREE.Mesh(
     new THREE.BoxGeometry(halfW * 2, 0.4, 0.4),
@@ -171,15 +132,15 @@ export function createDungeonRoom(scene) {
   borderTop.position.set(0, wallHeight - 0.2, -halfH + 0.2);
   roomGroup.add(borderTop);
 
-  // Doors (Isaac style wooden / stone trapdoors)
+  // Doors
   const doorGeo = new THREE.BoxGeometry(2.4, 2.8, 0.2);
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0x2b1810,
-    roughness: 0.8,
+    color: 0x362117,
+    roughness: 0.7,
   });
   const doorFrameMat = new THREE.MeshStandardMaterial({
-    color: 0x7c5443,
-    roughness: 0.7,
+    color: 0x8d6350,
+    roughness: 0.6,
   });
 
   // North Door (Top)
@@ -209,17 +170,40 @@ export function createDungeonRoom(scene) {
   doorEast.position.set(halfW - 0.2, 1.4, 0);
   roomGroup.add(doorEast);
 
-  // Dungeon Lights (warm ambient & directional lights)
-  const ambientLight = new THREE.AmbientLight(0xffdfc4, 1.2);
+  // 3. Bright & Atmospheric Dungeon Lights (Enhanced Illumination)
+  const ambientLight = new THREE.AmbientLight(0xffeedd, 2.2);
   roomGroup.add(ambientLight);
 
-  const centerLight = new THREE.PointLight(0xffb570, 1.5, 25);
-  centerLight.position.set(0, 6, 0);
+  const centerLight = new THREE.PointLight(0xffb76c, 3.2, 30);
+  centerLight.position.set(0, 5.5, 0);
   roomGroup.add(centerLight);
 
+  // Corner Torches / Lanterns
+  const torchPositions = [
+    { x: -7.5, y: 2.2, z: -5.5 },
+    { x: 7.5, y: 2.2, z: -5.5 },
+    { x: -7.5, y: 2.2, z: 5.5 },
+    { x: 7.5, y: 2.2, z: 5.5 },
+  ];
+  torchPositions.forEach((tp) => {
+    const torchLight = new THREE.PointLight(0xffaa44, 1.8, 14);
+    torchLight.position.set(tp.x, tp.y, tp.z);
+    roomGroup.add(torchLight);
+
+    // Small glowing torch head
+    const torchBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffaa33 })
+    );
+    torchBulb.position.set(tp.x, tp.y, tp.z);
+    roomGroup.add(torchBulb);
+  });
+
+  roomGroup.visible = false;
   scene.add(roomGroup);
 
   return {
+    group: roomGroup,
     bounds: {
       minX: -halfW + 1.2,
       maxX: halfW - 1.2,

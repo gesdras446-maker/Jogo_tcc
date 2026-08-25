@@ -3,49 +3,106 @@ import * as THREE from 'three';
 import { Npc } from './Npc.js';
 import { Player } from './Player.js';
 import { createDungeonRoom } from './Room.js';
-
 import { createStreetEnvironment } from './Street.js';
 import './style.css';
 
 const app = document.querySelector('#app');
 app.innerHTML = `
-  <div class="rpg-banner">
-    <div class="act-badge" id="actBadge">ATO 1: A RUA ESCURA</div>
-    <div class="health-bar-container">
-      <div class="health-bar">
-        <div class="health-bar-fill" id="playerHealthFill"></div>
-      </div>
-    </div>
-    <div>WASD: Mover | E: Interagir</div>
-    <button class="btn-menu-trigger" id="openMenuBtn">⚙️ MENU (ESC)</button>
-  </div>
+  <!-- Top Right Menu Trigger -->
+  <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
 
+  <!-- Narrative Dialogue Box -->
   <div class="dialogue-box" id="dialogueBox">
     <div class="dialogue-speaker" id="dialogueSpeaker">NARRADOR</div>
-    <div class="dialogue-text" id="dialogueText">Uma noite chuvosa e escura sob o viaduto... Alguém parece estar te observando nas sombras dos postes.</div>
+    <div class="dialogue-text" id="dialogueText">Uma noite sob o viaduto... Algo parece estar te observando nas sombras dos prédios e árvores.</div>
+  </div>
+
+  <!-- Controls & How To Play Overlay (ONLY shown when clicking 'Novo Jogo') -->
+  <div class="controls-overlay hidden" id="controlsOverlay">
+    <div class="controls-card">
+      <div class="controls-header">
+        <div class="controls-badge">GUIA & COMANDOS</div>
+        <h2 class="controls-title">COMO JOGAR</h2>
+        <p class="controls-subtitle">Você caminha sozinho na calada da noite sob o viaduto... Fique atento aos seus arredores.</p>
+      </div>
+
+      <div class="controls-grid">
+        <div class="control-key-card">
+          <div class="keys-display">
+            <span class="key-cap">W</span>
+            <div class="keys-row">
+              <span class="key-cap">A</span>
+              <span class="key-cap">S</span>
+              <span class="key-cap">D</span>
+            </div>
+          </div>
+          <div class="key-info">
+            <span class="key-title">Movimentação</span>
+            <span class="key-desc">W, A, S, D ou Teclas de Seta para andar</span>
+          </div>
+        </div>
+
+        <div class="control-key-card">
+          <div class="keys-display">
+            <span class="key-cap single">E</span>
+          </div>
+          <div class="key-info">
+            <span class="key-title">Interagir / Investigar</span>
+            <span class="key-desc">Aproxime-se e pressione E para interagir</span>
+          </div>
+        </div>
+
+        <div class="control-key-card">
+          <div class="keys-display">
+            <span class="key-cap single">ESC</span>
+          </div>
+          <div class="key-info">
+            <span class="key-title">Menu & Pausa</span>
+            <span class="key-desc">Acesse opções de som, salvar ou reiniciar</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-story-box">
+        ⚠️ <strong>Atenção:</strong> Um vulto misterioso foi avistado espreitando atrás das moitas, árvores e cantos de prédios...
+      </div>
+
+      <button class="btn-start-game" id="btnStartGame">
+        <span>▶️ INICIAR JORNADA</span>
+        <small>(Ou pressione ESPAÇO para começar)</small>
+      </button>
+    </div>
   </div>
 
   <!-- Kidnapping Cutscene Overlay -->
   <div class="cutscene-overlay hidden" id="cutsceneOverlay">
     <div class="cutscene-title">⚠️ VOCÊ FOI SEQUESTRADO!</div>
     <div class="cutscene-text" id="cutsceneText">
-      Enquanto você caminhava pela rua escura, a figura misteriosa avançou pelas sombras por trás de você...<br><br>
-      Você sente um golpe forte e apaga! Ao abrir os olhos, percebe que foi levado e trancado no calabouço da casa dela...
+      Enquanto você caminhava pela rua deserta, a figura misteriosa avançou silenciosamente pelas sombras por trás de você...<br><br>
+      Você sente um golpe súbito e tudo fica escuro! Ao abrir os olhos, percebe que foi trancado no calabouço da casa dela...
     </div>
     <button class="cutscene-btn" id="btnWakeUp">👁️ Acordar no Calabouço</button>
   </div>
 
-  <!-- Main Menu / Settings Overlay -->
+  <!-- Main Menu / Pause Menu / Settings Overlay -->
   <div class="menu-overlay" id="menuOverlay">
     <div class="menu-card" id="mainMenuCard">
-      <div class="menu-title">CALABOUÇO</div>
-      <div class="menu-subtitle">MENU PRINCIPAL</div>
+      <div class="menu-title" id="menuTitle">CALABOUÇO</div>
+      <div class="menu-subtitle" id="menuSubtitle">MENU PRINCIPAL</div>
       
       <div class="menu-buttons">
+        <!-- Main Menu Mode Buttons -->
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
+
+        <!-- Pause Mode Buttons -->
+        <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
+        <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
+        <button class="menu-btn" id="btnSaveGame" style="display: none;">💾 Salvar Jogo</button>
+
+        <!-- Shared Buttons -->
         <button class="menu-btn" id="btnSettings">⚙️ Configurações</button>
-        <button class="menu-btn" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
+        <button class="menu-btn danger" id="btnReturnToMainMenu" style="display: none;">🏠 Menu Principal</button>
       </div>
     </div>
 
@@ -92,10 +149,19 @@ const mainMenuCardEl = document.querySelector('#mainMenuCard');
 const settingsCardEl = document.querySelector('#settingsCard');
 const openMenuBtnEl = document.querySelector('#openMenuBtn');
 
+const menuTitleEl = document.querySelector('#menuTitle');
+const menuSubtitleEl = document.querySelector('#menuSubtitle');
+
+const controlsOverlayEl = document.querySelector('#controlsOverlay');
+const btnStartGameEl = document.querySelector('#btnStartGame');
+
 const btnNewGameEl = document.querySelector('#btnNewGame');
 const btnContinueEl = document.querySelector('#btnContinue');
-const btnSettingsEl = document.querySelector('#btnSettings');
 const btnResumeGameEl = document.querySelector('#btnResumeGame');
+const btnRestartActEl = document.querySelector('#btnRestartAct');
+const btnSaveGameEl = document.querySelector('#btnSaveGame');
+const btnSettingsEl = document.querySelector('#btnSettings');
+const btnReturnToMainMenuEl = document.querySelector('#btnReturnToMainMenu');
 const btnBackFromSettingsEl = document.querySelector('#btnBackFromSettings');
 
 const volumeSliderEl = document.querySelector('#volumeSlider');
@@ -110,8 +176,6 @@ const btnWakeUpEl = document.querySelector('#btnWakeUp');
 
 const dialogueSpeakerEl = document.querySelector('#dialogueSpeaker');
 const dialogueTextEl = document.querySelector('#dialogueText');
-const playerHealthFillEl = document.querySelector('#playerHealthFill');
-const actBadgeEl = document.querySelector('#actBadge');
 
 // Sound State & LocalStorage
 const soundState = {
@@ -165,72 +229,88 @@ renderer.shadowMap.enabled = true;
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b0c10);
+scene.background = new THREE.Color(0x0e1118);
+
+// Global scene light
+const hemiLight = new THREE.HemisphereLight(0xdbe7ff, 0x18202d, 0.35);
+scene.add(hemiLight);
 
 // Camera Setup
 const camera = new THREE.PerspectiveCamera(
   42,
   window.innerWidth / window.innerHeight,
   0.1,
-  100
+  120
 );
-camera.position.set(0, 14.2, 8.2);
+camera.position.set(0, 14.5, 8.5);
 camera.lookAt(0, 0, 0.2);
 
 const cameraAngle = { x: -Math.atan2(camera.position.z, camera.position.y) };
 
-// Build Act 1 (Street) and Act 2 (Dungeon Room) environments
+// Build Environments
 const streetEnv = createStreetEnvironment(scene);
 const roomEnv = createDungeonRoom(scene);
 
-// Hide Dungeon Room initially
-roomEnv.bounds; // Prepared
+// Ensure proper initial visibility
+streetEnv.group.visible = true;
+roomEnv.group.visible = false;
+
 let currentAct = 1; // 1 = Street, 2 = Dungeon House
 
 // Create Player and NPC
-const player = new Player(scene, -12, 1);
-const npc = new Npc(scene, -15, 1);
+const player = new Player(scene, streetEnv.startPlayerX, 0.0);
+const initialSpot = streetEnv.hidingSpots[0];
+const npc = new Npc(scene, initialSpot.x, initialSpot.z);
 
 let interactTimer = 0;
 let isGameOver = false;
 let isGameStarted = false;
 let isKidnapped = false;
+let lastNarrativeZone = -1;
 
 function setAct(act) {
   currentAct = act;
   if (act === 1) {
-    actBadgeEl.textContent = 'ATO 1: A RUA ESCURA';
-    actBadgeEl.style.background = '#ff9800';
+    streetEnv.group.visible = true;
+    roomEnv.group.visible = false;
+    hemiLight.intensity = 0.35;
 
-    // Show street, hide room
-    scene.children.forEach((child) => {
-      if (child === roomEnv) child.visible = false;
-    });
+    player.group.position.set(streetEnv.startPlayerX, 0, 0.0);
+    const startSpot = streetEnv.hidingSpots[0];
+    npc.group.position.set(startSpot.x, 0, startSpot.z);
+    npc.currentSpot = startSpot;
+    npc.lastSpotId = startSpot.id;
+    npc.material.opacity = 1.0;
+    npc.isTeleporting = false;
 
-    player.group.position.set(-12, 0, 1);
-    npc.group.position.set(-15, 0, 1);
     player.hp = 100;
     npc.hp = 100;
     isKidnapped = false;
+    lastNarrativeZone = -1;
+
+    camera.position.x = streetEnv.startPlayerX;
 
     dialogueSpeakerEl.textContent = 'NARRADOR';
     dialogueTextEl.textContent =
-      'Uma noite chuvosa e escura sob o viaduto... Alguém parece estar te observando nas sombras.';
+      'Uma noite escura e fria... As lâmpadas dos postes iluminam a calçada, mas vultos se movem nas sombras.';
   } else {
-    actBadgeEl.textContent = 'ATO 2: O CALABOUÇO';
-    actBadgeEl.style.background = '#e53935';
+    streetEnv.group.visible = false;
+    roomEnv.group.visible = true;
+    hemiLight.intensity = 1.0;
 
-    // Move player and NPC inside dungeon room
     player.group.position.set(0, 0, 2);
     npc.group.position.set(0, 0, -2);
+    npc.material.opacity = 1.0;
+    npc.isTeleporting = false;
     player.hp = 100;
     npc.hp = 100;
+
+    camera.position.x = 0;
 
     dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
     dialogueTextEl.textContent =
       'Onde estou?! Fui sequestrado e trancado nesta sala escura! Preciso achar uma saída...';
   }
-  updateHUD();
 }
 
 function triggerKidnapping() {
@@ -275,23 +355,47 @@ function loadProgress() {
     player.hp = data.playerHp;
     npc.group.position.set(data.npcPos.x, 0, data.npcPos.z);
     npc.hp = data.npcHp;
-    updateHUD();
     return true;
   } catch (e) {
     return false;
   }
 }
 
+function updateMenuMode() {
+  if (isGameStarted) {
+    // PAUSE MENU MODE
+    menuTitleEl.textContent = 'JOGO PAUSADO';
+    menuSubtitleEl.textContent = 'MENU DE PAUSA';
+
+    btnNewGameEl.style.display = 'none';
+    btnContinueEl.style.display = 'none';
+
+    btnResumeGameEl.style.display = 'flex';
+    btnRestartActEl.style.display = 'flex';
+    btnSaveGameEl.style.display = 'flex';
+    btnReturnToMainMenuEl.style.display = 'flex';
+  } else {
+    // MAIN TITLE MENU MODE
+    menuTitleEl.textContent = 'CALABOUÇO';
+    menuSubtitleEl.textContent = 'MENU PRINCIPAL';
+
+    btnNewGameEl.style.display = 'flex';
+    btnContinueEl.style.display = 'flex';
+
+    btnResumeGameEl.style.display = 'none';
+    btnRestartActEl.style.display = 'none';
+    btnSaveGameEl.style.display = 'none';
+    btnReturnToMainMenuEl.style.display = 'none';
+
+    checkSaveData();
+  }
+}
+
 function openMenu() {
+  updateMenuMode();
   menuOverlayEl.classList.remove('hidden');
   mainMenuCardEl.style.display = 'flex';
   settingsCardEl.style.display = 'none';
-
-  if (isGameStarted) {
-    btnResumeGameEl.style.display = 'flex';
-  } else {
-    btnResumeGameEl.style.display = 'none';
-  }
 }
 
 function closeMenu() {
@@ -301,19 +405,56 @@ function closeMenu() {
 openMenuBtnEl.addEventListener('click', openMenu);
 
 btnNewGameEl.addEventListener('click', () => {
+  closeMenu();
+  // ONLY show Controls / How to Play overlay when starting a brand new game
+  controlsOverlayEl.classList.remove('hidden');
+});
+
+function startGameFromControls() {
+  controlsOverlayEl.classList.add('hidden');
   setAct(1);
   isGameOver = false;
   isGameStarted = true;
   saveProgress();
-  closeMenu();
-});
+}
+
+btnStartGameEl.addEventListener('click', startGameFromControls);
 
 btnContinueEl.addEventListener('click', () => {
   if (loadProgress()) {
     isGameOver = false;
     isGameStarted = true;
     closeMenu();
+    controlsOverlayEl.classList.add('hidden');
   }
+});
+
+btnResumeGameEl.addEventListener('click', () => {
+  closeMenu();
+});
+
+btnRestartActEl.addEventListener('click', () => {
+  setAct(currentAct);
+  isGameOver = false;
+  closeMenu();
+  dialogueSpeakerEl.textContent = 'SISTEMA';
+  dialogueTextEl.textContent = 'Ato reiniciado!';
+});
+
+btnSaveGameEl.addEventListener('click', () => {
+  saveProgress();
+  btnSaveGameEl.textContent = '✅ Jogo Salvo!';
+  setTimeout(() => {
+    btnSaveGameEl.textContent = '💾 Salvar Jogo';
+  }, 1200);
+});
+
+btnReturnToMainMenuEl.addEventListener('click', () => {
+  isGameStarted = false;
+  isGameOver = false;
+  controlsOverlayEl.classList.add('hidden');
+  setAct(1);
+  openMenu();
 });
 
 btnSettingsEl.addEventListener('click', () => {
@@ -326,24 +467,38 @@ btnBackFromSettingsEl.addEventListener('click', () => {
   mainMenuCardEl.style.display = 'flex';
 });
 
-btnResumeGameEl.addEventListener('click', () => {
-  closeMenu();
-});
-
 // Key Listeners
 const keys = {};
 window.addEventListener('keydown', (e) => {
   keys[e.code] = true;
 
+  // Space / Enter on Controls Modal starts the game
+  if (
+    !controlsOverlayEl.classList.contains('hidden') &&
+    (e.code === 'Space' || e.code === 'Enter')
+  ) {
+    e.preventDefault();
+    startGameFromControls();
+    return;
+  }
+
   if (e.code === 'Escape') {
-    if (menuOverlayEl.classList.contains('hidden')) {
-      openMenu();
-    } else {
-      closeMenu();
+    if (controlsOverlayEl.classList.contains('hidden')) {
+      if (menuOverlayEl.classList.contains('hidden')) {
+        openMenu();
+      } else {
+        closeMenu();
+      }
     }
   }
 
-  if (!menuOverlayEl.classList.contains('hidden') || !cutsceneOverlayEl.classList.contains('hidden')) return;
+  if (
+    !menuOverlayEl.classList.contains('hidden') ||
+    !cutsceneOverlayEl.classList.contains('hidden') ||
+    !controlsOverlayEl.classList.contains('hidden')
+  ) {
+    return;
+  }
 
   if (e.code === 'KeyE') {
     handleInteraction();
@@ -375,16 +530,15 @@ function handleInteraction() {
   interactTimer = 0.5;
 
   if (currentAct === 1) {
-    if (dist < 3.2) {
+    if (dist < 4.0) {
       dialogueSpeakerEl.textContent = 'MULHER (MISTERIOSA)';
       dialogueTextEl.textContent =
-        'O que você está fazendo sozinho nesta rua escura a esta hora...? *ela sorri de forma estranha*';
-      // Trigger kidnapping when interacting close on the street
-      setTimeout(triggerKidnapping, 1200);
+        'O que você está fazendo sozinho nesta rua escura a esta hora...? *ela sorri friamente nas sombras*';
+      setTimeout(triggerKidnapping, 1400);
     } else {
       dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
       dialogueTextEl.textContent =
-        'A rua está deserta. Sinto que alguém está me seguindo... preciso ter cuidado!';
+        'A rua está deserta e silenciosa... Sinto que alguém está me observando de trás das moitas.';
     }
   } else {
     if (dist < 2.8) {
@@ -394,19 +548,8 @@ function handleInteraction() {
     } else {
       dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
       dialogueTextEl.textContent =
-        'A porta está trancada! Preciso encontrar uma maneira de escapar!';
+        'A porta está trancada! Preciso encontrar uma maneira de escapar do calabouço!';
     }
-  }
-}
-
-function updateHUD() {
-  const hpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
-  playerHealthFillEl.style.width = `${hpPercent}%`;
-
-  if (hpPercent < 35) {
-    playerHealthFillEl.classList.add('danger');
-  } else {
-    playerHealthFillEl.classList.remove('danger');
   }
 }
 
@@ -414,6 +557,9 @@ function restartGame() {
   setAct(currentAct);
   isGameOver = false;
 }
+
+// Open Main Menu on initial load
+openMenu();
 
 // Main Game Loop
 let lastTime = performance.now();
@@ -437,6 +583,7 @@ function animate(currentTime) {
     !isGameOver &&
     menuOverlayEl.classList.contains('hidden') &&
     cutsceneOverlayEl.classList.contains('hidden') &&
+    controlsOverlayEl.classList.contains('hidden') &&
     isGameStarted
   ) {
     const activeBounds = currentAct === 1 ? streetEnv.bounds : roomEnv.bounds;
@@ -445,18 +592,51 @@ function animate(currentTime) {
     player.animate(elapsed);
 
     if (currentAct === 1) {
-      // Act 1: NPC Stalking Behavior
-      // NPC follows player from behind at a distance
-      const targetX = player.group.position.x - 3.5;
-      const targetZ = player.group.position.z;
-      npc.group.position.x += (targetX - npc.group.position.x) * dt * 1.8;
-      npc.group.position.z += (targetZ - npc.group.position.z) * dt * 1.8;
+      // Act 1: Stalker AI Hiding behind buildings, bushes and trees
+      npc.updateStalker(
+        player.group.position,
+        dt,
+        elapsed,
+        streetEnv.hidingSpots,
+        cameraAngle
+      );
       npc.animate(elapsed);
 
-      // Camera follows player smoothly along the street
-      camera.position.x = THREE.MathUtils.lerp(camera.position.x, player.group.position.x, 0.08);
+      // Camera smoothly follows player along the extended avenue
+      const targetCamX = THREE.MathUtils.clamp(
+        player.group.position.x,
+        streetEnv.bounds.minX + 6,
+        streetEnv.bounds.maxX - 6
+      );
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.08);
 
-      // Trigger kidnapping if player moves towards end of street
+      // Dynamic narrative suspense updates along the street walk
+      const px = player.group.position.x;
+      let zone = 0;
+      if (px < -20) zone = 1;
+      else if (px < 0) zone = 2;
+      else if (px < 20) zone = 3;
+      else zone = 4;
+
+      if (zone !== lastNarrativeZone && interactTimer <= 0) {
+        lastNarrativeZone = zone;
+        dialogueSpeakerEl.textContent = 'NARRADOR';
+        if (zone === 1) {
+          dialogueTextEl.textContent =
+            'Uma névoa fria desce sobre a rua... Você ouve galhos quebrando entre as árvores.';
+        } else if (zone === 2) {
+          dialogueTextEl.textContent =
+            'Os postes piscam... Um vulto misterioso se moveu rapidamente atrás da moita do beco.';
+        } else if (zone === 3) {
+          dialogueTextEl.textContent =
+            'As sombras dos pilares do viaduto se estendem... Alguém está te espiando fixamente.';
+        } else if (zone === 4) {
+          dialogueTextEl.textContent =
+            'A rua está quase no fim, mas o silêncio se tornou ensurdecedor... CUIDADO!';
+        }
+      }
+
+      // Trigger kidnapping sequence if player reaches ambush point
       if (player.group.position.x >= streetEnv.triggerKidnapX) {
         triggerKidnapping();
       }
@@ -464,7 +644,7 @@ function animate(currentTime) {
       // Act 2: Dungeon House Behavior
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, 0.08);
 
-      const npcResult = npc.update(
+      const npcResult = npc.updateDungeon(
         player.group.position,
         dt,
         elapsed,
@@ -475,10 +655,9 @@ function animate(currentTime) {
 
       if (npcResult.attacking && player.hp > 0) {
         player.hp -= npcResult.damage;
-        updateHUD();
         dialogueSpeakerEl.textContent = 'ALERTA!';
         dialogueTextEl.textContent =
-          '🩸 A garota sádica te atacou no calabouço! Cuidado!';
+          '🩸 A garota sádica te atacou no calabouço! Corra!';
 
         if (player.hp <= 0) {
           player.hp = 0;
@@ -499,5 +678,4 @@ function animate(currentTime) {
   renderer.render(scene, camera);
 }
 
-updateHUD();
 requestAnimationFrame(animate);

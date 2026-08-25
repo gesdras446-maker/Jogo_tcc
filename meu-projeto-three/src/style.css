@@ -10,7 +10,7 @@ html, body {
   height: 100vh;
   overflow: hidden;
   background-color: #0b0c10;
-  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', 'Trebuchet MS', Roboto, sans-serif;
 }
 
 #app {
@@ -25,116 +25,267 @@ canvas {
   height: 100%;
 }
 
-/* RPG Style Clean Status Bar */
-.rpg-banner {
+/* Discreet Top Corner Menu Button */
+.btn-top-menu {
   position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  background: rgba(18, 22, 32, 0.88);
-  border: 2px solid #455a64;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  padding: 8px 24px;
-  border-radius: 12px;
-  color: #eceff1;
-  font-size: 15px;
-  font-weight: bold;
+  top: 18px;
+  right: 22px;
+  z-index: 20;
+  background: rgba(18, 24, 36, 0.85);
+  border: 1.5px solid #455a64;
+  color: #cfd8dc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
   letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 6px;
 }
 
-.rpg-banner span {
-  color: #64b5f6;
+.btn-top-menu:hover {
+  background: rgba(38, 50, 72, 0.95);
+  border-color: #78909c;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
-.act-badge {
-  background: #ff9800;
-  color: #120d0b;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.btn-menu-trigger {
-  background: #37474f;
-  border: 1px solid #78909c;
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.btn-menu-trigger:hover {
-  background: #546e7a;
-}
-
-/* Dialogue Box */
+/* Cinematic Dialogue Box */
 .dialogue-box {
   position: absolute;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(640px, 92vw);
+  width: min(680px, 92vw);
   z-index: 10;
-  background: rgba(15, 18, 25, 0.94);
-  border: 3px solid #78909c;
-  border-radius: 14px;
-  padding: 14px 20px;
+  background: rgba(12, 16, 24, 0.92);
+  border: 2px solid #546e7a;
+  border-radius: 12px;
+  padding: 14px 22px;
   color: #ffffff;
   font-size: 15px;
-  line-height: 1.4;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  line-height: 1.45;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 .dialogue-speaker {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   color: #ffb74d;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .dialogue-text {
-  color: #eceff1;
+  color: #e0e6ed;
 }
 
-/* Health Bar */
-.health-bar-container {
+/* ========================================================
+   CONTROLS & HOW TO PLAY SCREEN (NOVO JOGO)
+   ======================================================== */
+.controls-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  background: rgba(6, 9, 14, 0.95);
+  backdrop-filter: blur(10px);
   display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  transition: opacity 0.4s ease;
+}
+
+.controls-overlay.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.controls-card {
+  width: min(580px, 94vw);
+  background: #131822;
+  border: 2px solid #37474f;
+  border-radius: 16px;
+  padding: 32px 30px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: modalFadeIn 0.35s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.controls-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.health-bar {
-  width: 110px;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.15);
+.controls-badge {
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid #ff9800;
+  color: #ffa726;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.controls-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 1.5px;
+}
+
+.controls-subtitle {
+  font-size: 14px;
+  color: #90a4ae;
+  max-width: 440px;
+  line-height: 1.4;
+}
+
+.controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-key-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #1a212d;
+  border: 1.5px solid #2d3848;
+  border-radius: 12px;
+  padding: 12px 18px;
+  transition: border-color 0.2s;
+}
+
+.control-key-card:hover {
+  border-color: #546e7a;
+}
+
+.keys-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 90px;
+}
+
+.keys-row {
+  display: flex;
+  gap: 4px;
+}
+
+.key-cap {
+  background: linear-gradient(180deg, #37474f, #263238);
+  border: 2px solid #546e7a;
+  border-bottom: 4px solid #1c272b;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 9px;
   border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  min-width: 26px;
 }
 
-.health-bar-fill {
-  height: 100%;
+.key-cap.single {
+  padding: 7px 14px;
+  font-size: 14px;
+}
+
+.key-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.key-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #eceff1;
+}
+
+.key-desc {
+  font-size: 12px;
+  color: #78909c;
+}
+
+.controls-story-box {
+  background: rgba(211, 47, 47, 0.12);
+  border: 1px dashed #ef5350;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ffcdd2;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.btn-start-game {
   width: 100%;
-  background: linear-gradient(90deg, #4caf50, #81c784);
-  transition: width 0.15s ease;
+  padding: 14px;
+  background: linear-gradient(180deg, #1e88e5, #1565c0);
+  border: 2px solid #64b5f6;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 6px 20px rgba(30, 136, 229, 0.4);
+  transition: all 0.2s ease;
 }
 
-.health-bar-fill.danger {
-  background: linear-gradient(90deg, #e53935, #ff7043);
+.btn-start-game small {
+  font-size: 11px;
+  font-weight: normal;
+  opacity: 0.8;
 }
 
-/* Kidnapping Cutscene Overlay */
+.btn-start-game:hover {
+  background: linear-gradient(180deg, #2196f3, #1e88e5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(33, 150, 243, 0.5);
+}
+
+/* ========================================================
+   KIDNAPPING CUTSCENE OVERLAY
+   ======================================================== */
 .cutscene-overlay {
   position: absolute;
   inset: 0;
@@ -190,7 +341,9 @@ canvas {
   transform: scale(1.05);
 }
 
-/* Main Menu & Overlay System */
+/* ========================================================
+   MAIN MENU & SETTINGS
+   ======================================================== */
 .menu-overlay {
   position: absolute;
   inset: 0;
@@ -285,6 +438,16 @@ canvas {
 
 .menu-btn.primary:hover {
   background: linear-gradient(180deg, #2196f3, #1e88e5);
+}
+
+.menu-btn.danger {
+  background: linear-gradient(180deg, #b71c1c, #880e4f);
+  border-color: #ef5350;
+}
+
+.menu-btn.danger:hover {
+  background: linear-gradient(180deg, #c62828, #ad1457);
+  border-color: #ff8a80;
 }
 
 /* Settings Form (Configurações) */
