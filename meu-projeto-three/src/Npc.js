@@ -1,18 +1,42 @@
 import * as THREE from 'three';
-import npcImg from './assets/coisa.png';
+
+// Vilão Frames (from src/Vilão)
+import vilao1 from './Vilão/1.png';
+import vilao2 from './Vilão/2.png';
+import vilao3 from './Vilão/3.png';
+import vilao4 from './Vilão/4.png';
+import vilao5 from './Vilão/5.png';
+import vilao6 from './Vilão/6.png';
+import vilao7 from './Vilão/7.png';
+import vilao8 from './Vilão/8.png';
 
 const textureLoader = new THREE.TextureLoader();
-const npcTexture = textureLoader.load(npcImg);
-npcTexture.colorSpace = THREE.SRGBColorSpace;
-npcTexture.magFilter = THREE.NearestFilter;
-npcTexture.minFilter = THREE.NearestFilter;
+
+function loadTex(imgSrc) {
+  const tex = textureLoader.load(imgSrc);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+const npcTextures = {
+  front: [loadTex(vilao5)],
+  side: [
+    loadTex(vilao6), loadTex(vilao7), loadTex(vilao8),
+    loadTex(vilao2), loadTex(vilao3), loadTex(vilao4)
+  ],
+  back: [loadTex(vilao1)],
+};
 
 export class Npc {
   constructor(scene, x, z) {
-    this.isSadistic = false;
+    this.isAttacking = false;
     this.isStalking = true;
     this.moving = false;
-    this.direction = -1;
+    this.facing = 'side'; // 'front' | 'side' | 'back'
+    this.direction = -1; // 1 = right, -1 = left
     this.speed = 3.6;
     this.hp = 100;
 
@@ -27,7 +51,7 @@ export class Npc {
     // Body Mesh
     const geo = new THREE.PlaneGeometry(2.4, 2.4);
     this.material = new THREE.MeshBasicMaterial({
-      map: npcTexture,
+      map: npcTextures.front[0],
       transparent: true,
       alphaTest: 0.02,
       opacity: 1.0,
@@ -37,38 +61,9 @@ export class Npc {
     this.mesh = new THREE.Mesh(geo, this.material);
     this.mesh.position.set(0, 1.2, 0);
 
-    // Eerie glowing red eyes for when lurking in shadows
-    const eyeCanvas = document.createElement('canvas');
-    eyeCanvas.width = 64;
-    eyeCanvas.height = 64;
-    const ectx = eyeCanvas.getContext('2d');
-    ectx.fillStyle = '#ff1744';
-    ectx.shadowColor = '#ff1744';
-    ectx.shadowBlur = 8;
-    ectx.beginPath();
-    ectx.arc(22, 28, 5, 0, Math.PI * 2);
-    ectx.arc(42, 28, 5, 0, Math.PI * 2);
-    ectx.fill();
-    const eyeTex = new THREE.CanvasTexture(eyeCanvas);
-
-    this.eyeGlowMat = new THREE.MeshBasicMaterial({
-      map: eyeTex,
-      transparent: true,
-      opacity: 0.9,
-      depthTest: false,
-    });
-
-    this.eyeGlow = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.9, 0.9),
-      this.eyeGlowMat
-    );
-    this.eyeGlow.position.set(0, 1.6, 0.05);
-    this.eyeGlow.visible = false;
-
     this.group = new THREE.Group();
     this.group.position.set(x, 0, z);
     this.group.add(this.mesh);
-    this.group.add(this.eyeGlow);
 
     scene.add(this.group);
   }
@@ -110,7 +105,8 @@ export class Npc {
   // Act 1: Stalker AI with Random Teleportation and Hiding behind Buildings/Moitas/Trees
   updateStalker(playerPos, dt, elapsed, hidingSpots, cameraAngle) {
     this.isStalking = true;
-    this.isSadistic = false;
+    this.isAttacking = false;
+    this.moving = false;
 
     // Initial spot assignment
     if (!this.currentSpot && hidingSpots && hidingSpots.length > 0) {
@@ -128,7 +124,6 @@ export class Npc {
         // Fade out into shadows
         this.stalkerOpacity = Math.max(0, this.stalkerOpacity - dt * 5.0);
         this.material.opacity = this.stalkerOpacity;
-        this.eyeGlowMat.opacity = this.stalkerOpacity;
 
         if (this.teleportTimer <= 0) {
           // Instant relocation while invisible
@@ -140,12 +135,10 @@ export class Npc {
         // Fade in emerging from behind obstacle
         this.stalkerOpacity = Math.min(1.0, this.stalkerOpacity + dt * 4.0);
         this.material.opacity = this.stalkerOpacity;
-        this.eyeGlowMat.opacity = this.stalkerOpacity;
 
         if (this.teleportTimer <= 0) {
           this.stalkerOpacity = 1.0;
           this.material.opacity = 1.0;
-          this.eyeGlowMat.opacity = 0.9;
           this.isTeleporting = false;
           this.teleportPhase = 'idle';
         }
@@ -153,7 +146,6 @@ export class Npc {
 
       if (cameraAngle) {
         this.mesh.rotation.x = cameraAngle.x;
-        this.eyeGlow.rotation.x = cameraAngle.x;
       }
 
       return {
@@ -168,8 +160,14 @@ export class Npc {
       playerPos.z - this.group.position.z
     );
 
-    // Stalker faces the player
-    this.direction = playerPos.x >= this.group.position.x ? 1 : -1;
+    // Stalker faces towards the player
+    const diffX = playerPos.x - this.group.position.x;
+    if (Math.abs(diffX) > 1.2) {
+      this.facing = 'side';
+      this.direction = diffX > 0 ? 1 : -1;
+    } else {
+      this.facing = 'front';
+    }
 
     // Check if player is too close OR if player has walked past the hiding spot
     const playerPassedSpot = playerPos.x > this.group.position.x + 3.0;
@@ -184,14 +182,11 @@ export class Npc {
     }
 
     // Peeking Animation while lurking
-    // Subtle peek out from behind tree/bush/building corner
     const peekOffset = (0.22 + Math.sin(elapsed * 2.5) * 0.08) * this.direction;
     this.mesh.position.x = THREE.MathUtils.lerp(this.mesh.position.x, peekOffset, dt * 4);
-    this.eyeGlow.visible = true;
 
     if (cameraAngle) {
       this.mesh.rotation.x = cameraAngle.x;
-      this.eyeGlow.rotation.x = cameraAngle.x;
     }
 
     return {
@@ -203,11 +198,10 @@ export class Npc {
   // Act 2: Dungeon Chase & Attack AI
   updateDungeon(playerPos, dt, elapsed, bounds, cameraAngle) {
     this.isStalking = false;
-    this.eyeGlow.visible = false;
     this.material.opacity = 1.0;
 
     if (this.hp <= 0) {
-      this.isSadistic = false;
+      this.isAttacking = false;
       this.moving = false;
       return { attacking: false };
     }
@@ -217,13 +211,22 @@ export class Npc {
     const dist = Math.hypot(dx, dz) || 1;
 
     if (dist < 6.5) {
-      this.isSadistic = true;
+      this.isAttacking = true;
       const stepX = dx / dist;
       const stepZ = dz / dist;
       this.group.position.x += stepX * this.speed * dt;
       this.group.position.z += stepZ * this.speed * dt;
-      this.direction = stepX >= 0 ? 1 : -1;
       this.moving = true;
+
+      // Determine movement direction facing
+      if (Math.abs(dx) > Math.abs(dz) * 0.75) {
+        this.facing = 'side';
+        this.direction = dx >= 0 ? 1 : -1;
+      } else if (dz > 0) {
+        this.facing = 'front';
+      } else {
+        this.facing = 'back';
+      }
 
       if (bounds) {
         this.group.position.x = THREE.MathUtils.clamp(
@@ -245,9 +248,10 @@ export class Npc {
     }
 
     // Idle wander in dungeon
-    this.isSadistic = false;
+    this.isAttacking = false;
     this.group.position.x += Math.sin(elapsed * 1.1) * 0.02;
     this.group.position.z += Math.cos(elapsed * 1.0) * 0.02;
+    this.facing = 'side';
     this.direction = Math.sin(elapsed * 1.1) >= 0 ? 1 : -1;
     this.moving = true;
 
@@ -272,16 +276,25 @@ export class Npc {
   }
 
   animate(elapsed) {
-    // Sprite horizontal flip
-    this.mesh.scale.x = this.direction > 0 ? 1 : -1;
-    this.eyeGlow.scale.x = this.direction > 0 ? 1 : -1;
+    const frames = npcTextures[this.facing] || npcTextures.front;
+
+    // Cycle through frames at ~8 fps when moving, or use frame 0 when idle
+    const frameIndex = this.moving ? Math.floor(elapsed * 8) % frames.length : 0;
+    this.material.map = frames[frameIndex];
+
+    // The sprite natively faces left in 6.png/7.png/8.png, flip (-1) when moving right (+1)
+    if (this.facing === 'side') {
+      this.mesh.scale.x = this.direction > 0 ? -1 : 1;
+    } else {
+      this.mesh.scale.x = 1;
+    }
 
     // Bobbing / breathing animation
     if (this.isStalking) {
       const breath = Math.sin(elapsed * 3.5) * 0.04;
       this.mesh.position.y = 1.2 + breath;
     } else {
-      const bob = this.moving ? Math.sin(elapsed * 12) * 0.06 : 0;
+      const bob = this.moving ? Math.sin(elapsed * 14) * 0.05 : 0;
       this.mesh.position.y = 1.2 + bob;
     }
   }

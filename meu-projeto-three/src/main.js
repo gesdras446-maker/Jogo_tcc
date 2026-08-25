@@ -79,7 +79,7 @@ app.innerHTML = `
     <div class="cutscene-title">⚠️ VOCÊ FOI SEQUESTRADO!</div>
     <div class="cutscene-text" id="cutsceneText">
       Enquanto você caminhava pela rua deserta, a figura misteriosa avançou silenciosamente pelas sombras por trás de você...<br><br>
-      Você sente um golpe súbito e tudo fica escuro! Ao abrir os olhos, percebe que foi trancado no calabouço da casa dela...
+      Você sente um golpe súbito e tudo fica escuro! Ao abrir os olhos, percebe que foi trancado no calabouço pelo sequestrador...
     </div>
     <button class="cutscene-btn" id="btnWakeUp">👁️ Acordar no Calabouço</button>
   </div>
@@ -307,7 +307,7 @@ function setAct(act) {
 
     camera.position.x = 0;
 
-    dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
+    dialogueSpeakerEl.textContent = 'JOGADOR';
     dialogueTextEl.textContent =
       'Onde estou?! Fui sequestrado e trancado nesta sala escura! Preciso achar uma saída...';
   }
@@ -531,22 +531,22 @@ function handleInteraction() {
 
   if (currentAct === 1) {
     if (dist < 4.0) {
-      dialogueSpeakerEl.textContent = 'MULHER (MISTERIOSA)';
+      dialogueSpeakerEl.textContent = 'SEQUESTRADOR (MISTERIOSO)';
       dialogueTextEl.textContent =
-        'O que você está fazendo sozinho nesta rua escura a esta hora...? *ela sorri friamente nas sombras*';
+        'O que você está fazendo sozinho nesta rua escura a esta hora...? *ele sorri friamente nas sombras*';
       setTimeout(triggerKidnapping, 1400);
     } else {
-      dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
+      dialogueSpeakerEl.textContent = 'JOGADOR';
       dialogueTextEl.textContent =
         'A rua está deserta e silenciosa... Sinto que alguém está me observando de trás das moitas.';
     }
   } else {
     if (dist < 2.8) {
-      dialogueSpeakerEl.textContent = 'MULHER (SÁDICA)';
+      dialogueSpeakerEl.textContent = 'VILÃO (SEQUESTRADOR)';
       dialogueTextEl.textContent =
-        'HAHAHA! Agora você é meu convidado especial! Você nunca vai sair desta casa!';
+        'HAHAHA! Agora você é meu convidado especial! Você nunca vai sair deste calabouço!';
     } else {
-      dialogueSpeakerEl.textContent = 'JOGADOR (NERD)';
+      dialogueSpeakerEl.textContent = 'JOGADOR';
       dialogueTextEl.textContent =
         'A porta está trancada! Preciso encontrar uma maneira de escapar do calabouço!';
     }
@@ -657,7 +657,7 @@ function animate(currentTime) {
         player.hp -= npcResult.damage;
         dialogueSpeakerEl.textContent = 'ALERTA!';
         dialogueTextEl.textContent =
-          '🩸 A garota sádica te atacou no calabouço! Corra!';
+          '🩸 O vilão te atacou no calabouço! Corra!';
 
         if (player.hp <= 0) {
           player.hp = 0;
