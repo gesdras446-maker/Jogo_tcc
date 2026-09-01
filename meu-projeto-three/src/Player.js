@@ -87,9 +87,15 @@ export class Player {
   constructor(scene, x, z) {
     this.moving = false;
     this.isInteracting = false;
+    this.isSneaking = false;
+    this.isFalling = false;
+    this.fallTimer = 0;
+    this.fallDuration = 0.8;
+    this.noiseLevel = 0; // 0 = silent, 1 = sneak, 2 = walk, 3 = loud/running
     this.facing = 'front'; // 'front' | 'side' | 'back'
     this.direction = 1; // 1 = right, -1 = left
-    this.speed = 4.5;
+    this.baseSpeed = 4.8;
+    this.sneakSpeed = 2.2;
     this.hp = 100;
     this.maxHp = 100;
     this.deathTimer = 0;
@@ -112,14 +118,38 @@ export class Player {
     scene.add(this.group);
   }
 
-  update(keys, dt, bounds, cameraAngle) {
+  triggerHoleFall() {
+    if (this.isFalling) return;
+    this.isFalling = true;
+    this.fallTimer = 0;
+    this.moving = false;
+  }
+
+  update(keys, dt, bounds, cameraAngle, obstacles) {
+    // Handle Falling in Hole Animation
+    if (this.isFalling) {
+      this.fallTimer += dt;
+      const progress = Math.min(this.fallTimer / this.fallDuration, 1.0);
+
+      // Shrink and drop down into hole
+      const scale = Math.max(0.01, 1.0 - progress);
+      this.mesh.scale.set(scale, scale, scale);
+      this.mesh.position.y = 1.2 - progress * 2.2;
+      this.mesh.rotation.z += dt * 14;
+
+      if (cameraAngle) {
+        this.mesh.rotation.x = cameraAngle.x;
+      }
+      return { finishedFall: progress >= 1.0 };
+    }
+
     if (this.hp <= 0) {
       this.moving = false;
       this.deathTimer += dt;
       if (cameraAngle) {
         this.mesh.rotation.x = cameraAngle.x;
       }
-      return;
+      return { finishedFall: false };
     }
 
     this.deathTimer = 0;
@@ -131,11 +161,18 @@ export class Player {
     if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
     if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
 
+    // Shift key for sneak (passos silenciosos)
+    this.isSneaking = Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
+    const currentSpeed = this.isSneaking ? this.sneakSpeed : this.baseSpeed;
+
     const len = Math.hypot(moveX, moveZ);
     if (len > 0) {
-      this.group.position.x += (moveX / len) * this.speed * dt;
-      this.group.position.z += (moveZ / len) * this.speed * dt;
       this.moving = true;
+      const stepX = (moveX / len) * currentSpeed * dt;
+      const stepZ = (moveZ / len) * currentSpeed * dt;
+
+      // Obstacle collision check with dungeon walls & pillars
+      this.moveWithObstacles(stepX, stepZ, obstacles);
 
       // Determine directional facing
       if (Math.abs(moveX) > 0.1) {
@@ -146,8 +183,12 @@ export class Player {
       } else if (moveZ < -0.1) {
         this.facing = 'back';
       }
+
+      // Calculate noise level (Furtividade)
+      this.noiseLevel = this.isSneaking ? 1 : 2;
     } else {
       this.moving = false;
+      this.noiseLevel = 0;
     }
 
     if (bounds) {
@@ -166,9 +207,46 @@ export class Player {
     if (cameraAngle) {
       this.mesh.rotation.x = cameraAngle.x;
     }
+
+    return { finishedFall: false };
+  }
+
+  moveWithObstacles(stepX, stepZ, obstacles) {
+    const nextX = this.group.position.x + stepX;
+    const nextZ = this.group.position.z + stepZ;
+
+    let canMoveX = true;
+    let canMoveZ = true;
+
+    if (obstacles) {
+      const radius = 0.5;
+      for (const obs of obstacles) {
+        if (
+          nextX + radius > obs.minX &&
+          nextX - radius < obs.maxX &&
+          this.group.position.z + radius > obs.minZ &&
+          this.group.position.z - radius < obs.maxZ
+        ) {
+          canMoveX = false;
+        }
+        if (
+          this.group.position.x + radius > obs.minX &&
+          this.group.position.x - radius < obs.maxX &&
+          nextZ + radius > obs.minZ &&
+          nextZ - radius < obs.maxZ
+        ) {
+          canMoveZ = false;
+        }
+      }
+    }
+
+    if (canMoveX) this.group.position.x = nextX;
+    if (canMoveZ) this.group.position.z = nextZ;
   }
 
   animate(elapsed) {
+    if (this.isFalling) return;
+
     if (this.hp <= 0) {
       const deathFrames = playerTextures.death;
       const deathIndex = Math.min(Math.floor(this.deathTimer * 8), deathFrames.length - 1);
@@ -178,26 +256,26 @@ export class Player {
       return;
     }
 
+    const animSpeed = this.isSneaking ? 5 : 9;
+
     if (this.moving) {
       if (this.facing === 'side') {
         const frames = playerTextures.side;
-        const frameIndex = Math.floor(elapsed * 9) % frames.length;
+        const frameIndex = Math.floor(elapsed * animSpeed) % frames.length;
         this.material.map = frames[frameIndex];
-        // SideWalk natively faces left, flip (-1) when moving right (+1)
         this.mesh.scale.x = this.direction > 0 ? -1 : 1;
       } else if (this.facing === 'back') {
         const frames = playerTextures.up;
-        const frameIndex = Math.floor(elapsed * 9) % frames.length;
+        const frameIndex = Math.floor(elapsed * animSpeed) % frames.length;
         this.material.map = frames[frameIndex];
         this.mesh.scale.x = 1;
       } else {
         const frames = playerTextures.down;
-        const frameIndex = Math.floor(elapsed * 9) % frames.length;
+        const frameIndex = Math.floor(elapsed * animSpeed) % frames.length;
         this.material.map = frames[frameIndex];
         this.mesh.scale.x = 1;
       }
     } else {
-      // Idle state
       if (this.facing === 'front') {
         const frames = playerTextures.idle;
         const frameIndex = Math.floor(elapsed * 8) % frames.length;
@@ -213,7 +291,19 @@ export class Player {
     }
 
     // Walking bob effect
-    const bob = this.moving ? Math.sin(elapsed * 18) * 0.04 : 0;
+    const bob = this.moving ? Math.sin(elapsed * (this.isSneaking ? 10 : 18)) * (this.isSneaking ? 0.02 : 0.04) : 0;
     this.mesh.position.y = 1.2 + bob;
+    this.mesh.scale.y = 1;
+    this.mesh.rotation.z = 0;
+  }
+
+  reset(x, z) {
+    this.group.position.set(x, 0, z);
+    this.isFalling = false;
+    this.fallTimer = 0;
+    this.hp = 100;
+    this.mesh.scale.set(1, 1, 1);
+    this.mesh.position.y = 1.2;
+    this.mesh.rotation.z = 0;
   }
 }
