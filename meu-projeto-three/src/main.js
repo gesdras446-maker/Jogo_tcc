@@ -549,12 +549,41 @@ btnMuteToggleEl.addEventListener('click', () => {
 
 updateSoundUI();
 
-// Renderer Setup
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Renderer Setup with Context Loss Prevention & Recovery
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    powerPreference: 'high-performance',
+    failIfMajorPerformanceCaveat: false,
+  });
+} catch (e) {
+  console.warn('Falha ao criar WebGLRenderer, usando fallback:', e);
+  renderer = new THREE.WebGLRenderer({ antialias: false });
+}
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false;
 app.appendChild(renderer.domElement);
+
+// Context Loss Prevention: Inform browser we handle context loss to prevent domain blocking!
+renderer.domElement.addEventListener(
+  'webglcontextlost',
+  (event) => {
+    event.preventDefault();
+    console.warn('⚠️ WebGL context perdido! Prevenindo bloqueio do navegador...');
+  },
+  false
+);
+
+renderer.domElement.addEventListener(
+  'webglcontextrestored',
+  () => {
+    console.log('✅ WebGL context restaurado com sucesso!');
+  },
+  false
+);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0c10);
@@ -590,18 +619,19 @@ const npc = new Npc(scene, initialSpot.x, initialSpot.z);
 let dungeonEnemies = [];
 
 function spawnDungeonEnemies() {
-  dungeonEnemies.forEach((e) => e.destroy());
-  dungeonEnemies = [];
-
-  dungeonEnv.enemySpawnPoints.forEach((sp) => {
-    const enemy = new Enemy(scene, {
-      x: sp.x,
-      z: sp.z,
-      name: sp.name,
-      patrolRadius: sp.patrolRadius,
+  if (dungeonEnemies.length === 0) {
+    dungeonEnv.enemySpawnPoints.forEach((sp) => {
+      const enemy = new Enemy(scene, {
+        x: sp.x,
+        z: sp.z,
+        name: sp.name,
+        patrolRadius: sp.patrolRadius,
+      });
+      dungeonEnemies.push(enemy);
     });
-    dungeonEnemies.push(enemy);
-  });
+  } else {
+    dungeonEnemies.forEach((e) => e.reset());
+  }
 }
 
 // Quest & Inventory State
@@ -829,6 +859,8 @@ function triggerVillainWakeUpSpeech() {
 function triggerKnockout(reason = 'Você perdeu a consciência...') {
   if (isKnockedOut) return;
   isKnockedOut = true;
+  player.isFalling = false;
+  player.fallTimer = 0;
   playSound('hit');
 
   knockoutOverlayEl.classList.remove('hidden');
@@ -841,6 +873,7 @@ function triggerKnockout(reason = 'Você perdeu a consciência...') {
 btnWakeUpCellEl.addEventListener('click', () => {
   knockoutOverlayEl.classList.add('hidden');
   isKnockedOut = false;
+  resetPuzzles(false);
   performEyeWakeUpTransition();
 });
 
@@ -857,6 +890,7 @@ btnPlayAgainEl.addEventListener('click', () => {
   questState.hasCultistEmblem = false;
   questState.gateOpen = false;
   questState.activePedestals = 0;
+  resetPuzzles(true);
   setAct(1);
   closeMenu();
 });
@@ -864,6 +898,7 @@ btnPlayAgainEl.addEventListener('click', () => {
 btnVictoryMenuEl.addEventListener('click', () => {
   victoryOverlayEl.classList.add('hidden');
   isGameStarted = false;
+  resetPuzzles(true);
   setAct(1);
   openMenu();
 });
@@ -876,6 +911,7 @@ function checkSaveData() {
 checkSaveData();
 
 function saveProgress() {
+  if (player.isFalling || isKnockedOut || player.hp <= 0) return;
   const saveData = {
     currentAct,
     playerPos: { x: player.group.position.x, z: player.group.position.z },
@@ -894,6 +930,19 @@ function loadProgress() {
     if (data.questState) {
       Object.assign(questState, data.questState);
     }
+    // Sync 3D binary levers with loaded or restored state
+    if (dungeonEnv && dungeonEnv.binaryLevers && questState.binaryBits) {
+      dungeonEnv.binaryLevers.forEach((bl, i) => {
+        bl.state = questState.binaryBits[i] || 0;
+        const color = bl.state === 1 ? 0x00e676 : 0xff1744;
+        if (bl.bulbMat) bl.bulbMat.color.setHex(color);
+        if (bl.light && bl.light.color) bl.light.color.setHex(color);
+      });
+    }
+    updateBinaryModalUI();
+    updateColorSequenceUI();
+    updateSafeDialsUI();
+
     setAct(data.currentAct || 1);
     player.group.position.set(data.playerPos.x, 0, data.playerPos.z);
     player.hp = data.playerHp;
@@ -956,6 +1005,7 @@ function startGameFromControls() {
   questState.hasCultistEmblem = false;
   questState.gateOpen = false;
   questState.activePedestals = 0;
+  resetPuzzles(true);
   setAct(1);
   isGameOver = false;
   isGameStarted = true;
@@ -976,6 +1026,14 @@ btnContinueEl.addEventListener('click', () => {
 btnResumeGameEl.addEventListener('click', closeMenu);
 
 btnRestartActEl.addEventListener('click', () => {
+  if (currentAct === 2) {
+    questState.hasBronzeKey = false;
+    questState.hasCthulhuRune = false;
+    questState.hasCultistEmblem = false;
+    questState.gateOpen = false;
+    questState.activePedestals = 0;
+    resetPuzzles(true);
+  }
   setAct(currentAct);
   isGameOver = false;
   closeMenu();
@@ -994,6 +1052,7 @@ btnReturnToMainMenuEl.addEventListener('click', () => {
   isGameStarted = false;
   isGameOver = false;
   controlsOverlayEl.classList.add('hidden');
+  resetPuzzles(true);
   setAct(1);
   openMenu();
 });
@@ -1082,6 +1141,7 @@ function updateBinaryModalUI() {
   const bits = questState.binaryBits;
   [0, 1, 2, 3].forEach((i) => {
     const btn = document.querySelector(`#btnBin${i}`);
+    if (!btn) return;
     btn.textContent = bits[i];
     if (bits[i] === 1) {
       btn.classList.add('active');
@@ -1091,7 +1151,57 @@ function updateBinaryModalUI() {
   });
 
   const decimalVal = bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3] * 1;
-  binaryValueDisplayEl.textContent = `Código: [ ${bits.join(' ')} ] = Valor Decimal: ${decimalVal}`;
+  if (binaryValueDisplayEl) {
+    binaryValueDisplayEl.textContent = `Código: [ ${bits.join(' ')} ] = Valor Decimal: ${decimalVal}`;
+  }
+}
+
+function resetBinaryPuzzle() {
+  questState.binaryBits = [0, 0, 0, 0];
+  if (dungeonEnv && dungeonEnv.binaryLevers) {
+    dungeonEnv.binaryLevers.forEach((bl) => {
+      bl.state = 0;
+      if (bl.bulbMat) bl.bulbMat.color.setHex(0xff1744);
+      if (bl.light && bl.light.color) bl.light.color.setHex(0xff1744);
+    });
+  }
+  updateBinaryModalUI();
+}
+
+function resetPuzzles(resetAll = true) {
+  if (resetAll || !questState.hasBronzeKey) {
+    resetBinaryPuzzle();
+  }
+
+  if (resetAll || !questState.hasCthulhuRune) {
+    questState.colorSequence = [];
+    updateColorSequenceUI();
+  }
+
+  if (resetAll || !questState.hasCultistEmblem) {
+    questState.safeDials = [0, 0, 0];
+    updateSafeDialsUI();
+  }
+
+  if (resetAll) {
+    if (dungeonEnv && dungeonEnv.pedestals) {
+      dungeonEnv.pedestals.forEach((ped) => {
+        ped.active = false;
+        if (ped.light) ped.light.intensity = 0;
+      });
+    }
+    const gateObj =
+      dungeonEnv &&
+      dungeonEnv.interactiveObjects &&
+      dungeonEnv.interactiveObjects.find((o) => o.id === 'escape_gate');
+    if (gateObj && gateObj.isOpen) {
+      gateObj.isOpen = false;
+      gateObj.mesh.position.y = 1.8;
+      if (dungeonEnv.obstacles && !dungeonEnv.obstacles.includes(gateObj.obstacle)) {
+        dungeonEnv.obstacles.push(gateObj.obstacle);
+      }
+    }
+  }
 }
 
 [0, 1, 2, 3].forEach((i) => {
@@ -1364,12 +1474,17 @@ function handleInteraction() {
       );
     }
   } else if (obj.type === 'gate') {
-    if (questState.activePedestals >= 3) {
+    if (
+      questState.activePedestals >= 3 &&
+      questState.hasBronzeKey &&
+      questState.hasCthulhuRune &&
+      questState.hasCultistEmblem
+    ) {
       openEscapeGate();
     } else {
       typeWriterDialogue(
         'GRANDE PORTÃO DE FERRO',
-        `🔒 O portão está trancado por 3 selos arcanos. Ative os 3 pedestais no Altar de Cthulhu (${questState.activePedestals}/3)!`
+        `🔒 O portão está trancado por 3 selos arcanos. Você precisa resolver todos os 3 enigmas (Alavancas Binárias, Cristais Elementais e Baú Numérico) e ativar os 3 pedestais no Altar de Cthulhu (${questState.activePedestals}/3)!`
       );
     }
   }
@@ -1381,6 +1496,7 @@ function openEscapeGate() {
   const gateObj = dungeonEnv.interactiveObjects.find((o) => o.id === 'escape_gate');
   if (gateObj && !gateObj.isOpen) {
     gateObj.isOpen = true;
+    questState.gateOpen = true;
     gateObj.mesh.position.y = 8.0;
     const idx = dungeonEnv.obstacles.indexOf(gateObj.obstacle);
     if (idx !== -1) dungeonEnv.obstacles.splice(idx, 1);
@@ -1394,6 +1510,14 @@ function openEscapeGate() {
 }
 
 function restartGame() {
+  if (currentAct === 2) {
+    questState.hasBronzeKey = false;
+    questState.hasCthulhuRune = false;
+    questState.hasCultistEmblem = false;
+    questState.gateOpen = false;
+    questState.activePedestals = 0;
+    resetPuzzles(true);
+  }
   setAct(currentAct);
 }
 
@@ -1402,6 +1526,7 @@ openMenu();
 
 // Main Game Loop
 let lastTime = performance.now();
+let lastSavedSecond = -1;
 
 function animate(currentTime) {
   requestAnimationFrame(animate);
@@ -1499,6 +1624,7 @@ function animate(currentTime) {
       player.animate(elapsed);
 
       if (playerUpdateRes && playerUpdateRes.finishedFall) {
+        player.isFalling = false;
         triggerKnockout('Você caiu no abismo sem fundo de um buraco da masmorra!');
       }
 
@@ -1567,7 +1693,7 @@ function animate(currentTime) {
             player.group.position.x - trap.x,
             player.group.position.z - trap.z
           );
-          if (distToHole < trap.radius && !player.isFalling) {
+          if (distToHole < trap.radius && !player.isFalling && !isKnockedOut) {
             player.triggerHoleFall();
             playSound('fall');
           }
@@ -1603,14 +1729,28 @@ function animate(currentTime) {
         }
       });
 
-      // Check Victory Reach
+      // Check Victory Reach (Impede 100% o acesso à vitória sem ter resolvido todos os puzzles)
       if (
         player.group.position.x >= 44.0 &&
         Math.abs(player.group.position.z) < 3.0 &&
         !isVictory &&
         !player.isFalling
       ) {
-        triggerVictory();
+        if (
+          questState.activePedestals >= 3 &&
+          questState.hasBronzeKey &&
+          questState.hasCthulhuRune &&
+          questState.hasCultistEmblem &&
+          questState.gateOpen
+        ) {
+          triggerVictory();
+        } else {
+          player.group.position.x = 35.0;
+          typeWriterDialogue(
+            'SAÍDA BLOQUEADA',
+            '🔒 Uma barreira intransponível bloqueia a saída! Você precisa resolver todos os 3 enigmas e abrir o portão de ferro para escapar!'
+          );
+        }
       }
 
       // Check Nearby Interactive Objects for Floating Prompt
@@ -1652,7 +1792,9 @@ function animate(currentTime) {
       updateHUD();
     }
 
-    if (Math.floor(elapsed) % 5 === 0) {
+    const currentSec = Math.floor(elapsed);
+    if (currentSec % 5 === 0 && currentSec !== lastSavedSecond) {
+      lastSavedSecond = currentSec;
       saveProgress();
     }
   }

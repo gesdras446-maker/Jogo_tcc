@@ -85,14 +85,9 @@ export class Enemy {
     this.mesh = new THREE.Mesh(geo, this.material);
     this.mesh.position.set(0, 1.9, 0);
 
-    // Menacing red aura point light
-    this.glowLight = new THREE.PointLight(0xff0033, 1.8, 5.0);
-    this.glowLight.position.set(0, 1.8, 0.5);
-
     this.group = new THREE.Group();
     this.group.position.set(this.startX, 0, this.startZ);
     this.group.add(this.mesh);
-    this.group.add(this.glowLight);
 
     scene.add(this.group);
   }
@@ -280,5 +275,7 @@ export class Enemy {
 
   destroy() {
     this.scene.remove(this.group);
+    if (this.material) this.material.dispose();
+    if (this.mesh && this.mesh.geometry) this.mesh.geometry.dispose();
   }
 }

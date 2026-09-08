@@ -136,6 +136,35 @@ function loadCroppedTex(imgSrc, repeatX = 1, repeatY = 1) {
   return texture;
 }
 
+// Coffin Sprite Loader: Rotates horizontal coffin sprites 90deg onto vertical 3D sarcophagi with zero distortion
+function loadCoffinTex(imgSrc) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    canvas.width = img.height;
+    canvas.height = img.width;
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.restore();
+
+    texture.needsUpdate = true;
+  };
+  img.src = imgSrc;
+
+  return texture;
+}
+
 // Generate Detailed Pixel-Art Chest (Baú) Textures
 function createChestTextures() {
   const bodyCanvas = document.createElement('canvas');
@@ -258,9 +287,9 @@ export function createDungeonEnvironment(scene) {
   ];
 
   const coffinTextures = [
-    loadDungeonTex(caixao1),
-    loadDungeonTex(caixao2),
-    loadDungeonTex(caixao3),
+    loadCoffinTex(caixao1), // 0: Aberto com esqueleto
+    loadCoffinTex(caixao2), // 1: Rachado
+    loadCoffinTex(caixao3), // 2: Selado com runas
   ];
 
   const potTextures = [
@@ -294,61 +323,80 @@ export function createDungeonEnvironment(scene) {
     const tex = floorTex.clone();
     tex.repeat.set(repeatU, repeatV);
 
-    const mat = new THREE.MeshStandardMaterial({
+    const mat = new THREE.MeshLambertMaterial({
       map: tex,
-      roughness: 0.7,
-      metalness: 0.1,
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set((minX + maxX) / 2, 0.0, (minZ + maxZ) / 2);
-    mesh.receiveShadow = true;
     dungeonGroup.add(mesh);
   }
 
   // Floors using the authentic textures from Estrutura_da_masmorra!
   createFloor(-34.0, -14.0, -10.0, 10.0, floorTexLama); // Chamber 1: Muddy Stone Cell
   createFloor(-14.0, 2.0, -6.5, 6.5, floorTex0);       // Chamber 2: Stone Floor 1
-  createFloor(-12.0, 12.0, 6.0, 25.0, floorTex2);      // Chamber 3: Catacombs Floor 3
-  createFloor(2.0, 18.0, -10.0, 10.0, floorTex4);      // Chamber 4: Spike Gauntlet Floor 5
+  createFloor(-12.0, 12.0, 6.5, 25.5, floorTex2);      // Chamber 3: Catacombs Floor 3
+  createFloor(2.0, 18.0, -6.5, 6.5, floorTex4);        // Chamber 4: Spike Gauntlet Floor 5
   createFloor(18.0, 36.0, -12.0, 12.0, floorTex3);     // Chamber 5: Grand Altar Floor 4
   createFloor(36.0, 48.0, -6.5, 6.5, floorTex1);       // Chamber 6: Chest & Escape Floor 2
 
   // ========================================================
-  // 2. WALLS WITH TOP STONE CAP (NO BLACK STRIPES ON TOP!)
+  // 2. WALLS WITH TOP STONE CAP & AUTHENTIC STONE TEXTURING
   // ========================================================
   // Clean stone material for side and top caps
-  const stoneTopMat = new THREE.MeshStandardMaterial({
+  const stoneTopMat = new THREE.MeshLambertMaterial({
     map: wallCapTexture,
-    roughness: 0.7,
-    metalness: 0.1,
   });
 
-  const stoneSideMat = new THREE.MeshStandardMaterial({
-    color: 0x3a424d,
-    roughness: 0.75,
-    metalness: 0.1,
+  const stoneSideMat = new THREE.MeshLambertMaterial({
+    map: loadCroppedTex(texParedeInteira, 1, 1),
   });
 
   function createWall(x, z, width, depth, height = 3.8, frontTexture = wallFullTexture, isSolid = true) {
     const geo = new THREE.BoxGeometry(width, height, depth);
 
-    const frontMat = new THREE.MeshStandardMaterial({
-      map: frontTexture,
-      roughness: 0.65,
-      metalness: 0.1,
-    });
+    let materials;
+    if (width >= depth) {
+      // Horizontal wall running along X:
+      // Front and back (+Z, -Z) are the main visible faces
+      const repeatU = Math.max(1, Math.round(width / 3.2));
+      const frontTex = frontTexture.clone();
+      frontTex.repeat.set(repeatU, 1);
+      const frontMat = new THREE.MeshLambertMaterial({ map: frontTex });
 
-    // Materials array for 6 faces: [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
-    // Top face is textured with wallCapTexture (Acabamento.png) - ZERO black bars on top of walls!
-    const materials = [
-      stoneSideMat,
-      stoneSideMat,
-      stoneTopMat,  // TOP FACE IS TEXTURED STONE CAP!
-      stoneSideMat,
-      frontMat,
-      frontMat,
-    ];
+      // Top cap face (+Y)
+      const topTex = wallCapTexture.clone();
+      topTex.repeat.set(repeatU, 1);
+      const topMat = new THREE.MeshLambertMaterial({ map: topTex });
+
+      // End caps (+X, -X) get textured stone
+      const endTex = wallFullTexture.clone();
+      endTex.repeat.set(Math.max(1, Math.round(depth / 3.2)), 1);
+      const endMat = new THREE.MeshLambertMaterial({ map: endTex });
+
+      // [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
+      materials = [endMat, endMat, topMat, stoneSideMat, frontMat, frontMat];
+    } else {
+      // Vertical wall running along Z:
+      // Right and left (+X, -X) are the main visible faces!
+      const repeatU = Math.max(1, Math.round(depth / 3.2));
+      const mainTex = frontTexture.clone();
+      mainTex.repeat.set(repeatU, 1);
+      const mainMat = new THREE.MeshLambertMaterial({ map: mainTex });
+
+      // Top cap face (+Y)
+      const topTex = wallCapTexture.clone();
+      topTex.repeat.set(1, repeatU);
+      const topMat = new THREE.MeshLambertMaterial({ map: topTex });
+
+      // End caps (+Z, -Z) get textured stone
+      const endTex = wallFullTexture.clone();
+      endTex.repeat.set(Math.max(1, Math.round(width / 3.2)), 1);
+      const endMat = new THREE.MeshLambertMaterial({ map: endTex });
+
+      // [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
+      materials = [mainMat, mainMat, topMat, stoneSideMat, endMat, endMat];
+    }
 
     const mesh = new THREE.Mesh(geo, materials);
     mesh.position.set(x, height / 2, z);
@@ -370,37 +418,39 @@ export function createDungeonEnvironment(scene) {
   const W_THICK = 1.2;
 
   // ========================================================
-  // CLEAN MODULAR ROOM WALLS (ZERO OVERLAPPING / ZERO CROSSING)
+  // CLEAN MODULAR ROOM WALLS (100% FLUSH JUNCTIONS / OPEN PASSAGES)
   // ========================================================
 
   // 1. Chamber 1 (Cela de Sacrifício): X: -34 to -14, Z: -10 to 10
   createWall(-34.6, 0.0, W_THICK, 20.0, 3.8, wall1Texture);      // West Wall
   createWall(-24.0, 10.6, 20.0, W_THICK, 3.8, wall2Texture);     // North Wall
   createWall(-24.0, -10.6, 20.0, W_THICK, 3.8, wall3Texture);    // South Wall
-  createWall(-14.6, 6.5, W_THICK, 7.0, 3.8, wall1Texture);       // East Wall (North wing)
-  createWall(-14.6, -6.5, W_THICK, 7.0, 3.8, wall1Texture);      // East Wall (South wing)
+  createWall(-14.6, 8.55, W_THICK, 4.1, 3.8, wall1Texture);      // East Wall (North wing - flush at Z=6.5)
+  createWall(-14.6, -8.55, W_THICK, 4.1, 3.8, wall1Texture);     // East Wall (South wing - flush at Z=-6.5)
 
   // 2. Chamber 2 (Corredor das Alavancas): X: -14 to 2, Z: -6.5 to 6.5
-  createWall(-6.0, 7.1, 16.0, W_THICK, 3.8, wallCorpsesTexture); // North Wall
-  createWall(-6.0, -7.1, 16.0, W_THICK, 3.8, wallCorpsesTexture);// South Wall
+  // Corner seal between Chamber 1/2 and Chamber 3 (X = -14.5 to -12.1)
+  createWall(-13.3, 7.1, 2.4, W_THICK, 3.8, wallCorpsesTexture);
+  // (NOTE: X = -12.1 to 2.0 is 100% OPEN so the player can enter Chamber 3 / Puzzle de Cores freely!)
+  createWall(-6.0, -7.1, 16.0, W_THICK, 3.8, wallCorpsesTexture);// South Wall (flush from X=-14 to X=2)
 
   // 3. Chamber 3 (Catacumbas dos Cristais): X: -12 to 12, Z: 6.5 to 25.5
   createWall(-12.6, 16.0, W_THICK, 18.0, 3.8, wallCorpsesTexture);// West Wall
   createWall(12.6, 16.0, W_THICK, 18.0, 3.8, wallCorpsesTexture); // East Wall
   createWall(0.0, 25.6, 24.0, W_THICK, 3.8, wall5Texture);       // North Wall
-  createWall(6.5, 7.1, 11.0, W_THICK, 3.8, wall3Texture);        // South Partition
+  createWall(7.3, 7.1, 10.6, W_THICK, 3.8, wall3Texture);        // South Partition (X: 2.0 to 12.6)
 
-  // 4. Chamber 4 (Salão dos Espinhos): X: 2 to 18, Z: -10 to 10
-  createWall(10.0, 10.6, 16.0, W_THICK, 3.8, wall2Texture);      // North Wall
-  createWall(10.0, -10.6, 16.0, W_THICK, 3.8, wall2Texture);     // South Wall
+  // 4. Chamber 4 (Salão dos Espinhos): X: 2 to 18, Z: -6.5 to 6.5
+  createWall(15.3, 7.1, 5.4, W_THICK, 3.8, wall2Texture);        // North Wall (X: 12.6 to 18.0)
+  createWall(10.0, -7.1, 16.0, W_THICK, 3.8, wall2Texture);      // South Wall (X: 2.0 to 18.0, flush with Chamber 2)
 
   // 5. Chamber 5 (Grand Altar de Cthulhu): X: 18 to 36, Z: -12 to 12
   createWall(27.0, 12.6, 18.0, W_THICK, 4.2, wallCorpsesTexture);// North Wall
   createWall(27.0, -12.6, 18.0, W_THICK, 4.2, wallCorpsesTexture);// South Wall
-  createWall(18.6, 8.5, W_THICK, 7.0, 3.8, wall1Texture);        // West Wall (North wing)
-  createWall(18.6, -8.5, W_THICK, 7.0, 3.8, wall1Texture);       // West Wall (South wing)
-  createWall(36.6, 8.5, W_THICK, 7.0, 3.8, wall5Texture);        // East Wall (North wing)
-  createWall(36.6, -8.5, W_THICK, 7.0, 3.8, wall5Texture);       // East Wall (South wing)
+  createWall(18.6, 9.85, W_THICK, 5.5, 3.8, wall1Texture);       // West Wall (North wing - flush at Z=7.1)
+  createWall(18.6, -9.85, W_THICK, 5.5, 3.8, wall1Texture);      // West Wall (South wing - flush at Z=-7.1)
+  createWall(36.0, 7.1, W_THICK, 11.0, 3.8, wall5Texture);       // East Wall (North partition - spans Z: 1.6 to 12.6)
+  createWall(36.0, -7.1, W_THICK, 11.0, 3.8, wall5Texture);      // East Wall (South partition - spans Z: -12.6 to -1.6)
 
   // 6. Chamber 6 (Sala do Baú & Escadaria de Fuga): X: 36 to 48, Z: -6.5 to 6.5
   createWall(42.0, 7.1, 12.0, W_THICK, 3.8, wall3Texture);       // North Wall
@@ -410,17 +460,14 @@ export function createDungeonEnvironment(scene) {
   // SOLID PILLARS (NO TRANSPARENT SIDES / CLEAN STONE TEXTURES)
   function createPillar(x, z) {
     const geo = new THREE.BoxGeometry(1.2, 3.8, 1.2);
-    const colMat = new THREE.MeshStandardMaterial({
+    const colMat = new THREE.MeshLambertMaterial({
       map: column1Texture,
-      roughness: 0.65,
     });
     const materials = [
       colMat, colMat, stoneTopMat, stoneSideMat, colMat, colMat
     ];
     const mesh = new THREE.Mesh(geo, materials);
     mesh.position.set(x, 1.9, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
     dungeonGroup.add(mesh);
 
     obstacles.push({
@@ -479,22 +526,25 @@ export function createDungeonEnvironment(scene) {
   // 4. PITFALL / HOLE TRAPS (DISTANTES EM CANTOS ESTRATÉGICOS)
   // ========================================================
   const holeCoords = [
-    { x: -30.0, z: -7.0 }, // Canto distante da Cela
-    { x: -1.0, z: 22.5 },  // Canto distante das Catacumbas
-    { x: 5.5, z: -7.5 },   // Alcova lateral do Salão dos Espinhos
-    { x: 15.0, z: 7.5 },   // Alcova lateral do Salão dos Espinhos
-    { x: 33.5, z: -9.5 },  // Canto da Câmara do Altar
+    { x: -28.0, z: -5.5 }, // Cela de Sacrifício (espaço aberto sem encostar nas paredes)
+    { x: 0.0, z: 16.0 },   // Catacumbas dos Cristais (centro aberto, longe das paredes e placas)
+    { x: 6.0, z: -2.0 },   // Salão dos Espinhos (no corredor central, 3.3m de folga das paredes Z=±6.5)
+    { x: 14.0, z: 2.0 },   // Salão dos Espinhos (no corredor central, 3.3m de folga das paredes Z=±6.5)
+    { x: 32.0, z: -7.0 },  // Câmara do Grande Altar (área interna livre, sem encostar nas paredes)
   ];
 
   holeCoords.forEach((hc) => {
-    const hMat = new THREE.MeshBasicMaterial({
+    const hMat = new THREE.MeshLambertMaterial({
       map: holeTexture,
       transparent: true,
       side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
     });
     const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), hMat);
     hMesh.rotation.x = -Math.PI / 2;
-    hMesh.position.set(hc.x, 0.02, hc.z);
+    hMesh.position.set(hc.x, 0.03, hc.z);
     dungeonGroup.add(hMesh);
 
     traps.push({
@@ -511,21 +561,27 @@ export function createDungeonEnvironment(scene) {
   dungeonGroup.add(dungeonAmbient);
 
   const centerLights = [
-    { x: -24, y: 4.5, z: 0, color: 0xffd180, intensity: 3.4, dist: 24 },
-    { x: -6, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.2, dist: 22 },
-    { x: 0, y: 4.5, z: 15, color: 0x80d8ff, intensity: 3.4, dist: 26 },
-    { x: 10, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.2, dist: 24 },
-    { x: 27, y: 5.0, z: 0, color: 0xd1c4e9, intensity: 4.0, dist: 30 },
-    { x: 42, y: 4.5, z: 0, color: 0xffecb3, intensity: 3.6, dist: 24 },
+    { x: -24, y: 4.5, z: 0, color: 0xffd180, intensity: 3.2, dist: 28 },
+    { x: -6, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.0, dist: 26 },
+    { x: 0, y: 4.5, z: 15, color: 0x80d8ff, intensity: 3.2, dist: 28 },
+    { x: 10, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.0, dist: 26 },
+    { x: 27, y: 5.0, z: 0, color: 0xd1c4e9, intensity: 3.8, dist: 32 },
+    { x: 42, y: 4.5, z: 0, color: 0xffecb3, intensity: 3.4, dist: 26 },
   ];
 
   centerLights.forEach((cl) => {
     const light = new THREE.PointLight(cl.color, cl.intensity, cl.dist);
     light.position.set(cl.x, cl.y, cl.z);
     dungeonGroup.add(light);
+
+    animatedLights.push({
+      type: 'room',
+      light,
+      baseIntensity: cl.intensity,
+    });
   });
 
-  // Wall Torches
+  // Wall Torches (Self-illuminated authentic sprite meshes)
   function createTorch(x, y, z, rotY = 0) {
     const tMat = new THREE.MeshBasicMaterial({
       map: torchFrames[0],
@@ -537,33 +593,22 @@ export function createDungeonEnvironment(scene) {
     tMesh.rotation.y = rotY;
     dungeonGroup.add(tMesh);
 
-    const light = new THREE.PointLight(0xffa726, 3.6, 20);
-    light.position.set(x, y + 0.3, z);
-    dungeonGroup.add(light);
-
-    animatedLights.push({
-      type: 'torch',
-      mesh: tMesh,
-      mat: tMat,
-      light,
-      baseIntensity: 3.6,
-    });
-    return { mesh: tMesh, light };
+    return { mesh: tMesh };
   }
 
-  // GROUND STANDING BRAZIERS (Tochas no chão)
+  // GROUND STANDING BRAZIERS (Tochas no chão com base de coluna de pedra esculpida)
   function createGroundTorch(x, z) {
-    const pedGeo = new THREE.CylinderGeometry(0.3, 0.4, 0.8, 8);
-    const pedMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.8 });
+    const pedGeo = new THREE.CylinderGeometry(0.35, 0.45, 0.8, 12);
+    const pedMat = new THREE.MeshLambertMaterial({ map: column1Texture });
     const pedMesh = new THREE.Mesh(pedGeo, pedMat);
     pedMesh.position.set(x, 0.4, z);
     dungeonGroup.add(pedMesh);
 
     obstacles.push({
-      minX: x - 0.4,
-      maxX: x + 0.4,
-      minZ: z - 0.4,
-      maxZ: z + 0.4,
+      minX: x - 0.45,
+      maxX: x + 0.45,
+      minZ: z - 0.45,
+      maxZ: z + 0.45,
     });
 
     const tMat = new THREE.MeshBasicMaterial({
@@ -574,18 +619,6 @@ export function createDungeonEnvironment(scene) {
     const tMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.8), tMat);
     tMesh.position.set(x, 1.3, z);
     dungeonGroup.add(tMesh);
-
-    const light = new THREE.PointLight(0xffa726, 3.4, 18);
-    light.position.set(x, 1.5, z);
-    dungeonGroup.add(light);
-
-    animatedLights.push({
-      type: 'torch',
-      mesh: tMesh,
-      mat: tMat,
-      light,
-      baseIntensity: 3.4,
-    });
   }
 
   createTorch(-34.0, 2.3, 0, Math.PI / 2);
@@ -600,11 +633,11 @@ export function createDungeonEnvironment(scene) {
   createGroundTorch(23.0, -10.5);
   createGroundTorch(31.0, -10.5);
 
-  // Candles in Altar (With Solid Hitbox!)
+  // Candles in Altar (Com base de pedra texturizada & Hitbox Sólida!)
   function createAltarCandle(x, z) {
     const cBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.25, 0.3, 0.6, 6),
-      new THREE.MeshStandardMaterial({ color: 0x2e353d, roughness: 0.8 })
+      new THREE.CylinderGeometry(0.25, 0.35, 0.6, 8),
+      new THREE.MeshLambertMaterial({ map: column3Texture })
     );
     cBase.position.set(x, 0.3, z);
     dungeonGroup.add(cBase);
@@ -624,18 +657,6 @@ export function createDungeonEnvironment(scene) {
     const cMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.3), cMat);
     cMesh.position.set(x, 0.9, z);
     dungeonGroup.add(cMesh);
-
-    const cLight = new THREE.PointLight(0x00e676, 2.5, 9);
-    cLight.position.set(x, 1.1, z);
-    dungeonGroup.add(cLight);
-
-    animatedLights.push({
-      type: 'candle',
-      mesh: cMesh,
-      mat: cMat,
-      light: cLight,
-      baseIntensity: 2.5,
-    });
   }
 
   createAltarCandle(24.0, -3.5);
@@ -670,7 +691,7 @@ export function createDungeonEnvironment(scene) {
   binaryLevers.forEach((bl) => {
     const ped = new THREE.Mesh(
       new THREE.BoxGeometry(0.7, 1.2, 0.7),
-      new THREE.MeshStandardMaterial({ map: column3Texture, roughness: 0.8 })
+      new THREE.MeshLambertMaterial({ map: column3Texture })
     );
     ped.position.set(bl.x, 0.6, bl.z);
     dungeonGroup.add(ped);
@@ -687,12 +708,13 @@ export function createDungeonEnvironment(scene) {
     bulb.position.set(bl.x, 1.35, bl.z);
     dungeonGroup.add(bulb);
 
-    const bLight = new THREE.PointLight(0xff1744, 1.5, 4);
-    bLight.position.set(bl.x, 1.4, bl.z);
-    dungeonGroup.add(bLight);
-
     bl.bulbMat = bulbMat;
-    bl.light = bLight;
+    bl.light = {
+      color: {
+        setHex: (hex) => bulbMat.color.setHex(hex),
+      },
+      intensity: 1,
+    };
 
     interactiveObjects.push({
       id: `binary_lever_${bl.id}`,
@@ -729,7 +751,7 @@ export function createDungeonEnvironment(scene) {
   colorCrystals.forEach((cc) => {
     const cPillar = new THREE.Mesh(
       new THREE.CylinderGeometry(0.4, 0.5, 1.6, 8),
-      new THREE.MeshStandardMaterial({ map: column2Texture, roughness: 0.7 })
+      new THREE.MeshLambertMaterial({ map: column2Texture })
     );
     cPillar.position.set(cc.x, 0.8, cc.z);
     dungeonGroup.add(cPillar);
@@ -747,12 +769,13 @@ export function createDungeonEnvironment(scene) {
     gemMesh.position.set(cc.x, 1.9, cc.z);
     dungeonGroup.add(gemMesh);
 
-    const cLight = new THREE.PointLight(cc.colorHex, 2.2, 7);
-    cLight.position.set(cc.x, 2.0, cc.z);
-    dungeonGroup.add(cLight);
-
     cc.gemMesh = gemMesh;
-    cc.light = cLight;
+    cc.light = {
+      color: {
+        setHex: (hex) => gemMat.color.setHex(hex),
+      },
+      intensity: 1,
+    };
 
     interactiveObjects.push({
       id: `crystal_${cc.id}`,
@@ -796,7 +819,7 @@ export function createDungeonEnvironment(scene) {
 
     const baseMesh = new THREE.Mesh(
       new THREE.BoxGeometry(1.3, 0.7, 2.4),
-      new THREE.MeshStandardMaterial({ color: 0x3d3028, roughness: 0.85 })
+      new THREE.MeshLambertMaterial({ map: column2Texture })
     );
     baseMesh.position.set(sd.x, 0.35, sd.z);
     dungeonGroup.add(baseMesh);
@@ -861,20 +884,22 @@ export function createDungeonEnvironment(scene) {
   });
 
   // ========================================================
-  // PUZZLE 3: CHEST (BAÚ 3D)
+  // PUZZLE 3: CHEST (BAÚ 3D NO GRANDE ALTAR - FORA DA SAÍDA!)
   // ========================================================
   const { bodyTex, frontTex } = createChestTextures();
 
   const chestGroup = new THREE.Group();
-  chestGroup.position.set(43.5, 0.0, 0.0);
+  // Posicionado na alcova norte do Grande Altar de Cthulhu (fora da saída!)
+  chestGroup.position.set(27.0, 0.0, 8.0);
+  chestGroup.rotation.y = Math.PI;
 
   const chestBodyMat = [
-    new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 }),
-    new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 }),
-    new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 }),
-    new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 }),
-    new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.5 }),
-    new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 }),
+    new THREE.MeshLambertMaterial({ map: bodyTex }),
+    new THREE.MeshLambertMaterial({ map: bodyTex }),
+    new THREE.MeshLambertMaterial({ map: bodyTex }),
+    new THREE.MeshLambertMaterial({ map: bodyTex }),
+    new THREE.MeshLambertMaterial({ map: frontTex }),
+    new THREE.MeshLambertMaterial({ map: bodyTex }),
   ];
 
   const chestBase = new THREE.Mesh(
@@ -882,48 +907,42 @@ export function createDungeonEnvironment(scene) {
     chestBodyMat
   );
   chestBase.position.set(0, 0.4, 0);
-  chestBase.castShadow = true;
   chestGroup.add(chestBase);
 
   const lidGeo = new THREE.CylinderGeometry(0.55, 0.55, 1.6, 12, 1, false, 0, Math.PI);
-  const lidMat = new THREE.MeshStandardMaterial({ map: bodyTex, roughness: 0.6 });
+  const lidMat = new THREE.MeshLambertMaterial({ map: bodyTex });
   const lidMesh = new THREE.Mesh(lidGeo, lidMat);
   lidMesh.rotation.z = Math.PI / 2;
   lidMesh.position.set(0, 0.8, 0);
-  lidMesh.castShadow = true;
   chestGroup.add(lidMesh);
 
   const latchMesh = new THREE.Mesh(
     new THREE.BoxGeometry(0.3, 0.35, 0.1),
-    new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 })
+    new THREE.MeshLambertMaterial({ color: 0xffd700 })
   );
   latchMesh.position.set(0, 0.55, 0.58);
   chestGroup.add(latchMesh);
 
-  const chestLight = new THREE.PointLight(0xffb300, 2.2, 5.5);
-  chestLight.position.set(0, 0.9, 0.6);
-  chestGroup.add(chestLight);
-
   dungeonGroup.add(chestGroup);
 
   obstacles.push({
-    minX: 42.7,
-    maxX: 44.3,
-    minZ: -0.65,
-    maxZ: 0.65,
+    minX: 26.1,
+    maxX: 27.9,
+    minZ: 7.35,
+    maxZ: 8.65,
   });
 
   interactiveObjects.push({
     id: 'numeric_safe',
     type: 'numeric_safe',
-    x: 43.5,
-    z: 0,
+    x: 27.0,
+    z: 8.0,
     radius: 2.2,
     prompt: '[E] Abrir Baú Trancado por Segredo Numérico',
     unlocked: false,
   });
 
-  // 3 POETIC MONUMENT CLUES
+  // 3 POETIC MONUMENT CLUES (COM BASES DE COLUNA DE PEDRA)
   const monumentClues = [
     {
       x: -30.0,
@@ -948,7 +967,7 @@ export function createDungeonEnvironment(scene) {
   monumentClues.forEach((mc, idx) => {
     const mBase = new THREE.Mesh(
       new THREE.BoxGeometry(1.6, 0.4, 1.2),
-      new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.8 })
+      new THREE.MeshLambertMaterial({ map: column1Texture })
     );
     mBase.position.set(mc.x, 0.2, mc.z);
     dungeonGroup.add(mBase);
@@ -980,11 +999,11 @@ export function createDungeonEnvironment(scene) {
   });
 
   // ========================================================
-  // 5. GRAND ALTAR & PEDESTALS (ALL WITH SOLID HITBOXES!)
+  // 5. GRAND ALTAR & PEDESTALS (COM BASES DE PEDRA TEXTURIZADAS)
   // ========================================================
   const mainAltarBase = new THREE.Mesh(
     new THREE.BoxGeometry(3.6, 0.8, 1.6),
-    new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.8 })
+    new THREE.MeshLambertMaterial({ map: column2Texture })
   );
   mainAltarBase.position.set(27.0, 0.4, 0);
   dungeonGroup.add(mainAltarBase);
@@ -1017,7 +1036,7 @@ export function createDungeonEnvironment(scene) {
   pedestals.forEach((ped) => {
     const pedBase = new THREE.Mesh(
       new THREE.BoxGeometry(1.4, 0.9, 1.2),
-      new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.75 })
+      new THREE.MeshLambertMaterial({ map: column3Texture })
     );
     pedBase.position.set(ped.x, 0.45, ped.z);
     dungeonGroup.add(pedBase);
@@ -1041,10 +1060,7 @@ export function createDungeonEnvironment(scene) {
     pMesh.position.set(ped.x, 1.6, ped.z);
     dungeonGroup.add(pMesh);
 
-    const pLight = new THREE.PointLight(0x00ffff, 0, 6);
-    pLight.position.set(ped.x, 1.8, ped.z);
-    dungeonGroup.add(pLight);
-    ped.light = pLight;
+    ped.light = { intensity: 0 };
 
     interactiveObjects.push({
       id: `pedestal_${ped.id}`,
@@ -1057,22 +1073,22 @@ export function createDungeonEnvironment(scene) {
     });
   });
 
-  // Escape Gate
+  // Escape Gate (Impede 100% o acesso à escadaria de fuga sem resolver os enigmas)
   const gateMat = new THREE.MeshBasicMaterial({
     map: gateTexture,
     transparent: true,
     side: THREE.DoubleSide,
   });
-  const gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 3.6), gateMat);
-  gateMesh.position.set(36.0, 1.8, 0);
+  const gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.8), gateMat);
+  gateMesh.position.set(36.0, 1.9, 0);
   gateMesh.rotation.y = Math.PI / 2;
   dungeonGroup.add(gateMesh);
 
   const gateObstacle = {
-    minX: 35.5,
-    maxX: 36.5,
-    minZ: -2.8,
-    maxZ: 2.8,
+    minX: 35.4,
+    maxX: 36.6,
+    minZ: -1.6,
+    maxZ: 1.6,
   };
   obstacles.push(gateObstacle);
 
@@ -1081,7 +1097,7 @@ export function createDungeonEnvironment(scene) {
     type: 'gate',
     x: 36.0,
     z: 0,
-    radius: 2.4,
+    radius: 2.6,
     prompt: '[E] Abrir Grande Portão de Ferro',
     isOpen: false,
     mesh: gateMesh,
@@ -1091,25 +1107,20 @@ export function createDungeonEnvironment(scene) {
   // Escape Stairs
   const stairsMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(4.0, 5.6),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshLambertMaterial({
       map: stairsUpTex,
       transparent: true,
       side: THREE.DoubleSide,
-      roughness: 0.6,
     })
   );
   stairsMesh.rotation.x = -Math.PI / 2;
   stairsMesh.position.set(46.0, 0.05, 0);
   dungeonGroup.add(stairsMesh);
 
-  const exitLight = new THREE.PointLight(0xaaddff, 4.0, 16);
-  exitLight.position.set(46.5, 3.5, 0);
-  dungeonGroup.add(exitLight);
-
   // Spawn Straw Bed in Cell
   const spawnStairsMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(2.8, 2.8),
-    new THREE.MeshStandardMaterial({ map: stairsDownTex, transparent: true })
+    new THREE.MeshLambertMaterial({ map: stairsDownTex, transparent: true })
   );
   spawnStairsMesh.rotation.x = -Math.PI / 2;
   spawnStairsMesh.position.set(-28.0, 0.02, 0);
