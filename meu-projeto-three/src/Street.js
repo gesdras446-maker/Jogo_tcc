@@ -551,6 +551,38 @@ export function createStreetEnvironment(scene) {
     streetGroup.add(lampGroup);
   });
 
+  // Sign at the beginning of the road (Voltar para a cidade)
+  const exitSignCanvas = document.createElement('canvas');
+  exitSignCanvas.width = 256;
+  exitSignCanvas.height = 64;
+  const esCtx = exitSignCanvas.getContext('2d');
+  esCtx.fillStyle = '#0e1726';
+  esCtx.fillRect(0, 0, 256, 64);
+  esCtx.strokeStyle = '#4fc3f7';
+  esCtx.lineWidth = 4;
+  esCtx.strokeRect(4, 4, 248, 56);
+  esCtx.fillStyle = '#4fc3f7';
+  esCtx.font = 'bold 18px monospace';
+  esCtx.textAlign = 'center';
+  esCtx.textBaseline = 'middle';
+  esCtx.fillText('⬅️ CIDADE / VOLTAR', 128, 32);
+
+  const exitSignTex = new THREE.CanvasTexture(exitSignCanvas);
+  exitSignTex.colorSpace = THREE.SRGBColorSpace;
+  const exitSignMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 0.6),
+    new THREE.MeshBasicMaterial({ map: exitSignTex, side: THREE.DoubleSide })
+  );
+  exitSignMesh.position.set(-42.6, 1.7, 3.8);
+  streetGroup.add(exitSignMesh);
+
+  const exitSignPost = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 1.7),
+    new THREE.MeshStandardMaterial({ color: 0x37474f, metalness: 0.6 })
+  );
+  exitSignPost.position.set(-42.6, 0.85, 3.8);
+  streetGroup.add(exitSignPost);
+
   scene.add(streetGroup);
 
   // ========================================================
@@ -580,7 +612,7 @@ export function createStreetEnvironment(scene) {
   return {
     group: streetGroup,
     bounds: {
-      minX: -44.0,
+      minX: -45.0,
       maxX: 44.0,
       minZ: -3.8, // Walking area in the street road & sidewalks
       maxZ: 4.5,
@@ -588,5 +620,6 @@ export function createStreetEnvironment(scene) {
     hidingSpots,
     startPlayerX: -41.0,
     triggerKidnapX: 39.5,
+    triggerSecretEndingX: -43.0,
   };
 }

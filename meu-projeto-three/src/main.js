@@ -5,12 +5,16 @@ import { Enemy } from './Enemy.js';
 import { Npc } from './Npc.js';
 import { Player } from './Player.js';
 import { createStreetEnvironment } from './Street.js';
+import { createAct3Environment } from './Act3.js';
 import './style.css';
 
 const app = document.querySelector('#app');
 app.innerHTML = `
-  <!-- Top Right Menu Trigger -->
-  <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
+  <!-- Top Right Actions Bar -->
+  <div class="top-actions-bar">
+    <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/4</span>)</button>
+    <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
+  </div>
 
   <!-- Dungeon HUD (Health, Stealth Meter & Seals Inventory) -->
   <div class="dungeon-hud hidden" id="dungeonHud">
@@ -158,6 +162,95 @@ app.innerHTML = `
     </div>
   </div>
 
+  <!-- ATO 3 PUZZLE 1: Quebra-Cabeça da Relíquia dos Antigos (Estilo Ruínas de Alph) -->
+  <div class="relic-puzzle-modal-overlay hidden" id="relicPuzzleModal">
+    <div class="relic-puzzle-card">
+      <div class="relic-header">
+        <div class="relic-title">🏛️ QUEBRA-CABEÇA DA RELÍQUIA DOS ANTIGOS</div>
+        <div class="relic-subtitle">Reorganize as 16 peças de pedra para reconstituir o fóssil sagrado de Cthulhu</div>
+      </div>
+
+      <div class="relic-game-wrapper">
+        <!-- Corner target preview (Idêntico ao Kabuto nas Ruínas de Alph da imagem de referência!) -->
+        <div class="relic-preview-corner">
+          <span>ALVO 🎯</span>
+          <canvas class="relic-preview-canvas" id="relicPreviewCanvas" width="72" height="72"></canvas>
+        </div>
+
+        <!-- 4x4 Grid Board -->
+        <div class="relic-grid-board" id="relicGridBoard">
+          <!-- 16 slots gerados dinamicamente com borda vermelha de seleção -->
+        </div>
+      </div>
+
+      <div style="color: #ffd54f; font-size: 13.5px; font-weight: bold;" id="relicStatusText">
+        Clique em uma peça selecionada (borda vermelha) e depois em outra para trocá-las de lugar!
+      </div>
+
+      <div class="relic-actions">
+        <button class="puzzle-btn secondary" id="btnScrambleRelic">🔄 Embaralhar</button>
+        <button class="puzzle-btn primary" id="btnSolveRelic">⚡ Encaixar Selo</button>
+        <button class="puzzle-btn secondary" id="btnCloseRelicModal">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATO 3 PUZZLE 2: Terminal de Tiro ao Alvo em Sequência -->
+  <div class="target-modal-overlay hidden" id="targetShootingModal">
+    <div class="target-modal-card">
+      <div class="target-header">
+        <div class="target-title">🏹 BALISTA RÚNICA: TIRO AO ALVO EM SEQUÊNCIA</div>
+        <div class="target-clue-box">
+          📜 <strong>Profecia dos 4 Pilares:</strong><br>
+          <em>"Primeiro arde o Fogo 🔥, depois corre o Sangue 🩸, então ribomba o Raio ⚡ e por fim reina o Vazio 👁️."</em>
+        </div>
+      </div>
+
+      <div class="target-progress-bar-row">
+        <span>Sequência de Acertos:</span>
+        <div class="target-dots" id="targetDots">
+          <div class="target-dot" id="tdot0"></div>
+          <div class="target-dot" id="tdot1"></div>
+          <div class="target-dot" id="tdot2"></div>
+          <div class="target-dot" id="tdot3"></div>
+        </div>
+        <span id="targetProgressText">(0 / 4)</span>
+      </div>
+
+      <div class="target-chasm-arena">
+        <div class="target-runes-grid">
+          <button class="target-btn" id="btnTarget1" data-target="1">
+            <span class="target-icon">🔥</span>
+            <span class="target-name" style="color: #ff5722;">FOGO</span>
+          </button>
+          <button class="target-btn" id="btnTarget2" data-target="2">
+            <span class="target-icon">🩸</span>
+            <span class="target-name" style="color: #ff1744;">SANGUE</span>
+          </button>
+          <button class="target-btn" id="btnTarget3" data-target="3">
+            <span class="target-icon">⚡</span>
+            <span class="target-name" style="color: #00e5ff;">RAIO</span>
+          </button>
+          <button class="target-btn" id="btnTarget4" data-target="4">
+            <span class="target-icon">👁️</span>
+            <span class="target-name" style="color: #d500f9;">VAZIO</span>
+          </button>
+        </div>
+
+        <div class="target-chasm-lava"></div>
+      </div>
+
+      <div style="color: #ffe0b2; font-size: 13.5px; font-weight: bold; min-height: 20px;" id="targetFeedbackText">
+        Mire e clique no alvo elemental correto de acordo com a profecia!
+      </div>
+
+      <div class="target-actions">
+        <button class="puzzle-btn secondary" id="btnResetTargets">🔄 Reiniciar Alvos</button>
+        <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Controls & How To Play Overlay -->
   <div class="controls-overlay hidden" id="controlsOverlay">
     <div class="controls-card">
@@ -190,6 +283,16 @@ app.innerHTML = `
           <div class="key-info">
             <span class="key-title">Passos Silenciosos (Furtividade)</span>
             <span class="key-desc">Segure SHIFT para andar em silêncio! Os monstros são cegos e só te ouvem caso faça barulho!</span>
+          </div>
+        </div>
+
+        <div class="control-key-card">
+          <div class="keys-display">
+            <span class="key-cap single">CTRL</span>
+          </div>
+          <div class="key-info">
+            <span class="key-title">Correr (Disparada Rápida)</span>
+            <span class="key-desc">Segure CTRL para correr velozmente! Cuidado: o som alto dos passos alertará os monstros!</span>
           </div>
         </div>
 
@@ -233,7 +336,63 @@ app.innerHTML = `
     </div>
     <div class="victory-buttons">
       <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
+      <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
       <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
+    </div>
+  </div>
+
+  <!-- SECRET ENDING OVERLAY (#3 - EU SINTO QUE TEM ALGUMA COISA DE ERRADO COM AQUELE LADO) -->
+  <div class="secret-ending-overlay hidden" id="secretEndingOverlay">
+    <div class="secret-ending-card">
+      <div class="secret-ending-badge">🏆 CONQUISTA DE FINAL DESBLOQUEADA!</div>
+      <h2 class="secret-ending-title">
+        FINAL #3
+        <span>"Eu sinto que tem alguma coisa de errado com aquele lado"</span>
+      </h2>
+      
+      <div class="secret-ending-image-wrapper">
+        <img class="secret-ending-image" src="/ending_pixel_art.jpg" alt="Final #3: Eu sinto que tem alguma coisa de errado com aquele lado" />
+      </div>
+
+      <div class="secret-ending-quote">
+        "Um arrepio gélido percorreu minha espinha ao encarar aquela escuridão... Decidi dar meia-volta. Há caminhos que nunca devem ser trilhados."
+      </div>
+
+      <p class="secret-ending-text">
+        Seus instintos salvaram a sua vida! Ao invés de avançar para a armadilha do cultista nas sombras do galpão, você deu meia-volta na rua e retornou em segurança para a grande avenida iluminada. Você nunca saberá que rituais sombrios eram preparados para você... mas esta noite, você sobreviveu ileso.
+      </p>
+
+      <div class="secret-ending-actions">
+        <button class="secret-ending-btn primary" id="btnSecretPlayAgain">🔄 Jogar Novamente</button>
+        <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
+        <button class="secret-ending-btn secondary" id="btnSecretMainMenu">🏠 Menu Principal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENDINGS & ACHIEVEMENTS GALLERY MODAL (COLEÇÃO N/4) -->
+  <div class="endings-modal-overlay hidden" id="endingsModal">
+    <div class="endings-modal-card">
+      <div class="endings-modal-header">
+        <div class="endings-modal-title">🏆 GALERIA DE FINAIS & CONQUISTAS</div>
+        <div class="endings-progress-wrapper">
+          <div class="endings-progress-text">
+            <span>Progresso Total:</span>
+            <span id="endingsProgressText">0 de 4 Descobertos (0%)</span>
+          </div>
+          <div class="endings-progress-bg">
+            <div class="endings-progress-fill" id="endingsProgressFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endings-grid" id="endingsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="endings-modal-footer">
+        <button class="puzzle-btn secondary" id="btnCloseEndingsModal">Fechar</button>
+      </div>
     </div>
   </div>
 
@@ -246,6 +405,7 @@ app.innerHTML = `
       <div class="menu-buttons">
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
+        <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/4</span>)</button>
         <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
         <button class="menu-btn" id="btnSaveGame" style="display: none;">💾 Salvar Jogo</button>
@@ -481,6 +641,126 @@ const btnWakeUpCellEl = document.querySelector('#btnWakeUpCell');
 const victoryOverlayEl = document.querySelector('#victoryOverlay');
 const btnPlayAgainEl = document.querySelector('#btnPlayAgain');
 const btnVictoryMenuEl = document.querySelector('#btnVictoryMenu');
+const btnVictoryViewEndingsEl = document.querySelector('#btnVictoryViewEndings');
+
+// Endings & Secret Ending DOM
+const topEndingsBtnEl = document.querySelector('#topEndingsBtn');
+const secretEndingOverlayEl = document.querySelector('#secretEndingOverlay');
+const btnSecretPlayAgainEl = document.querySelector('#btnSecretPlayAgain');
+const btnSecretViewEndingsEl = document.querySelector('#btnSecretViewEndings');
+const btnSecretMainMenuEl = document.querySelector('#btnSecretMainMenu');
+const btnOpenEndingsMenuEl = document.querySelector('#btnOpenEndingsMenu');
+const endingsModalEl = document.querySelector('#endingsModal');
+const btnCloseEndingsModalEl = document.querySelector('#btnCloseEndingsModal');
+
+// ========================================================
+// 4 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (N/4)
+// ========================================================
+const TOTAL_ENDINGS = 4;
+const ENDINGS_DATA = [
+  {
+    id: 1,
+    number: '#1',
+    title: 'Fuga do Calabouço',
+    desc: 'Você desvendou os 3 enigmas arcanos, abriu o Grande Portão de Ferro e escapou com vida do covil do cultista.',
+    icon: '🚪',
+    image: null,
+  },
+  {
+    id: 2,
+    number: '#2',
+    title: 'Destino Oculto #2',
+    desc: 'Um desfecho sombrio e misterioso ainda não descoberto... Explore outros caminhos.',
+    icon: '🔒',
+    image: null,
+  },
+  {
+    id: 3,
+    number: '#3',
+    title: 'Eu sinto que tem alguma coisa de errado com aquele lado',
+    desc: 'Seus instintos salvaram a sua vida. Ao pressentir a emboscada na rua escura, você deu meia-volta e retornou em segurança.',
+    icon: '🏃‍♂️',
+    image: '/ending_pixel_art.jpg',
+  },
+  {
+    id: 4,
+    number: '#4',
+    title: 'Destino Oculto #4',
+    desc: 'Um desfecho sombrio e misterioso ainda não descoberto... Explore outros caminhos.',
+    icon: '🔒',
+    image: null,
+  },
+];
+
+function getUnlockedEndings() {
+  try {
+    const raw = localStorage.getItem('dungeon_unlocked_endings');
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function unlockEnding(id) {
+  const current = getUnlockedEndings();
+  if (!current.includes(id)) {
+    current.push(id);
+    localStorage.setItem('dungeon_unlocked_endings', JSON.stringify(current));
+    playSound('victory');
+  }
+  updateEndingsUI();
+}
+
+function updateEndingsUI() {
+  const unlocked = getUnlockedEndings();
+  const count = unlocked.length;
+  const countStr = `${count}/${TOTAL_ENDINGS}`;
+
+  document.querySelectorAll('.endings-counter-val').forEach((el) => {
+    el.textContent = countStr;
+  });
+
+  const progressPct = Math.round((count / TOTAL_ENDINGS) * 100);
+  const endingsProgressTextEl = document.querySelector('#endingsProgressText');
+  const endingsProgressFillEl = document.querySelector('#endingsProgressFill');
+  if (endingsProgressTextEl) {
+    endingsProgressTextEl.textContent = `${count} de ${TOTAL_ENDINGS} Descobertos (${progressPct}%)`;
+  }
+  if (endingsProgressFillEl) {
+    endingsProgressFillEl.style.width = `${progressPct}%`;
+  }
+
+  const grid = document.querySelector('#endingsGrid');
+  if (grid) {
+    grid.innerHTML = ENDINGS_DATA.map((ending) => {
+      const isUnlocked = unlocked.includes(ending.id);
+      return `
+        <div class="ending-item-card ${isUnlocked ? 'unlocked' : 'locked'}">
+          <div class="ending-card-icon">${isUnlocked ? ending.icon : '🔒'}</div>
+          <div class="ending-card-content">
+            <div class="ending-card-tag">${ending.number} • ${isUnlocked ? '✓ DESBLOQUEADO' : 'BLOQUEADO'}</div>
+            <div class="ending-card-name">${isUnlocked ? ending.title : '??? (Não Descoberto)'}</div>
+            <div class="ending-card-desc">${isUnlocked ? ending.desc : 'Explore os cenários e tome diferentes decisões para descobrir este final.'}</div>
+            ${isUnlocked && ending.image ? `<img class="ending-thumb-preview" src="${ending.image}" alt="${ending.title}" />` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function openEndingsModal() {
+  updateEndingsUI();
+  endingsModalEl.classList.remove('hidden');
+}
+
+function closeEndingsModal() {
+  endingsModalEl.classList.add('hidden');
+}
+
+updateEndingsUI();
 
 const dialogueContainerEl = document.querySelector('#dialogueContainer');
 const dialogueSpeakerEl = document.querySelector('#dialogueSpeaker');
@@ -511,6 +791,326 @@ const btnCloseColorModalEl = document.querySelector('#btnCloseColorModal');
 const safeModalEl = document.querySelector('#safeModal');
 const btnUnlockSafeEl = document.querySelector('#btnUnlockSafe');
 const btnCloseSafeEl = document.querySelector('#btnCloseSafe');
+
+// ========================================================
+// ATO 3 DOM: RELIC PUZZLE & TARGET SHOOTING
+// ========================================================
+const relicModalEl = document.querySelector('#relicPuzzleModal');
+const relicGridBoardEl = document.querySelector('#relicGridBoard');
+const relicPreviewCanvasEl = document.querySelector('#relicPreviewCanvas');
+const relicStatusTextEl = document.querySelector('#relicStatusText');
+const btnScrambleRelicEl = document.querySelector('#btnScrambleRelic');
+const btnSolveRelicEl = document.querySelector('#btnSolveRelic');
+const btnCloseRelicModalEl = document.querySelector('#btnCloseRelicModal');
+
+const targetModalEl = document.querySelector('#targetShootingModal');
+const targetFeedbackTextEl = document.querySelector('#targetFeedbackText');
+const targetProgressTextEl = document.querySelector('#targetProgressText');
+const btnResetTargetsEl = document.querySelector('#btnResetTargets');
+const btnCloseTargetModalEl = document.querySelector('#btnCloseTargetModal');
+
+// Master canvas for the authentic Cthulhu Fossil (Ruins of Alph style)
+const masterRelicCanvas = document.createElement('canvas');
+masterRelicCanvas.width = 256;
+masterRelicCanvas.height = 256;
+
+function drawMasterRelic() {
+  const ctx = masterRelicCanvas.getContext('2d');
+  // Ancient sandstone background
+  ctx.fillStyle = '#bcaaa4';
+  ctx.fillRect(0, 0, 256, 256);
+
+  // Border and tablet framing
+  ctx.strokeStyle = '#4e342e';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(3, 3, 250, 250);
+
+  // Sandstone speckles
+  for (let i = 0; i < 350; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#8d6e63' : '#d7ccc8';
+    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+  }
+
+  // Draw ancient Cthulhu Fossil Silhouette (matching user's reference image structure)
+  ctx.fillStyle = '#3e2723';
+  ctx.beginPath();
+  ctx.ellipse(128, 105, 68, 55, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Carapace outer ridge
+  ctx.fillStyle = '#4e342e';
+  ctx.beginPath();
+  ctx.ellipse(128, 92, 54, 38, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glowing eyes
+  ctx.fillStyle = '#ffd54f';
+  ctx.beginPath();
+  ctx.ellipse(108, 108, 10, 6, 0.2, 0, Math.PI * 2);
+  ctx.ellipse(148, 108, 10, 6, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#d84315';
+  ctx.beginPath();
+  ctx.arc(108, 108, 3, 0, Math.PI * 2);
+  ctx.arc(148, 108, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tentacles reaching downward
+  ctx.strokeStyle = '#3e2723';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(90, 145);
+  ctx.quadraticCurveTo(68, 185, 78, 215);
+  ctx.moveTo(112, 150);
+  ctx.quadraticCurveTo(105, 192, 114, 225);
+  ctx.moveTo(144, 150);
+  ctx.quadraticCurveTo(151, 192, 142, 225);
+  ctx.moveTo(166, 145);
+  ctx.quadraticCurveTo(188, 185, 178, 215);
+  ctx.stroke();
+
+  // Arcane carved glyph ridges
+  ctx.strokeStyle = '#271916';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(128, 80, 28, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(128, 65, 18, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+}
+drawMasterRelic();
+
+// Render corner target preview (exactly like the Ruins of Alph reference image!)
+if (relicPreviewCanvasEl) {
+  const pctx = relicPreviewCanvasEl.getContext('2d');
+  pctx.drawImage(masterRelicCanvas, 0, 0, 72, 72);
+}
+
+// 4x4 Grid = 16 tiles
+let relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+let selectedTileIndex = null;
+
+function scrambleRelicTiles() {
+  for (let i = relicTiles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [relicTiles[i], relicTiles[j]] = [relicTiles[j], relicTiles[i]];
+  }
+  selectedTileIndex = null;
+  if (relicStatusTextEl) {
+    relicStatusTextEl.textContent = 'Clique em uma peça e depois em outra para trocá-las!';
+    relicStatusTextEl.style.color = '#ffd54f';
+  }
+  renderRelicBoard();
+}
+
+function renderRelicBoard() {
+  if (!relicGridBoardEl) return;
+  relicGridBoardEl.innerHTML = '';
+
+  relicTiles.forEach((tileValue, gridIndex) => {
+    const slotEl = document.createElement('div');
+    slotEl.className = 'relic-tile-slot';
+    if (selectedTileIndex === gridIndex) {
+      slotEl.classList.add('selected'); // Red outline matching user reference image!
+    }
+
+    const tileCanvas = document.createElement('canvas');
+    tileCanvas.className = 'relic-tile-canvas';
+    tileCanvas.width = 64;
+    tileCanvas.height = 64;
+    const tctx = tileCanvas.getContext('2d');
+
+    const srcCol = tileValue % 4;
+    const srcRow = Math.floor(tileValue / 4);
+
+    tctx.drawImage(
+      masterRelicCanvas,
+      srcCol * 64,
+      srcRow * 64,
+      64,
+      64,
+      0,
+      0,
+      64,
+      64
+    );
+
+    tctx.strokeStyle = '#4e342e';
+    tctx.lineWidth = 2;
+    tctx.strokeRect(0, 0, 64, 64);
+
+    slotEl.appendChild(tileCanvas);
+
+    slotEl.addEventListener('click', () => {
+      onRelicTileClick(gridIndex);
+    });
+
+    relicGridBoardEl.appendChild(slotEl);
+  });
+}
+
+function onRelicTileClick(gridIndex) {
+  if (questState.relicPuzzleSolved) return;
+
+  if (selectedTileIndex === null) {
+    selectedTileIndex = gridIndex;
+    playSound('switch');
+    renderRelicBoard();
+  } else if (selectedTileIndex === gridIndex) {
+    selectedTileIndex = null;
+    renderRelicBoard();
+  } else {
+    const prev = selectedTileIndex;
+    [relicTiles[prev], relicTiles[gridIndex]] = [relicTiles[gridIndex], relicTiles[prev]];
+    selectedTileIndex = null;
+    playSound('switch');
+    renderRelicBoard();
+    checkRelicPuzzleWin();
+  }
+}
+
+function checkRelicPuzzleWin() {
+  const isComplete = relicTiles.every((val, idx) => val === idx);
+  if (isComplete) {
+    questState.relicPuzzleSolved = true;
+    playSound('victory');
+    if (relicStatusTextEl) {
+      relicStatusTextEl.textContent = '✨ RELÍQUIA RECONSTITUÍDA COM SUCESSO! A BALISTA FOI ENERGIZADA!';
+      relicStatusTextEl.style.color = '#00e676';
+    }
+    updateHUD();
+
+    setTimeout(() => {
+      relicModalEl.classList.add('hidden');
+      typeWriterDialogue(
+        'ALTAR DA RELÍQUIA',
+        '🏛️ Com a relíquia encaixada perfeitamente, a Balista Rúnica estremece de poder! Vá até ela para disparar contra os 4 Alvos sobre o abismo de lava!'
+      );
+    }, 1200);
+  }
+}
+
+btnScrambleRelicEl.addEventListener('click', scrambleRelicTiles);
+
+btnSolveRelicEl.addEventListener('click', () => {
+  relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  selectedTileIndex = null;
+  renderRelicBoard();
+  checkRelicPuzzleWin();
+});
+
+btnCloseRelicModalEl.addEventListener('click', () => {
+  relicModalEl.classList.add('hidden');
+});
+
+// Target Shooting Puzzle Logic (4 Runes Sequence)
+const TARGET_SEQUENCE = [1, 2, 3, 4]; // 1: Fogo, 2: Sangue, 3: Raio, 4: Vazio
+let targetCurrentStep = 0;
+
+function updateTargetShootingUI() {
+  [0, 1, 2, 3].forEach((i) => {
+    const dot = document.querySelector(`#tdot${i}`);
+    if (dot) {
+      if (i < targetCurrentStep) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    }
+  });
+
+  [1, 2, 3, 4].forEach((id) => {
+    const btn = document.querySelector(`#btnTarget${id}`);
+    if (btn) {
+      if (TARGET_SEQUENCE.slice(0, targetCurrentStep).includes(id)) {
+        btn.classList.add('hit');
+      } else {
+        btn.classList.remove('hit');
+      }
+    }
+  });
+
+  if (targetProgressTextEl) {
+    targetProgressTextEl.textContent = `(${targetCurrentStep} / 4)`;
+  }
+}
+
+function resetTargetPuzzle() {
+  targetCurrentStep = 0;
+  updateTargetShootingUI();
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = 'Mire e clique no alvo correto de acordo com a profecia!';
+    targetFeedbackTextEl.style.color = '#ffe0b2';
+  }
+}
+
+function onTargetClick(targetId) {
+  if (questState.targetPuzzleSolved) return;
+
+  const expected = TARGET_SEQUENCE[targetCurrentStep];
+  if (targetId === expected) {
+    targetCurrentStep++;
+    playSound('pickup');
+    updateTargetShootingUI();
+
+    if (targetFeedbackTextEl) {
+      targetFeedbackTextEl.textContent = `🎯 ACERTO! O Pilar ${targetId} acendeu em chamas sagradas!`;
+      targetFeedbackTextEl.style.color = '#00e676';
+    }
+
+    if (targetCurrentStep === 4) {
+      questState.targetPuzzleSolved = true;
+      playSound('gate_unlock');
+      playSound('victory');
+
+      if (targetFeedbackTextEl) {
+        targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 ALVOS ATINGIDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
+      }
+
+      if (act3Env && act3Env.bridge) {
+        act3Env.bridge.raise();
+      }
+      updateHUD();
+
+      setTimeout(() => {
+        targetModalEl.classList.add('hidden');
+        typeWriterDialogue(
+          'ESTRONDO SÍSMICO!',
+          '🚪 Um estrondo colossal estremece a caverna! A Grande Ponte de Basalto ergue-se das profundezas da lava fervente! Atravesse-a para alcançar o Portal de Fuga!'
+        );
+      }, 1400);
+    }
+  } else {
+    playSound('hit');
+    const wrongBtn = document.querySelector(`#btnTarget${targetId}`);
+    if (wrongBtn) {
+      wrongBtn.classList.add('wrong');
+      setTimeout(() => wrongBtn.classList.remove('wrong'), 450);
+    }
+    targetCurrentStep = 0;
+    updateTargetShootingUI();
+
+    if (targetFeedbackTextEl) {
+      targetFeedbackTextEl.textContent = '❌ ALVO INCORRETO! A profecia exige: 1º Fogo 🔥, 2º Sangue 🩸, 3º Raio ⚡, 4º Vazio 👁️!';
+      targetFeedbackTextEl.style.color = '#ff5252';
+    }
+  }
+}
+
+[1, 2, 3, 4].forEach((id) => {
+  const btn = document.querySelector(`#btnTarget${id}`);
+  if (btn) {
+    btn.addEventListener('click', () => onTargetClick(id));
+  }
+});
+
+btnResetTargetsEl.addEventListener('click', resetTargetPuzzle);
+
+btnCloseTargetModalEl.addEventListener('click', () => {
+  targetModalEl.classList.add('hidden');
+});
 
 function updateSoundUI() {
   volumeSliderEl.value = soundState.masterVolume;
@@ -605,9 +1205,11 @@ const cameraAngle = { x: -Math.atan2(camera.position.z, camera.position.y) };
 // Build Environments
 const streetEnv = createStreetEnvironment(scene);
 const dungeonEnv = createDungeonEnvironment(scene);
+const act3Env = createAct3Environment(scene);
 
 streetEnv.group.visible = true;
 dungeonEnv.group.visible = false;
+act3Env.group.visible = false;
 
 let currentAct = 1;
 
@@ -617,6 +1219,7 @@ const initialSpot = streetEnv.hidingSpots[0];
 const npc = new Npc(scene, initialSpot.x, initialSpot.z);
 
 let dungeonEnemies = [];
+let act3Enemies = [];
 
 function spawnDungeonEnemies() {
   if (dungeonEnemies.length === 0) {
@@ -634,6 +1237,22 @@ function spawnDungeonEnemies() {
   }
 }
 
+function spawnAct3Enemies() {
+  if (act3Enemies.length === 0) {
+    act3Env.enemySpawnPoints.forEach((sp) => {
+      const enemy = new Enemy(scene, {
+        x: sp.x,
+        z: sp.z,
+        name: sp.name,
+        patrolRadius: sp.patrolRadius,
+      });
+      act3Enemies.push(enemy);
+    });
+  } else {
+    act3Enemies.forEach((e) => e.reset());
+  }
+}
+
 // Quest & Inventory State
 const questState = {
   hasBronzeKey: false,
@@ -644,10 +1263,12 @@ const questState = {
   binaryBits: [0, 0, 0, 0],
   colorSequence: [],
   safeDials: [0, 0, 0],
+  relicPuzzleSolved: false,
+  targetPuzzleSolved: false,
 };
 
 function updateHUD() {
-  if (currentAct === 2) {
+  if (currentAct === 2 || currentAct === 3) {
     dungeonHudEl.classList.remove('hidden');
     healthValueEl.textContent = `${Math.round(player.hp)} / ${player.maxHp}`;
     const pct = Math.max(0, (player.hp / player.maxHp) * 100);
@@ -664,28 +1285,57 @@ function updateHUD() {
       stealthStatusEl.textContent = '🔇 PARADO (SILENCIOSO)';
     }
 
-    if (questState.hasBronzeKey) {
-      slotBronzeKeyEl.classList.add('acquired');
-      slotBronzeKeyEl.textContent = '🗝️ Chave [✓]';
-    } else {
-      slotBronzeKeyEl.classList.remove('acquired');
-      slotBronzeKeyEl.textContent = '🗝️ Chave [ ]';
-    }
+    const titleEl = document.querySelector('.hud-inventory-title');
+    if (currentAct === 3) {
+      if (titleEl) titleEl.textContent = '🌋 OBJETIVOS DO ABISMO DE LAVA';
+      if (questState.relicPuzzleSolved) {
+        slotBronzeKeyEl.classList.add('acquired');
+        slotBronzeKeyEl.textContent = '🏛️ Relíquia [✓]';
+      } else {
+        slotBronzeKeyEl.classList.remove('acquired');
+        slotBronzeKeyEl.textContent = '🏛️ Relíquia [ ]';
+      }
 
-    if (questState.hasCthulhuRune) {
-      slotCthulhuRuneEl.classList.add('acquired');
-      slotCthulhuRuneEl.textContent = '🔮 Runa [✓]';
-    } else {
-      slotCthulhuRuneEl.classList.remove('acquired');
-      slotCthulhuRuneEl.textContent = '🔮 Runa [ ]';
-    }
+      if (questState.targetPuzzleSolved) {
+        slotCthulhuRuneEl.classList.add('acquired');
+        slotCthulhuRuneEl.textContent = '🎯 4 Alvos [✓]';
+      } else {
+        slotCthulhuRuneEl.classList.remove('acquired');
+        slotCthulhuRuneEl.textContent = '🎯 4 Alvos [ ]';
+      }
 
-    if (questState.hasCultistEmblem) {
-      slotCultistEmblemEl.classList.add('acquired');
-      slotCultistEmblemEl.textContent = '📜 Emblema [✓]';
+      if (act3Env && act3Env.bridge && act3Env.bridge.isRaised) {
+        slotCultistEmblemEl.classList.add('acquired');
+        slotCultistEmblemEl.textContent = '🌉 Ponte [✓]';
+      } else {
+        slotCultistEmblemEl.classList.remove('acquired');
+        slotCultistEmblemEl.textContent = '🌉 Ponte [ ]';
+      }
     } else {
-      slotCultistEmblemEl.classList.remove('acquired');
-      slotCultistEmblemEl.textContent = '📜 Emblema [ ]';
+      if (titleEl) titleEl.textContent = '📜 SELOS PARA ABRIR O PORTÃO';
+      if (questState.hasBronzeKey) {
+        slotBronzeKeyEl.classList.add('acquired');
+        slotBronzeKeyEl.textContent = '🗝️ Chave [✓]';
+      } else {
+        slotBronzeKeyEl.classList.remove('acquired');
+        slotBronzeKeyEl.textContent = '🗝️ Chave [ ]';
+      }
+
+      if (questState.hasCthulhuRune) {
+        slotCthulhuRuneEl.classList.add('acquired');
+        slotCthulhuRuneEl.textContent = '🔮 Runa [✓]';
+      } else {
+        slotCthulhuRuneEl.classList.remove('acquired');
+        slotCthulhuRuneEl.textContent = '🔮 Runa [ ]';
+      }
+
+      if (questState.hasCultistEmblem) {
+        slotCultistEmblemEl.classList.add('acquired');
+        slotCultistEmblemEl.textContent = '📜 Emblema [✓]';
+      } else {
+        slotCultistEmblemEl.classList.remove('acquired');
+        slotCultistEmblemEl.textContent = '📜 Emblema [ ]';
+      }
     }
   } else {
     dungeonHudEl.classList.add('hidden');
@@ -699,6 +1349,7 @@ let isKidnapped = false;
 let isKnockedOut = false;
 let isVictory = false;
 let isWakingUp = false;
+let isSecretEnding = false;
 let lastNarrativeZone = -1;
 let currentPromptObject = null;
 let typewriterTimeout = null;
@@ -738,15 +1389,22 @@ function setAct(act) {
   isGameOver = false;
   isKnockedOut = false;
   isVictory = false;
+  isSecretEnding = false;
   knockoutOverlayEl.classList.add('hidden');
   victoryOverlayEl.classList.add('hidden');
+  secretEndingOverlayEl.classList.add('hidden');
+  endingsModalEl.classList.add('hidden');
   binaryModalEl.classList.add('hidden');
   colorModalEl.classList.add('hidden');
-  safeModalEl.classList.add('hidden');
+  relicModalEl.classList.add('hidden');
+  targetModalEl.classList.add('hidden');
 
   if (act === 1) {
     streetEnv.group.visible = true;
     dungeonEnv.group.visible = false;
+    act3Env.group.visible = false;
+    hemiLight.color.setHex(0xdbe7ff);
+    hemiLight.groundColor.setHex(0x18202d);
     hemiLight.intensity = 0.35;
 
     player.reset(streetEnv.startPlayerX, 0.0);
@@ -771,9 +1429,14 @@ function setAct(act) {
 
     dungeonEnemies.forEach((e) => e.destroy());
     dungeonEnemies = [];
-  } else {
+    act3Enemies.forEach((e) => e.destroy());
+    act3Enemies = [];
+  } else if (act === 2) {
     streetEnv.group.visible = false;
     dungeonEnv.group.visible = true;
+    act3Env.group.visible = false;
+    hemiLight.color.setHex(0xdbe7ff);
+    hemiLight.groundColor.setHex(0x18202d);
     hemiLight.intensity = 0.9;
 
     player.reset(dungeonEnv.spawnPos.x, dungeonEnv.spawnPos.z);
@@ -781,6 +1444,27 @@ function setAct(act) {
 
     camera.position.set(dungeonEnv.spawnPos.x, 15.0, 9.0);
     spawnDungeonEnemies();
+    act3Enemies.forEach((e) => e.destroy());
+    act3Enemies = [];
+  } else if (act === 3) {
+    streetEnv.group.visible = false;
+    dungeonEnv.group.visible = false;
+    act3Env.group.visible = true;
+    hemiLight.color.setHex(0xff7043);
+    hemiLight.groundColor.setHex(0x21100a);
+    hemiLight.intensity = 0.85;
+
+    player.reset(act3Env.spawnPos.x, act3Env.spawnPos.z);
+    camera.position.set(act3Env.spawnPos.x, 15.0, 9.0);
+
+    dungeonEnemies.forEach((e) => e.destroy());
+    dungeonEnemies = [];
+    spawnAct3Enemies();
+
+    typeWriterDialogue(
+      'ATO 3: O ABISMO DE LAVA',
+      '🔥 O calor sufocante e rios de magma cercam este abismo! Decifre a Relíquia dos Antigos e acerte os alvos na ordem correta para erguer a ponte sagrada!'
+    );
   }
   updateHUD();
 }
@@ -880,6 +1564,7 @@ btnWakeUpCellEl.addEventListener('click', () => {
 function triggerVictory() {
   if (isVictory) return;
   isVictory = true;
+  unlockEnding(1);
   playSound('victory');
   victoryOverlayEl.classList.remove('hidden');
 }
@@ -897,6 +1582,56 @@ btnPlayAgainEl.addEventListener('click', () => {
 
 btnVictoryMenuEl.addEventListener('click', () => {
   victoryOverlayEl.classList.add('hidden');
+  isGameStarted = false;
+  resetPuzzles(true);
+  setAct(1);
+  openMenu();
+});
+
+// Secret Ending #3 Trigger & Actions
+function triggerSecretEnding3() {
+  if (isSecretEnding || isGameOver || isKidnapped || isKnockedOut) return;
+  isSecretEnding = true;
+  unlockEnding(3);
+
+  player.moving = false;
+
+  typeWriterDialogue(
+    'JOGADOR (INTUIÇÃO)',
+    'Eu sinto que tem alguma coisa de errado com aquele lado... Melhor dar meia-volta enquanto ainda há tempo!',
+    () => {
+      setTimeout(() => {
+        playSound('victory');
+        dialogueContainerEl.classList.add('hidden');
+        secretEndingOverlayEl.classList.remove('hidden');
+      }, 1500);
+    }
+  );
+}
+
+btnSecretPlayAgainEl.addEventListener('click', () => {
+  secretEndingOverlayEl.classList.add('hidden');
+  isSecretEnding = false;
+  questState.hasBronzeKey = false;
+  questState.hasCthulhuRune = false;
+  questState.hasCultistEmblem = false;
+  questState.gateOpen = false;
+  questState.activePedestals = 0;
+  resetPuzzles(true);
+  setAct(1);
+  isGameStarted = true;
+  closeMenu();
+});
+
+btnSecretViewEndingsEl.addEventListener('click', openEndingsModal);
+btnVictoryViewEndingsEl.addEventListener('click', openEndingsModal);
+topEndingsBtnEl.addEventListener('click', openEndingsModal);
+btnOpenEndingsMenuEl.addEventListener('click', openEndingsModal);
+btnCloseEndingsModalEl.addEventListener('click', closeEndingsModal);
+
+btnSecretMainMenuEl.addEventListener('click', () => {
+  secretEndingOverlayEl.classList.add('hidden');
+  isSecretEnding = false;
   isGameStarted = false;
   resetPuzzles(true);
   setAct(1);
@@ -1082,6 +1817,13 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (e.code === 'Escape') {
+    if (!endingsModalEl.classList.contains('hidden')) {
+      endingsModalEl.classList.add('hidden');
+      return;
+    }
+    if (!secretEndingOverlayEl.classList.contains('hidden')) {
+      return;
+    }
     if (!binaryModalEl.classList.contains('hidden')) {
       binaryModalEl.classList.add('hidden');
       return;
@@ -1092,6 +1834,14 @@ window.addEventListener('keydown', (e) => {
     }
     if (!safeModalEl.classList.contains('hidden')) {
       safeModalEl.classList.add('hidden');
+      return;
+    }
+    if (!relicModalEl.classList.contains('hidden')) {
+      relicModalEl.classList.add('hidden');
+      return;
+    }
+    if (!targetModalEl.classList.contains('hidden')) {
+      targetModalEl.classList.add('hidden');
       return;
     }
 
@@ -1108,10 +1858,14 @@ window.addEventListener('keydown', (e) => {
     !menuOverlayEl.classList.contains('hidden') ||
     !knockoutOverlayEl.classList.contains('hidden') ||
     !victoryOverlayEl.classList.contains('hidden') ||
+    !secretEndingOverlayEl.classList.contains('hidden') ||
+    !endingsModalEl.classList.contains('hidden') ||
     !controlsOverlayEl.classList.contains('hidden') ||
     !binaryModalEl.classList.contains('hidden') ||
     !colorModalEl.classList.contains('hidden') ||
     !safeModalEl.classList.contains('hidden') ||
+    !relicModalEl.classList.contains('hidden') ||
+    !targetModalEl.classList.contains('hidden') ||
     isWakingUp
   ) {
     return;
@@ -1375,6 +2129,59 @@ function handleInteraction() {
     return;
   }
 
+  // Act 3: Check nearby interactive object in the Magma Chasm
+  if (currentAct === 3) {
+    if (!currentPromptObject) {
+      typeWriterDialogue(
+        'JOGADOR',
+        'Preciso reconstituir o Quebra-Cabeça da Relíquia no Altar e acertar a sequência dos 4 Alvos na Balista para erguer a Ponte de Basalto!'
+      );
+      return;
+    }
+
+    const obj = currentPromptObject;
+    if (obj.type === 'relic_puzzle') {
+      renderRelicBoard();
+      relicModalEl.classList.remove('hidden');
+    } else if (obj.type === 'target_shooting') {
+      if (!questState.relicPuzzleSolved) {
+        typeWriterDialogue(
+          'BALISTA INATIVA',
+          '🔒 A Balista Rúnica está sem energia! Monte primeiro o Quebra-Cabeça da Relíquia no Altar para energizar o disparo!'
+        );
+      } else {
+        updateTargetShootingUI();
+        targetModalEl.classList.remove('hidden');
+      }
+    } else if (obj.type === 'lore_clue') {
+      playSound('pickup');
+      typeWriterDialogue(obj.clueSpeaker || 'INSCRIÇÃO', obj.clueText);
+    } else if (obj.type === 'healing_source') {
+      if (!obj.searched) {
+        obj.searched = true;
+        player.hp = Math.min(player.maxHp, player.hp + 40);
+        playSound('pickup');
+        typeWriterDialogue(
+          'FONTE DE SANGUE SAGRADO',
+          '🧪 Você bebeu o sangue vital da fonte mágica (+40 HP)! Suas feridas foram restauradas!'
+        );
+        updateHUD();
+      } else {
+        typeWriterDialogue('FONTE SAGRADA', 'A fonte de sangue já foi consumida.');
+      }
+    } else if (obj.type === 'escape_portal') {
+      if (act3Env.bridge.isRaised) {
+        triggerVictory();
+      } else {
+        typeWriterDialogue(
+          'PORTAL DE FUGA',
+          '🌀 O portal de fuga reluz além da ponte! Você precisa erguer a Ponte de Basalto sobre a lava para alcançá-lo!'
+        );
+      }
+    }
+    return;
+  }
+
   // Act 2: Check nearby interactive object
   if (!currentPromptObject) {
     if (!npc.hasVanished) {
@@ -1548,13 +2355,18 @@ function animate(currentTime) {
     !isKnockedOut &&
     !isVictory &&
     !isWakingUp &&
+    !isSecretEnding &&
     menuOverlayEl.classList.contains('hidden') &&
     knockoutOverlayEl.classList.contains('hidden') &&
     victoryOverlayEl.classList.contains('hidden') &&
+    secretEndingOverlayEl.classList.contains('hidden') &&
+    endingsModalEl.classList.contains('hidden') &&
     controlsOverlayEl.classList.contains('hidden') &&
     binaryModalEl.classList.contains('hidden') &&
     colorModalEl.classList.contains('hidden') &&
     safeModalEl.classList.contains('hidden') &&
+    relicModalEl.classList.contains('hidden') &&
+    targetModalEl.classList.contains('hidden') &&
     isGameStarted
   ) {
     if (currentAct === 1) {
@@ -1609,10 +2421,15 @@ function animate(currentTime) {
         }
       }
 
+      // Check Secret Ending #3 (Dar meia-volta e voltar para a rua/cidade)
+      if (player.group.position.x <= streetEnv.triggerSecretEndingX && !isSecretEnding) {
+        triggerSecretEnding3();
+      }
+
       if (player.group.position.x >= streetEnv.triggerKidnapX) {
         triggerKidnapping();
       }
-    } else {
+    } else if (currentAct === 2) {
       // Act 2: Dungeon
       const playerUpdateRes = player.update(
         keys,
@@ -1729,7 +2546,7 @@ function animate(currentTime) {
         }
       });
 
-      // Check Victory Reach (Impede 100% o acesso à vitória sem ter resolvido todos os puzzles)
+      // Check Act 2 Completion (Transition to Act 3: O Abismo de Lava)
       if (
         player.group.position.x >= 44.0 &&
         Math.abs(player.group.position.z) < 3.0 &&
@@ -1743,12 +2560,18 @@ function animate(currentTime) {
           questState.hasCultistEmblem &&
           questState.gateOpen
         ) {
-          triggerVictory();
+          typeWriterDialogue(
+            'DESCENDO AO ABISMO',
+            '🚪 Você atravessou o Grande Portão e desceu as escadarias arcanas... O ar fica sufocante e rios de lava fervente se abrem à sua frente!',
+            () => {
+              setAct(3);
+            }
+          );
         } else {
           player.group.position.x = 35.0;
           typeWriterDialogue(
             'SAÍDA BLOQUEADA',
-            '🔒 Uma barreira intransponível bloqueia a saída! Você precisa resolver todos os 3 enigmas e abrir o portão de ferro para escapar!'
+            '🔒 Uma barreira intransponível bloqueia a saída! Você precisa resolver todos os 3 enigmas e abrir o portão de ferro para descer ao próximo nível!'
           );
         }
       }
@@ -1778,6 +2601,136 @@ function animate(currentTime) {
             type: 'cultist',
             prompt: '[E] Falar com o Cultista de Cthulhu',
           };
+        }
+      }
+
+      currentPromptObject = closestObj;
+      if (closestObj) {
+        interactionPromptEl.textContent = closestObj.prompt;
+        interactionPromptEl.classList.remove('hidden');
+      } else {
+        interactionPromptEl.classList.add('hidden');
+      }
+
+      updateHUD();
+    } else if (currentAct === 3) {
+      // Act 3: Volcanic Chasm & Magma River
+      act3Env.update(dt, elapsed);
+
+      const playerUpdateRes = player.update(
+        keys,
+        dt,
+        act3Env.bounds,
+        cameraAngle,
+        act3Env.obstacles
+      );
+      player.animate(elapsed);
+
+      const targetCamX = THREE.MathUtils.clamp(
+        player.group.position.x,
+        act3Env.bounds.minX + 6,
+        act3Env.bounds.maxX - 6
+      );
+      const targetCamZ = THREE.MathUtils.clamp(
+        player.group.position.z + 8.5,
+        act3Env.bounds.minZ + 8,
+        act3Env.bounds.maxZ + 8
+      );
+      camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.08);
+      camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCamZ, 0.08);
+
+      // Check Lava Hazards
+      for (const lh of act3Env.lavaHazards) {
+        if (
+          player.group.position.x >= lh.minX &&
+          player.group.position.x <= lh.maxX &&
+          player.group.position.z >= lh.minZ &&
+          player.group.position.z <= lh.maxZ
+        ) {
+          const onBridge = act3Env.bridge.isRaised && Math.abs(player.group.position.z) <= 2.2;
+          if (!onBridge) {
+            player.hp -= lh.damage * dt;
+            player.noiseLevel = 3;
+            playSound('hit');
+            updateHUD();
+            if (player.hp <= 0) {
+              player.hp = 0;
+              triggerKnockout('Você caiu no rio de lava ardente e foi consumido pelas chamas!');
+            }
+          }
+        }
+      }
+
+      // Check Acid Hazards
+      for (const ah of act3Env.acidHazards) {
+        if (
+          player.group.position.x >= ah.minX &&
+          player.group.position.x <= ah.maxX &&
+          player.group.position.z >= ah.minZ &&
+          player.group.position.z <= ah.maxZ
+        ) {
+          player.hp -= ah.damage * dt;
+          player.noiseLevel = 2;
+          playSound('hit');
+          updateHUD();
+          if (player.hp <= 0) {
+            player.hp = 0;
+            triggerKnockout('Você pisou no poço de ácido corrosivo e suas forças se esvaíram!');
+          }
+        }
+      }
+
+      // Update Act 3 Blind Blood Monsters
+      act3Enemies.forEach((enemy) => {
+        const res = enemy.updateBlindMonster(
+          player.group.position,
+          player.noiseLevel,
+          player.isSneaking,
+          dt,
+          elapsed,
+          act3Env.obstacles,
+          cameraAngle
+        );
+
+        if (res.attacked && !player.isFalling) {
+          player.hp -= res.damage;
+          player.noiseLevel = 3;
+          playSound('hit');
+          typeWriterDialogue(
+            'ALERTA MAGMÁTICO!',
+            `🩸 O ${enemy.name} ouviu seus passos sobre as pedras vulcânicas e atacou! Use SHIFT!`
+          );
+          updateHUD();
+
+          if (player.hp <= 0) {
+            player.hp = 0;
+            triggerKnockout(`O ${enemy.name} te atingiu com um golpe mortal e você desmaiou nas cinzas!`);
+          }
+        }
+      });
+
+      // Check Escape Portal (Vitória Suprema ao cruzar a ponte)
+      if (
+        player.group.position.x >= 37.0 &&
+        Math.abs(player.group.position.z) < 3.0 &&
+        act3Env.bridge.isRaised &&
+        !isVictory
+      ) {
+        triggerVictory();
+      }
+
+      // Check Nearby Interactive Objects in Act 3
+      let closestObj = null;
+      let closestDist = Infinity;
+
+      for (const obj of act3Env.interactiveObjects) {
+        const dist = Math.hypot(
+          player.group.position.x - obj.x,
+          player.group.position.z - obj.z
+        );
+        if (dist < obj.radius && dist < closestDist) {
+          closestDist = dist;
+          closestObj = obj;
         }
       }
 

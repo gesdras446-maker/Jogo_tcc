@@ -96,6 +96,8 @@ export class Player {
     this.direction = 1; // 1 = right, -1 = left
     this.baseSpeed = 4.8;
     this.sneakSpeed = 2.2;
+    this.sprintSpeed = 8.5;
+    this.isSprinting = false;
     this.hp = 100;
     this.maxHp = 100;
     this.deathTimer = 0;
@@ -161,9 +163,16 @@ export class Player {
     if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
     if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
 
-    // Shift key for sneak (passos silenciosos)
-    this.isSneaking = Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
-    const currentSpeed = this.isSneaking ? this.sneakSpeed : this.baseSpeed;
+    // Control key for sprint (corrida rápida) & Shift key for sneak (passos silenciosos)
+    this.isSprinting = Boolean(keys['ControlLeft'] || keys['ControlRight']);
+    this.isSneaking = !this.isSprinting && Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
+
+    let currentSpeed = this.baseSpeed;
+    if (this.isSprinting) {
+      currentSpeed = this.sprintSpeed;
+    } else if (this.isSneaking) {
+      currentSpeed = this.sneakSpeed;
+    }
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 0) {
@@ -184,8 +193,8 @@ export class Player {
         this.facing = 'back';
       }
 
-      // Calculate noise level (Furtividade)
-      this.noiseLevel = this.isSneaking ? 1 : 2;
+      // Calculate noise level (Furtividade / Corrida)
+      this.noiseLevel = this.isSneaking ? 1 : (this.isSprinting ? 3 : 2);
     } else {
       this.moving = false;
       this.noiseLevel = 0;
@@ -256,7 +265,7 @@ export class Player {
       return;
     }
 
-    const animSpeed = this.isSneaking ? 5 : 9;
+    const animSpeed = this.isSneaking ? 5 : (this.isSprinting ? 15 : 9);
 
     if (this.moving) {
       if (this.facing === 'side') {
@@ -290,8 +299,10 @@ export class Player {
       }
     }
 
-    // Walking bob effect
-    const bob = this.moving ? Math.sin(elapsed * (this.isSneaking ? 10 : 18)) * (this.isSneaking ? 0.02 : 0.04) : 0;
+    // Walking/Running bob effect
+    const bobFreq = this.isSneaking ? 10 : (this.isSprinting ? 24 : 18);
+    const bobAmp = this.isSneaking ? 0.02 : (this.isSprinting ? 0.06 : 0.04);
+    const bob = this.moving ? Math.sin(elapsed * bobFreq) * bobAmp : 0;
     this.mesh.position.y = 1.2 + bob;
     this.mesh.scale.y = 1;
     this.mesh.rotation.z = 0;

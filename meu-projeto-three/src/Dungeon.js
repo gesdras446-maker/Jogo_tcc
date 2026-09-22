@@ -679,52 +679,67 @@ export function createDungeonEnvironment(scene) {
   dungeonGroup.add(chainMeshR);
 
   // ========================================================
-  // PUZZLE 1: BINARY LEVERS (ALAVANCAS)
+  // PUZZLE 1: BINARY TERMINAL (PEDESTAL ÚNICO)
   // ========================================================
-  const binaryLevers = [
-    { id: 1, x: -11.0, z: -4.0, state: 0, target: 1 },
-    { id: 2, x: -8.0, z: -4.0, state: 0, target: 0 },
-    { id: 3, x: -5.0, z: -4.0, state: 0, target: 1 },
-    { id: 4, x: -2.0, z: -4.0, state: 0, target: 1 },
-  ];
+  // Single central pedestal with 4 bit indicator crystals on top
+  const pedX = -6.5;
+  const pedZ = -4.0;
 
-  binaryLevers.forEach((bl) => {
-    const ped = new THREE.Mesh(
-      new THREE.BoxGeometry(0.7, 1.2, 0.7),
-      new THREE.MeshLambertMaterial({ map: column3Texture })
-    );
-    ped.position.set(bl.x, 0.6, bl.z);
-    dungeonGroup.add(ped);
+  const pedBase = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 1.2, 0.8),
+    new THREE.MeshLambertMaterial({ map: column3Texture })
+  );
+  pedBase.position.set(pedX, 0.6, pedZ);
+  dungeonGroup.add(pedBase);
 
-    obstacles.push({
-      minX: bl.x - 0.45,
-      maxX: bl.x + 0.45,
-      minZ: bl.z - 0.45,
-      maxZ: bl.z + 0.45,
-    });
+  // Tablet / console top slab
+  const pedTop = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 0.12, 0.9),
+    new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.6, metalness: 0.4 })
+  );
+  pedTop.position.set(pedX, 1.25, pedZ);
+  dungeonGroup.add(pedTop);
 
+  // Single solid collision obstacle for the pedestal
+  obstacles.push({
+    minX: pedX - 0.8,
+    maxX: pedX + 0.8,
+    minZ: pedZ - 0.5,
+    maxZ: pedZ + 0.5,
+  });
+
+  // 4 bit indicator orbs aligned neatly on top of the single pedestal
+  const binaryLevers = [];
+  const bulbOffsets = [-0.45, -0.15, 0.15, 0.45];
+
+  bulbOffsets.forEach((offsetX, i) => {
     const bulbMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), bulbMat);
-    bulb.position.set(bl.x, 1.35, bl.z);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), bulbMat);
+    bulb.position.set(pedX + offsetX, 1.38, pedZ);
     dungeonGroup.add(bulb);
 
-    bl.bulbMat = bulbMat;
-    bl.light = {
-      color: {
-        setHex: (hex) => bulbMat.color.setHex(hex),
+    const blData = {
+      id: i + 1,
+      state: 0,
+      bulbMat: bulbMat,
+      light: {
+        color: {
+          setHex: (hex) => bulbMat.color.setHex(hex),
+        },
+        intensity: 1,
       },
-      intensity: 1,
     };
+    binaryLevers.push(blData);
+  });
 
-    interactiveObjects.push({
-      id: `binary_lever_${bl.id}`,
-      type: 'binary_lever',
-      x: bl.x,
-      z: bl.z,
-      radius: 1.8,
-      prompt: `[E] Alavanca Binária #${bl.id}`,
-      data: bl,
-    });
+  // Single interactive trigger for the binary puzzle
+  interactiveObjects.push({
+    id: 'binary_pedestal',
+    type: 'binary_lever',
+    x: pedX,
+    z: pedZ,
+    radius: 2.2,
+    prompt: '[E] Pedestal do Código Binário',
   });
 
   interactiveObjects.push({
