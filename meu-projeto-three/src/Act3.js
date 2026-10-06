@@ -418,7 +418,7 @@ export function createAct3Environment(scene) {
     prompt: '[E] Mirar Balista Rúnica (Tiro ao Alvo)',
   });
 
-  // C. Inscrição da Sequência Sagrada (Monumento de Pista)
+  // C. Estela do Mecanismo da Balista Ancestral (Mecanismo de Disparo Rápido)
   const clueGroup = new THREE.Group();
   clueGroup.position.set(-8.0, 0, 5.0);
 
@@ -435,13 +435,13 @@ export function createAct3Environment(scene) {
   interactiveObjects.push({
     id: 'target_clue_monument',
     type: 'lore_clue',
-    clueSpeaker: 'INSCRIÇÃO DOS 4 PILARES',
+    clueSpeaker: 'MECANISMO DA BALISTA ANCESTRAL',
     clueText:
-      '📜 "Para que a Ponte de Basalto desperte das chamas, invoque os 4 Pilares na sagrada ordem: 1º FOGO 🔥, 2º SANGUE 🩸, 3º RAIO ⚡, 4º VAZIO 👁️!"',
+      '📜 "A Balista de Basalto canaliza as runas primordiais dos 4 elementos. Para calibrá-la contra o abismo, o operador deve engatilhar disparos de reflexo rápido no instante exato do pulso! Mantenha os olhos atentos e as mãos firmes!"',
     x: -8.0,
     z: 5.0,
     radius: 2.8,
-    prompt: '[E] Ler Inscrição dos 4 Pilares',
+    prompt: '[E] Ler Mecanismo da Balista Ancestral',
   });
 
   // D. Fonte de Sangue Curativo (Recupera Vida)
@@ -475,49 +475,167 @@ export function createAct3Environment(scene) {
     prompt: '[E] Beber Sangue Vital da Fonte (+40 HP)',
   });
 
-  // E. Grande Portal de Fuga dos Antigos (Na ilha final além da ponte)
-  const portalGroup = new THREE.Group();
-  portalGroup.position.set(38.0, 0, 0);
+  // ========================================================
+  // E. AS 3 ESCOLHAS DO DESTINO FINAL (ALÉM DA PONTE DE BASALTO)
+  // ========================================================
 
-  // Arch pillars
-  const pArchMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.6, metalness: 0.3 });
-  const pLeft = new THREE.Mesh(new THREE.BoxGeometry(0.8, 5.0, 0.8), pArchMat);
-  pLeft.position.set(0, 2.5, -2.2);
-  portalGroup.add(pLeft);
+  // 1. ESCOLHA 1: A PORTA ANCESTRAL (Z = -5.0, X = 39.5) -> Final #1
+  const doorArchGroup = new THREE.Group();
+  doorArchGroup.position.set(39.5, 0, -5.0);
 
-  const pRight = new THREE.Mesh(new THREE.BoxGeometry(0.8, 5.0, 0.8), pArchMat);
-  pRight.position.set(0, 2.5, 2.2);
-  portalGroup.add(pRight);
+  const doorArchMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.7, metalness: 0.2 });
+  const doorPostL = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
+  doorPostL.position.set(0, 2.1, -1.6);
+  doorArchGroup.add(doorPostL);
 
-  const pTop = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 5.2), pArchMat);
-  pTop.position.set(0, 5.2, 0);
-  portalGroup.add(pTop);
+  const doorPostR = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
+  doorPostR.position.set(0, 2.1, 1.6);
+  doorArchGroup.add(doorPostR);
 
-  // Swirling Portal Energy Plane
-  const pEnergyMat = new THREE.MeshBasicMaterial({
-    color: 0x00e5ff,
-    side: THREE.DoubleSide,
-  });
-  const portalEnergy = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.4), pEnergyMat);
-  portalEnergy.position.set(0, 2.6, 0);
-  portalEnergy.rotation.y = Math.PI / 2;
-  portalGroup.add(portalEnergy);
+  const doorLintel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 4.0), doorArchMat);
+  doorLintel.position.set(0, 4.2, 0);
+  doorArchGroup.add(doorLintel);
 
-  const portalLight = new THREE.PointLight(0x00e5ff, 4.0, 10);
-  portalLight.position.set(0, 2.8, 0);
-  portalGroup.add(portalLight);
+  // Folhas da Porta de Carvalho Reforçado
+  const doorPlankMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.8 });
+  const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.8, 2.6), doorPlankMat);
+  doorLeaf.position.set(0, 2.0, 0);
+  doorArchGroup.add(doorLeaf);
 
-  act3Group.add(portalGroup);
-  obstacles.push({ minX: 37.2, maxX: 38.8, minZ: -2.8, maxZ: -1.6 });
-  obstacles.push({ minX: 37.2, maxX: 38.8, minZ: 1.6, maxZ: 2.8 });
+  // Luz do Luar / Sol que escapa pela porta
+  const doorLight = new THREE.PointLight(0xffecb3, 3.5, 9);
+  doorLight.position.set(-0.5, 2.5, 0);
+  doorArchGroup.add(doorLight);
+
+  act3Group.add(doorArchGroup);
+  obstacles.push({ minX: 38.6, maxX: 40.4, minZ: -6.8, maxZ: -3.2 });
 
   interactiveObjects.push({
-    id: 'escape_portal',
-    type: 'escape_portal',
-    x: 38.0,
-    z: 0,
+    id: 'door_choice',
+    type: 'ending_choice',
+    endingId: 1,
+    choiceName: 'A Porta Ancestral',
+    x: 38.5,
+    z: -5.0,
+    radius: 3.2,
+    prompt: '[E] Abrir a Porta Ancestral (Escapar para a Superfície)',
+  });
+
+  // 2. ESCOLHA 2: O BUEIRO FÉTIDO SUBTERRÂNEO (Z = +5.0, X = 39.5) -> Final #2
+  const manholeGroup = new THREE.Group();
+  manholeGroup.position.set(39.5, 0, 5.0);
+
+  // Aro de pedra ao redor do bueiro
+  const manholeRim = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.6, 1.8, 0.25, 16),
+    new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9 })
+  );
+  manholeRim.position.y = 0.12;
+  manholeGroup.add(manholeRim);
+
+  // Tampa de ferro fundido com grelha
+  const manholeCover = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.3, 1.3, 0.28, 16),
+    new THREE.MeshStandardMaterial({ color: 0x1a2327, metalness: 0.8, roughness: 0.4 })
+  );
+  manholeCover.position.y = 0.15;
+  manholeGroup.add(manholeCover);
+
+  // Névoa tóxica/esverdeada emanando do bueiro
+  const manholeGlow = new THREE.Mesh(
+    new THREE.RingGeometry(0.8, 1.4, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00e676, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+  );
+  manholeGlow.rotation.x = -Math.PI / 2;
+  manholeGlow.position.y = 0.3;
+  manholeGroup.add(manholeGlow);
+
+  const manholeLight = new THREE.PointLight(0x00e676, 2.5, 7);
+  manholeLight.position.set(0, 1.0, 0);
+  manholeGroup.add(manholeLight);
+
+  act3Group.add(manholeGroup);
+  obstacles.push({ minX: 38.6, maxX: 40.4, minZ: 4.1, maxZ: 5.9 });
+
+  interactiveObjects.push({
+    id: 'manhole_choice',
+    type: 'ending_choice',
+    endingId: 2,
+    choiceName: 'O Bueiro Subterrâneo',
+    x: 38.5,
+    z: 5.0,
+    radius: 3.2,
+    prompt: '[E] Descer pelo Bueiro Fétido (Rastejar pelos Esgotos)',
+  });
+
+  // 3. ESCOLHA 3: O CULTISTA SUPREMO & RITUAL DE CTHULHU (Z = 0.0, X = 41.0) -> Final #4
+  const cultistShrineGroup = new THREE.Group();
+  cultistShrineGroup.position.set(41.0, 0, 0);
+
+  // Círculo Rúnico de Invocação de Cthulhu no chão
+  const cultistCircle = new THREE.Mesh(
+    new THREE.RingGeometry(1.8, 2.5, 32),
+    new THREE.MeshBasicMaterial({ color: 0xd500f9, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+  );
+  cultistCircle.rotation.x = -Math.PI / 2;
+  cultistCircle.position.y = 0.04;
+  cultistShrineGroup.add(cultistCircle);
+
+  // Altar de Obsidiana
+  const cultistPedestal = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 1.2, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0x12002b, roughness: 0.5, metalness: 0.6 })
+  );
+  cultistPedestal.position.y = 0.6;
+  cultistShrineGroup.add(cultistPedestal);
+
+  // A Figura Sombria do Cultista Supremo (Presença Cósmica com Manto e Olhos Vermelhos)
+  const cultistBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.9, 2.4, 12),
+    new THREE.MeshStandardMaterial({ color: 0x240046, roughness: 0.8 })
+  );
+  cultistBody.position.y = 2.4;
+  cultistShrineGroup.add(cultistBody);
+
+  const cultistHood = new THREE.Mesh(
+    new THREE.SphereGeometry(0.55, 12, 12),
+    new THREE.MeshStandardMaterial({ color: 0x3c096c, roughness: 0.8 })
+  );
+  cultistHood.position.set(0, 3.8, 0);
+  cultistShrineGroup.add(cultistHood);
+
+  // Olhos carmesins brilhantes da entidade
+  const cultistEyeL = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xff1744 })
+  );
+  cultistEyeL.position.set(-0.4, 3.75, -0.2);
+  cultistShrineGroup.add(cultistEyeL);
+
+  const cultistEyeR = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xff1744 })
+  );
+  cultistEyeR.position.set(-0.4, 3.75, 0.2);
+  cultistShrineGroup.add(cultistEyeR);
+
+  // Luz Cósmica de Cthulhu
+  const cultistLight = new THREE.PointLight(0xd500f9, 4.0, 10);
+  cultistLight.position.set(-0.5, 3.2, 0);
+  cultistShrineGroup.add(cultistLight);
+
+  act3Group.add(cultistShrineGroup);
+  obstacles.push({ minX: 39.8, maxX: 42.2, minZ: -1.2, maxZ: 1.2 });
+
+  interactiveObjects.push({
+    id: 'cultist_choice',
+    type: 'ending_choice',
+    endingId: 4,
+    choiceName: 'O Cultista Supremo',
+    x: 40.0,
+    z: 0.0,
     radius: 3.5,
-    prompt: '[E] Atravessar Portal Sagrado (Escapar com Vida!)',
+    prompt: '[E] Juntar-se ao Cultista (Virar Receptáculo de Cthulhu)',
   });
 
   // ========================================================

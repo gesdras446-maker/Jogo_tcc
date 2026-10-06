@@ -184,30 +184,28 @@ app.innerHTML = `
       </div>
 
       <div style="color: #ffd54f; font-size: 13.5px; font-weight: bold;" id="relicStatusText">
-        Clique em uma peça selecionada (borda vermelha) e depois em outra para trocá-las de lugar!
+        Deslize as peças para o espaço vazio para montar a imagem!
       </div>
 
       <div class="relic-actions">
-        <button class="puzzle-btn secondary" id="btnScrambleRelic">🔄 Embaralhar</button>
         <button class="puzzle-btn primary" id="btnSolveRelic">⚡ Encaixar Selo</button>
         <button class="puzzle-btn secondary" id="btnCloseRelicModal">Fechar</button>
       </div>
     </div>
   </div>
 
-  <!-- ATO 3 PUZZLE 2: Terminal de Tiro ao Alvo em Sequência -->
+  <!-- ATO 3 PUZZLE 2: Terminal de Disparo Rápido (Quick Time Event - QTE) -->
   <div class="target-modal-overlay hidden" id="targetShootingModal">
     <div class="target-modal-card">
       <div class="target-header">
-        <div class="target-title">🏹 BALISTA RÚNICA: TIRO AO ALVO EM SEQUÊNCIA</div>
-        <div class="target-clue-box">
-          📜 <strong>Profecia dos 4 Pilares:</strong><br>
-          <em>"Primeiro arde o Fogo 🔥, depois corre o Sangue 🩸, então ribomba o Raio ⚡ e por fim reina o Vazio 👁️."</em>
+        <div class="target-title">⚡ BALISTA RÚNICA: QUICK TIME EVENT</div>
+        <div class="target-clue-box" id="qteInstructionBox">
+          🎯 <strong>Mecanismo de Disparo Rápido:</strong> Mire nos 4 Pilares! Pressione a tecla rúnica indicada antes que o tempo esgote para calibrar cada disparo!
         </div>
       </div>
 
       <div class="target-progress-bar-row">
-        <span>Sequência de Acertos:</span>
+        <span>Sequência de Impacto:</span>
         <div class="target-dots" id="targetDots">
           <div class="target-dot" id="tdot0"></div>
           <div class="target-dot" id="tdot1"></div>
@@ -217,35 +215,34 @@ app.innerHTML = `
         <span id="targetProgressText">(0 / 4)</span>
       </div>
 
-      <div class="target-chasm-arena">
-        <div class="target-runes-grid">
-          <button class="target-btn" id="btnTarget1" data-target="1">
-            <span class="target-icon">🔥</span>
-            <span class="target-name" style="color: #ff5722;">FOGO</span>
-          </button>
-          <button class="target-btn" id="btnTarget2" data-target="2">
-            <span class="target-icon">🩸</span>
-            <span class="target-name" style="color: #ff1744;">SANGUE</span>
-          </button>
-          <button class="target-btn" id="btnTarget3" data-target="3">
-            <span class="target-icon">⚡</span>
-            <span class="target-name" style="color: #00e5ff;">RAIO</span>
-          </button>
-          <button class="target-btn" id="btnTarget4" data-target="4">
-            <span class="target-icon">👁️</span>
-            <span class="target-name" style="color: #d500f9;">VAZIO</span>
+      <div class="qte-arena">
+        <div class="qte-target-info" id="qteTargetInfo">
+          <span class="qte-target-icon" id="qteTargetIcon">🔥</span>
+          <span class="qte-target-name" id="qteTargetName">1º ALVO: PILAR DO FOGO</span>
+        </div>
+
+        <div class="qte-timer-track">
+          <div class="qte-timer-fill" id="qteTimerFill"></div>
+        </div>
+
+        <div class="qte-key-container">
+          <div class="qte-key-pulse-ring" id="qtePulseRing"></div>
+          <button class="qte-big-key-btn" id="qteKeyBtn" type="button">
+            <span class="qte-key-letter" id="qteKeyLetter">Q</span>
+            <span class="qte-key-subtext">TECLE OU CLIQUE!</span>
           </button>
         </div>
 
         <div class="target-chasm-lava"></div>
       </div>
 
-      <div style="color: #ffe0b2; font-size: 13.5px; font-weight: bold; min-height: 20px;" id="targetFeedbackText">
-        Mire e clique no alvo elemental correto de acordo com a profecia!
+      <div style="color: #ffe0b2; font-size: 14px; font-weight: bold; min-height: 22px; text-align: center;" id="targetFeedbackText">
+        Mire a balista e inicie o teste de reflexos rápidos para os 4 disparos!
       </div>
 
       <div class="target-actions">
-        <button class="puzzle-btn secondary" id="btnResetTargets">🔄 Reiniciar Alvos</button>
+        <button class="puzzle-btn primary" id="btnStartQte">🏹 Iniciar Disparos (QTE)</button>
+        <button class="puzzle-btn secondary" id="btnResetTargets" style="display: none;">🔄 Tentar Novamente</button>
         <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
       </div>
     </div>
@@ -328,16 +325,21 @@ app.innerHTML = `
     <button class="knockout-btn" id="btnWakeUpCell">👁️ Despertar na Cela (Tentar Novamente)</button>
   </div>
 
-  <!-- Victory Screen Overlay -->
+  <!-- Victory Screen Overlay (Customizável por final alcançado) -->
   <div class="victory-overlay hidden" id="victoryOverlay">
-    <div class="victory-title">🏆 FUGA CONCLUÍDA!</div>
-    <div class="victory-text" id="victoryText">
-      PARABÉNS! Você quebrou os selos arcanos, enganou os monstros de sangue e escapou com vida das profundezas do calabouço de Cthulhu!
-    </div>
-    <div class="victory-buttons">
-      <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
-      <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
-      <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
+    <div class="victory-modal-card">
+      <div class="victory-badge" id="victoryBadge">🏆 CONQUISTA DE FINAL DESBLOQUEADA!</div>
+      <div class="victory-icon-large" id="victoryIconLarge">🚪</div>
+      <div class="victory-title" id="victoryTitle">🏆 FINAL #1: ALÉM DA PORTA ANCESTRAL</div>
+      <div class="victory-quote" id="victoryQuote">"A luz do mundo exterior penetra seus olhos uma vez mais..."</div>
+      <div class="victory-text" id="victoryText">
+        PARABÉNS! Você quebrou os selos arcanos e escapou com vida das profundezas cósmicas!
+      </div>
+      <div class="victory-buttons">
+        <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
+        <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
+        <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
+      </div>
     </div>
   </div>
 
@@ -661,17 +663,17 @@ const ENDINGS_DATA = [
   {
     id: 1,
     number: '#1',
-    title: 'Fuga do Calabouço',
-    desc: 'Você desvendou os 3 enigmas arcanos, abriu o Grande Portão de Ferro e escapou com vida do covil do cultista.',
+    title: 'Além da Porta Ancestral',
+    desc: 'Ao cruzar o abismo de chamas, você abriu a pesada porta dos ancestrais e escapou com vida e sanidade preservadas para a luz da superfície.',
     icon: '🚪',
     image: null,
   },
   {
     id: 2,
     number: '#2',
-    title: 'Destino Oculto #2',
-    desc: 'Um desfecho sombrio e misterioso ainda não descoberto... Explore outros caminhos.',
-    icon: '🔒',
+    title: 'As Sombras do Bueiro',
+    desc: 'Você optou por descer no bueiro fétido, rastejando pela imundície dos esgotos esquecidos até emergir em um beco sombrio da cidade.',
+    icon: '🕳️',
     image: null,
   },
   {
@@ -685,9 +687,9 @@ const ENDINGS_DATA = [
   {
     id: 4,
     number: '#4',
-    title: 'Destino Oculto #4',
-    desc: 'Um desfecho sombrio e misterioso ainda não descoberto... Explore outros caminhos.',
-    icon: '🔒',
+    title: 'O Receptáculo de Cthulhu',
+    desc: 'Você se prostrou perante o Cultista Supremo, aceitou o ritual profano e seu corpo tornou-se o novo receptáculo terreno do Grande Cthulhu!',
+    icon: '🐙',
     image: null,
   },
 ];
@@ -808,6 +810,8 @@ const targetFeedbackTextEl = document.querySelector('#targetFeedbackText');
 const targetProgressTextEl = document.querySelector('#targetProgressText');
 const btnResetTargetsEl = document.querySelector('#btnResetTargets');
 const btnCloseTargetModalEl = document.querySelector('#btnCloseTargetModal');
+const btnStartQteEl = document.querySelector('#btnStartQte');
+const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
 
 // Master canvas for the authentic Cthulhu Fossil (Ruins of Alph style)
 const masterRelicCanvas = document.createElement('canvas');
@@ -888,18 +892,40 @@ if (relicPreviewCanvasEl) {
   pctx.drawImage(masterRelicCanvas, 0, 0, 72, 72);
 }
 
-// 4x4 Grid = 16 tiles
-let relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-let selectedTileIndex = null;
+// 4x4 Sliding Puzzle (15-puzzle) — tile value -1 = empty slot
+// Solved state: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,-1] (empty at bottom-right)
+let relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
+
+function getEmptyIndex() {
+  return relicTiles.indexOf(-1);
+}
+
+function getValidMoves(emptyIdx) {
+  // Returns indices of tiles that can slide into the empty slot (adjacent horizontally/vertically)
+  const row = Math.floor(emptyIdx / 4);
+  const col = emptyIdx % 4;
+  const moves = [];
+  if (row > 0) moves.push(emptyIdx - 4); // tile above
+  if (row < 3) moves.push(emptyIdx + 4); // tile below
+  if (col > 0) moves.push(emptyIdx - 1); // tile to the left
+  if (col < 3) moves.push(emptyIdx + 1); // tile to the right
+  return moves;
+}
 
 function scrambleRelicTiles() {
-  for (let i = relicTiles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [relicTiles[i], relicTiles[j]] = [relicTiles[j], relicTiles[i]];
+  // Shuffle via many random valid moves (guarantees solvability)
+  let emptyIdx = getEmptyIndex();
+  let lastMoved = -1;
+  for (let i = 0; i < 300; i++) {
+    const moves = getValidMoves(emptyIdx).filter(m => m !== lastMoved);
+    const chosen = moves[Math.floor(Math.random() * moves.length)];
+    relicTiles[emptyIdx] = relicTiles[chosen];
+    relicTiles[chosen] = -1;
+    lastMoved = emptyIdx;
+    emptyIdx = chosen;
   }
-  selectedTileIndex = null;
   if (relicStatusTextEl) {
-    relicStatusTextEl.textContent = 'Clique em uma peça e depois em outra para trocá-las!';
+    relicStatusTextEl.textContent = 'Deslize as peças para o espaço vazio para montar a imagem!';
     relicStatusTextEl.style.color = '#ffd54f';
   }
   renderRelicBoard();
@@ -909,43 +935,55 @@ function renderRelicBoard() {
   if (!relicGridBoardEl) return;
   relicGridBoardEl.innerHTML = '';
 
+  const emptyIdx = getEmptyIndex();
+  const validMoves = getValidMoves(emptyIdx);
+
   relicTiles.forEach((tileValue, gridIndex) => {
     const slotEl = document.createElement('div');
+    const isEmpty = tileValue === -1;
+    const canMove = validMoves.includes(gridIndex);
+
     slotEl.className = 'relic-tile-slot';
-    if (selectedTileIndex === gridIndex) {
-      slotEl.classList.add('selected'); // Red outline matching user reference image!
+    if (isEmpty) {
+      slotEl.classList.add('relic-empty-slot');
+    } else if (canMove) {
+      slotEl.classList.add('relic-can-move');
     }
 
-    const tileCanvas = document.createElement('canvas');
-    tileCanvas.className = 'relic-tile-canvas';
-    tileCanvas.width = 64;
-    tileCanvas.height = 64;
-    const tctx = tileCanvas.getContext('2d');
+    if (!isEmpty) {
+      const tileCanvas = document.createElement('canvas');
+      tileCanvas.className = 'relic-tile-canvas';
+      tileCanvas.width = 64;
+      tileCanvas.height = 64;
+      const tctx = tileCanvas.getContext('2d');
 
-    const srcCol = tileValue % 4;
-    const srcRow = Math.floor(tileValue / 4);
+      const srcCol = tileValue % 4;
+      const srcRow = Math.floor(tileValue / 4);
 
-    tctx.drawImage(
-      masterRelicCanvas,
-      srcCol * 64,
-      srcRow * 64,
-      64,
-      64,
-      0,
-      0,
-      64,
-      64
-    );
+      tctx.drawImage(
+        masterRelicCanvas,
+        srcCol * 64,
+        srcRow * 64,
+        64,
+        64,
+        0,
+        0,
+        64,
+        64
+      );
 
-    tctx.strokeStyle = '#4e342e';
-    tctx.lineWidth = 2;
-    tctx.strokeRect(0, 0, 64, 64);
+      tctx.strokeStyle = '#4e342e';
+      tctx.lineWidth = 2;
+      tctx.strokeRect(0, 0, 64, 64);
 
-    slotEl.appendChild(tileCanvas);
+      slotEl.appendChild(tileCanvas);
+    }
 
-    slotEl.addEventListener('click', () => {
-      onRelicTileClick(gridIndex);
-    });
+    if (!isEmpty) {
+      slotEl.addEventListener('click', () => {
+        onRelicTileClick(gridIndex);
+      });
+    }
 
     relicGridBoardEl.appendChild(slotEl);
   });
@@ -954,17 +992,13 @@ function renderRelicBoard() {
 function onRelicTileClick(gridIndex) {
   if (questState.relicPuzzleSolved) return;
 
-  if (selectedTileIndex === null) {
-    selectedTileIndex = gridIndex;
-    playSound('switch');
-    renderRelicBoard();
-  } else if (selectedTileIndex === gridIndex) {
-    selectedTileIndex = null;
-    renderRelicBoard();
-  } else {
-    const prev = selectedTileIndex;
-    [relicTiles[prev], relicTiles[gridIndex]] = [relicTiles[gridIndex], relicTiles[prev]];
-    selectedTileIndex = null;
+  const emptyIdx = getEmptyIndex();
+  const validMoves = getValidMoves(emptyIdx);
+
+  if (validMoves.includes(gridIndex)) {
+    // Slide clicked tile into empty slot
+    relicTiles[emptyIdx] = relicTiles[gridIndex];
+    relicTiles[gridIndex] = -1;
     playSound('switch');
     renderRelicBoard();
     checkRelicPuzzleWin();
@@ -972,7 +1006,10 @@ function onRelicTileClick(gridIndex) {
 }
 
 function checkRelicPuzzleWin() {
-  const isComplete = relicTiles.every((val, idx) => val === idx);
+  // Solved when tiles 0-14 are in order and -1 is at position 15
+  const isComplete =
+    relicTiles[15] === -1 &&
+    relicTiles.slice(0, 15).every((val, idx) => val === idx);
   if (isComplete) {
     questState.relicPuzzleSolved = true;
     playSound('victory');
@@ -992,11 +1029,8 @@ function checkRelicPuzzleWin() {
   }
 }
 
-btnScrambleRelicEl.addEventListener('click', scrambleRelicTiles);
-
 btnSolveRelicEl.addEventListener('click', () => {
-  relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-  selectedTileIndex = null;
+  relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
   renderRelicBoard();
   checkRelicPuzzleWin();
 });
@@ -1005,110 +1039,265 @@ btnCloseRelicModalEl.addEventListener('click', () => {
   relicModalEl.classList.add('hidden');
 });
 
-// Target Shooting Puzzle Logic (4 Runes Sequence)
-const TARGET_SEQUENCE = [1, 2, 3, 4]; // 1: Fogo, 2: Sangue, 3: Raio, 4: Vazio
-let targetCurrentStep = 0;
+// ========================================================
+// ATO 3 PUZZLE 2: BALISTA RÚNICA - QUICK TIME EVENT (QTE)
+// ========================================================
+const QTE_STEPS = [
+  { id: 1, name: 'PILAR DO FOGO', symbol: '🔥', key: 'q', keyDisplay: 'Q', color: '#ff5722', duration: 2500 },
+  { id: 2, name: 'PILAR DO SANGUE', symbol: '🩸', key: 'e', keyDisplay: 'E', color: '#ff1744', duration: 2300 },
+  { id: 3, name: 'PILAR DO RAIO', symbol: '⚡', key: 'r', keyDisplay: 'R', color: '#00e5ff', duration: 2000 },
+  { id: 4, name: 'PILAR DO VAZIO', symbol: '👁️', key: ' ', keyDisplay: 'ESPAÇO', color: '#d500f9', duration: 1800 },
+];
 
-function updateTargetShootingUI() {
+let qteCurrentIndex = 0;
+let qteActive = false;
+let qteCanInput = false;
+let qteTimerRaf = null;
+let qteStartTime = 0;
+let qteMaxDuration = 2500;
+
+function updateQteUI() {
   [0, 1, 2, 3].forEach((i) => {
     const dot = document.querySelector(`#tdot${i}`);
     if (dot) {
-      if (i < targetCurrentStep) {
-        dot.classList.add('active');
-      } else {
-        dot.classList.remove('active');
-      }
-    }
-  });
-
-  [1, 2, 3, 4].forEach((id) => {
-    const btn = document.querySelector(`#btnTarget${id}`);
-    if (btn) {
-      if (TARGET_SEQUENCE.slice(0, targetCurrentStep).includes(id)) {
-        btn.classList.add('hit');
-      } else {
-        btn.classList.remove('hit');
-      }
+      if (i < qteCurrentIndex) dot.classList.add('active');
+      else dot.classList.remove('active');
     }
   });
 
   if (targetProgressTextEl) {
-    targetProgressTextEl.textContent = `(${targetCurrentStep} / 4)`;
+    targetProgressTextEl.textContent = `(${qteCurrentIndex} / 4)`;
   }
 }
 
-function resetTargetPuzzle() {
-  targetCurrentStep = 0;
-  updateTargetShootingUI();
+function openQteModal() {
+  targetModalEl.classList.remove('hidden');
+  qteActive = false;
+  qteCanInput = false;
+  qteCurrentIndex = 0;
+  updateQteUI();
+  if (btnStartQteEl) btnStartQteEl.style.display = 'inline-block';
+  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = 'Mire e clique no alvo correto de acordo com a profecia!';
+    targetFeedbackTextEl.textContent = 'Mire a balista e inicie o teste de reflexos rápidos para os 4 disparos!';
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
+  const qteTargetNameEl = document.querySelector('#qteTargetName');
+  const qteTargetIconEl = document.querySelector('#qteTargetIcon');
+  const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
+  const qteTimerFillEl = document.querySelector('#qteTimerFill');
+  if (qteTargetNameEl) qteTargetNameEl.textContent = '1º ALVO: PILAR DO FOGO';
+  if (qteTargetIconEl) qteTargetIconEl.textContent = '🔥';
+  if (qteKeyLetterEl) qteKeyLetterEl.textContent = 'Q';
+  if (qteTimerFillEl) qteTimerFillEl.style.width = '100%';
 }
 
-function onTargetClick(targetId) {
+function startQteSequence() {
   if (questState.targetPuzzleSolved) return;
+  qteCurrentIndex = 0;
+  qteActive = true;
+  updateQteUI();
+  if (btnStartQteEl) btnStartQteEl.style.display = 'none';
+  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
+  promptNextQteTarget();
+}
 
-  const expected = TARGET_SEQUENCE[targetCurrentStep];
-  if (targetId === expected) {
-    targetCurrentStep++;
-    playSound('pickup');
-    updateTargetShootingUI();
+function promptNextQteTarget() {
+  if (qteCurrentIndex >= QTE_STEPS.length) {
+    onQteCompleteSuccess();
+    return;
+  }
 
-    if (targetFeedbackTextEl) {
-      targetFeedbackTextEl.textContent = `🎯 ACERTO! O Pilar ${targetId} acendeu em chamas sagradas!`;
-      targetFeedbackTextEl.style.color = '#00e676';
+  const step = QTE_STEPS[qteCurrentIndex];
+  qteCanInput = true;
+  qteMaxDuration = step.duration;
+  qteStartTime = performance.now();
+
+  const qteTargetIconEl = document.querySelector('#qteTargetIcon');
+  const qteTargetNameEl = document.querySelector('#qteTargetName');
+  const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
+  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+  const qtePulseRingEl = document.querySelector('#qtePulseRing');
+
+  if (qteTargetIconEl) qteTargetIconEl.textContent = step.symbol;
+  if (qteTargetNameEl) {
+    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}º ALVO: ${step.name}`;
+    qteTargetNameEl.style.color = step.color;
+  }
+  if (qteKeyLetterEl) {
+    qteKeyLetterEl.textContent = step.keyDisplay;
+    qteKeyLetterEl.style.color = step.color;
+  }
+  if (qteKeyBtnEl) {
+    qteKeyBtnEl.style.borderColor = step.color;
+    qteKeyBtnEl.style.boxShadow = `0 0 25px ${step.color}88`;
+  }
+  if (qtePulseRingEl) {
+    qtePulseRingEl.style.borderColor = step.color;
+  }
+
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = `⚡ DISPARO ATIVO! Pressione [${step.keyDisplay}] ou clique no centro rápido!`;
+    targetFeedbackTextEl.style.color = '#ffe0b2';
+  }
+
+  runQteTimerLoop();
+}
+
+function runQteTimerLoop() {
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+
+  function tick(now) {
+    if (!qteActive || !qteCanInput) return;
+
+    const elapsed = now - qteStartTime;
+    const remainingPct = Math.max(0, 1 - elapsed / qteMaxDuration);
+    const qteTimerFillEl = document.querySelector('#qteTimerFill');
+    if (qteTimerFillEl) {
+      qteTimerFillEl.style.width = `${remainingPct * 100}%`;
     }
 
-    if (targetCurrentStep === 4) {
-      questState.targetPuzzleSolved = true;
-      playSound('gate_unlock');
-      playSound('victory');
-
-      if (targetFeedbackTextEl) {
-        targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 ALVOS ATINGIDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
-      }
-
-      if (act3Env && act3Env.bridge) {
-        act3Env.bridge.raise();
-      }
-      updateHUD();
-
-      setTimeout(() => {
-        targetModalEl.classList.add('hidden');
-        typeWriterDialogue(
-          'ESTRONDO SÍSMICO!',
-          '🚪 Um estrondo colossal estremece a caverna! A Grande Ponte de Basalto ergue-se das profundezas da lava fervente! Atravesse-a para alcançar o Portal de Fuga!'
-        );
-      }, 1400);
+    if (elapsed >= qteMaxDuration) {
+      onQteTimeOut();
+      return;
     }
+
+    qteTimerRaf = requestAnimationFrame(tick);
+  }
+
+  qteTimerRaf = requestAnimationFrame(tick);
+}
+
+function handleQteInput(inputKey) {
+  if (!qteActive || !qteCanInput) return;
+  const step = QTE_STEPS[qteCurrentIndex];
+
+  const pressed = inputKey.toLowerCase();
+  const isMatch = (pressed === step.key) || 
+                  (step.key === ' ' && (pressed === ' ' || pressed === 'space' || pressed === 'spacebar'));
+
+  if (isMatch) {
+    onQteHitSuccess();
   } else {
-    playSound('hit');
-    const wrongBtn = document.querySelector(`#btnTarget${targetId}`);
-    if (wrongBtn) {
-      wrongBtn.classList.add('wrong');
-      setTimeout(() => wrongBtn.classList.remove('wrong'), 450);
-    }
-    targetCurrentStep = 0;
-    updateTargetShootingUI();
-
-    if (targetFeedbackTextEl) {
-      targetFeedbackTextEl.textContent = '❌ ALVO INCORRETO! A profecia exige: 1º Fogo 🔥, 2º Sangue 🩸, 3º Raio ⚡, 4º Vazio 👁️!';
-      targetFeedbackTextEl.style.color = '#ff5252';
-    }
+    onQteMissError();
   }
 }
 
-[1, 2, 3, 4].forEach((id) => {
-  const btn = document.querySelector(`#btnTarget${id}`);
-  if (btn) {
-    btn.addEventListener('click', () => onTargetClick(id));
-  }
-});
+function onQteHitSuccess() {
+  qteCanInput = false;
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
 
-btnResetTargetsEl.addEventListener('click', resetTargetPuzzle);
+  playSound('pickup');
+  const step = QTE_STEPS[qteCurrentIndex];
+
+  if (act3Env && act3Env.targets && act3Env.targets[qteCurrentIndex]) {
+    act3Env.targets[qteCurrentIndex].hit = true;
+    if (act3Env.targets[qteCurrentIndex].orb) {
+      act3Env.targets[qteCurrentIndex].orb.material.emissiveIntensity = 2.5;
+    }
+  }
+
+  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+  if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.add('hit-success');
+    setTimeout(() => qteKeyBtnEl.classList.remove('hit-success'), 350);
+  }
+
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! O ${step.name} acendeu em chamas sagradas!`;
+    targetFeedbackTextEl.style.color = '#00e676';
+  }
+
+  qteCurrentIndex++;
+  updateQteUI();
+
+  if (qteCurrentIndex >= QTE_STEPS.length) {
+    setTimeout(onQteCompleteSuccess, 500);
+  } else {
+    setTimeout(promptNextQteTarget, 600);
+  }
+}
+
+function onQteMissError() {
+  qteCanInput = false;
+  qteActive = false;
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+  playSound('hit');
+
+  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+  if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.add('miss-error');
+    setTimeout(() => qteKeyBtnEl.classList.remove('miss-error'), 450);
+  }
+
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = '❌ TECLA INCORRETA! O tiro errou o pilar e o mecanismo travou!';
+    targetFeedbackTextEl.style.color = '#ff1744';
+  }
+
+  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'inline-block';
+}
+
+function onQteTimeOut() {
+  qteCanInput = false;
+  qteActive = false;
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+  playSound('hit');
+
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = '⏱️ TEMPO ESGOTADO! O pulso de magma passou e o disparo falhou!';
+    targetFeedbackTextEl.style.color = '#ff9100';
+  }
+
+  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'inline-block';
+}
+
+function onQteCompleteSuccess() {
+  qteActive = false;
+  qteCanInput = false;
+  questState.targetPuzzleSolved = true;
+  playSound('gate_unlock');
+  playSound('victory');
+
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 PILARES CALIBRADOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
+    targetFeedbackTextEl.style.color = '#00e676';
+  }
+
+  if (act3Env && act3Env.bridge) {
+    act3Env.bridge.raise();
+  }
+  updateHUD();
+
+  setTimeout(() => {
+    targetModalEl.classList.add('hidden');
+    typeWriterDialogue(
+      'ESTRONDO SÍSMICO!',
+      '🚪 Um estrondo colossal ecoa por todo o abismo! A Grande Ponte de Basalto ergueu-se das profundezas de lava fervente! O caminho até o santuário final além do abismo está aberto!'
+    );
+  }, 1300);
+}
+
+if (btnStartQteEl) {
+  btnStartQteEl.addEventListener('click', startQteSequence);
+}
+
+if (btnResetTargetsEl) {
+  btnResetTargetsEl.addEventListener('click', startQteSequence);
+}
+
+if (qteKeyBtnEl) {
+  qteKeyBtnEl.addEventListener('click', () => {
+    if (qteActive && qteCanInput && qteCurrentIndex < QTE_STEPS.length) {
+      handleQteInput(QTE_STEPS[qteCurrentIndex].key);
+    }
+  });
+}
 
 btnCloseTargetModalEl.addEventListener('click', () => {
+  qteActive = false;
+  qteCanInput = false;
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
   targetModalEl.classList.add('hidden');
 });
 
@@ -1561,12 +1750,57 @@ btnWakeUpCellEl.addEventListener('click', () => {
   performEyeWakeUpTransition();
 });
 
-function triggerVictory() {
+let act3ChoiceDialogShown = false;
+
+function triggerEnding(endingId) {
   if (isVictory) return;
   isVictory = true;
-  unlockEnding(1);
+  unlockEnding(endingId);
   playSound('victory');
+
+  const ending = ENDINGS_DATA.find((e) => e.id === endingId) || ENDINGS_DATA[0];
+
+  const victoryBadgeEl = document.querySelector('#victoryBadge');
+  const victoryIconLargeEl = document.querySelector('#victoryIconLarge');
+  const victoryTitleEl = document.querySelector('#victoryTitle');
+  const victoryQuoteEl = document.querySelector('#victoryQuote');
+  const victoryTextEl = document.querySelector('#victoryText');
+
+  if (victoryBadgeEl) victoryBadgeEl.textContent = `🏆 CONQUISTA DE FINAL #${ending.id} DESBLOQUEADA!`;
+  if (victoryIconLargeEl) victoryIconLargeEl.textContent = ending.icon;
+  if (victoryTitleEl) victoryTitleEl.textContent = `FINAL ${ending.number}: ${ending.title.toUpperCase()}`;
+
+  if (endingId === 1) {
+    if (victoryQuoteEl) victoryQuoteEl.textContent = '"A pesada porta dos ancestrais rangeu... e a brisa da noite tocou sua pele mais uma vez."';
+    if (victoryTextEl) {
+      victoryTextEl.innerHTML = `
+        <strong>PARABÉNS!</strong> Você escolheu abrir a Porta Ancestral e deixar para trás o covil das cinzas e magma.<br><br>
+        Subindo degraus milenares de pedra, você alcançou os limites de uma floresta calma e silenciosa sob a luz do luar. Você escapou do abismo com vida, liberdade e sanidade preservadas!
+      `;
+    }
+  } else if (endingId === 2) {
+    if (victoryQuoteEl) victoryQuoteEl.textContent = '"O fedor nauseante de lodo e ferrugem inundou seus pulmões enquanto você rastejava na escuridão."';
+    if (victoryTextEl) {
+      victoryTextEl.innerHTML = `
+        <strong>FUGA PELAS SOMBRAS!</strong> Você optou por descer na podridão dos bueiros subterrâneos.<br><br>
+        Rastejando por horas a fio entre águas turvas e canos esquecidos, você finalmente emergiu por uma grade de drenagem nos fundos de um cais portuário. Você sobreviveu... mas os sussurros fétidos do esgoto jamais deixarão a sua mente.
+      `;
+    }
+  } else if (endingId === 4) {
+    if (victoryQuoteEl) victoryQuoteEl.textContent = '"Ph\'nglui mglw\'nafh Cthulhu R\'lyeh wgah\'nagl fhtagn... O despertar cósmico começou."';
+    if (victoryTextEl) {
+      victoryTextEl.innerHTML = `
+        <strong>PACTO CONSUMADO!</strong> Você se prostrou perante o Cultista Supremo e abriu seu espírito ao Grande Cthulhu.<br><br>
+        Tentáculos de energia cósmica envolveram seu corpo enquanto sua consciência mortal se dissolvia no infinito do cosmo. Você não é mais apenas um humano... você é o Receptáculo Sagrado que trará o reinado das profundezas à Terra!
+      `;
+    }
+  }
+
   victoryOverlayEl.classList.remove('hidden');
+}
+
+function triggerVictory() {
+  triggerEnding(1);
 }
 
 btnPlayAgainEl.addEventListener('click', () => {
@@ -1575,6 +1809,7 @@ btnPlayAgainEl.addEventListener('click', () => {
   questState.hasCultistEmblem = false;
   questState.gateOpen = false;
   questState.activePedestals = 0;
+  act3ChoiceDialogShown = false;
   resetPuzzles(true);
   setAct(1);
   closeMenu();
@@ -1583,6 +1818,7 @@ btnPlayAgainEl.addEventListener('click', () => {
 btnVictoryMenuEl.addEventListener('click', () => {
   victoryOverlayEl.classList.add('hidden');
   isGameStarted = false;
+  act3ChoiceDialogShown = false;
   resetPuzzles(true);
   setAct(1);
   openMenu();
@@ -1805,6 +2041,16 @@ btnBackFromSettingsEl.addEventListener('click', () => {
 // Key Listeners
 const keys = {};
 window.addEventListener('keydown', (e) => {
+  // Handle QTE Keyboard Input
+  if (qteActive && qteCanInput && !targetModalEl.classList.contains('hidden')) {
+    const k = e.key.toLowerCase();
+    if (['q', 'e', 'r', ' '].includes(k) || e.code === 'Space') {
+      e.preventDefault();
+      handleQteInput(e.key);
+      return;
+    }
+  }
+
   keys[e.code] = true;
 
   if (
@@ -1841,6 +2087,9 @@ window.addEventListener('keydown', (e) => {
       return;
     }
     if (!targetModalEl.classList.contains('hidden')) {
+      qteActive = false;
+      qteCanInput = false;
+      if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
       targetModalEl.classList.add('hidden');
       return;
     }
@@ -1954,6 +2203,13 @@ function resetPuzzles(resetAll = true) {
       if (dungeonEnv.obstacles && !dungeonEnv.obstacles.includes(gateObj.obstacle)) {
         dungeonEnv.obstacles.push(gateObj.obstacle);
       }
+    }
+  }
+
+  if (dungeonEnv && dungeonEnv.pathPuzzle) {
+    dungeonEnv.pathPuzzle.resetPathTiles();
+    if (resetAll) {
+      dungeonEnv.pathPuzzle.rerollSafePath();
     }
   }
 }
@@ -2141,7 +2397,13 @@ function handleInteraction() {
 
     const obj = currentPromptObject;
     if (obj.type === 'relic_puzzle') {
-      renderRelicBoard();
+      if (!questState.relicPuzzleSolved) {
+        // Reset to solved state then scramble fresh each time the modal opens
+        relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
+        scrambleRelicTiles();
+      } else {
+        renderRelicBoard();
+      }
       relicModalEl.classList.remove('hidden');
     } else if (obj.type === 'target_shooting') {
       if (!questState.relicPuzzleSolved) {
@@ -2150,8 +2412,7 @@ function handleInteraction() {
           '🔒 A Balista Rúnica está sem energia! Monte primeiro o Quebra-Cabeça da Relíquia no Altar para energizar o disparo!'
         );
       } else {
-        updateTargetShootingUI();
-        targetModalEl.classList.remove('hidden');
+        openQteModal();
       }
     } else if (obj.type === 'lore_clue') {
       playSound('pickup');
@@ -2169,15 +2430,10 @@ function handleInteraction() {
       } else {
         typeWriterDialogue('FONTE SAGRADA', 'A fonte de sangue já foi consumida.');
       }
+    } else if (obj.type === 'ending_choice') {
+      triggerEnding(obj.endingId);
     } else if (obj.type === 'escape_portal') {
-      if (act3Env.bridge.isRaised) {
-        triggerVictory();
-      } else {
-        typeWriterDialogue(
-          'PORTAL DE FUGA',
-          '🌀 O portal de fuga reluz além da ponte! Você precisa erguer a Ponte de Basalto sobre a lava para alcançá-lo!'
-        );
-      }
+      triggerEnding(1);
     }
     return;
   }
@@ -2517,6 +2773,43 @@ function animate(currentTime) {
         }
       });
 
+      // Check Chamber 5 Tile Path Puzzle (Trilha das Lajes Rúnicas e Buracos)
+      if (
+        dungeonEnv &&
+        dungeonEnv.pathPuzzle &&
+        !player.isFalling &&
+        !isKnockedOut &&
+        player.group.position.x >= 20.5 &&
+        player.group.position.x <= 34.0 &&
+        player.group.position.z >= 1.0 &&
+        player.group.position.z <= 9.0
+      ) {
+        for (const tile of dungeonEnv.pathPuzzle.tiles) {
+          const distToTile = Math.hypot(
+            player.group.position.x - tile.x,
+            player.group.position.z - tile.z
+          );
+          if (distToTile < 1.05) {
+            if (tile.isSafe) {
+              if (!tile.isStepped) {
+                tile.isStepped = true;
+                tile.mat.emissive.setHex(0x00e676);
+                playSound('pickup');
+              }
+            } else {
+              // Laje falsa desmorona em buraco!
+              if (!tile.isCollapsed) {
+                tile.isCollapsed = true;
+                tile.mesh.visible = false;
+                player.triggerHoleFall();
+                playSound('fall');
+                break;
+              }
+            }
+          }
+        }
+      }
+
       // Update Blind Blood Monsters
       dungeonEnemies.forEach((enemy) => {
         const res = enemy.updateBlindMonster(
@@ -2709,14 +3002,18 @@ function animate(currentTime) {
         }
       });
 
-      // Check Escape Portal (Vitória Suprema ao cruzar a ponte)
+      // Anúncio dramático das 3 Escolhas ao cruzar a ponte e pisar no santuário final (X >= 27.5)
       if (
-        player.group.position.x >= 37.0 &&
-        Math.abs(player.group.position.z) < 3.0 &&
+        player.group.position.x >= 27.5 &&
         act3Env.bridge.isRaised &&
+        !act3ChoiceDialogShown &&
         !isVictory
       ) {
-        triggerVictory();
+        act3ChoiceDialogShown = true;
+        typeWriterDialogue(
+          'ENCRUZILHADA DO DESTINO',
+          '🔥 Você atravessou o abismo de chamas! Três caminhos se revelam no santuário: a Porta Ancestral à esquerda, o Bueiro Fétido à direita, ou o Cultista Supremo ao centro aguardando para o despertar de Cthulhu!'
+        );
       }
 
       // Check Nearby Interactive Objects in Act 3
