@@ -1639,10 +1639,12 @@ function setAct(act) {
     dungeonEnemies = [];
     act3Enemies.forEach((e) => e.destroy());
     act3Enemies = [];
+    npc.group.visible = true;
   } else if (act === 2) {
     streetEnv.group.visible = false;
     dungeonEnv.group.visible = true;
     act3Env.group.visible = false;
+    npc.group.visible = true;
     hemiLight.color.setHex(0xdbe7ff);
     hemiLight.groundColor.setHex(0x18202d);
     hemiLight.intensity = 0.9;
@@ -1658,6 +1660,7 @@ function setAct(act) {
     streetEnv.group.visible = false;
     dungeonEnv.group.visible = false;
     act3Env.group.visible = true;
+    npc.group.visible = false; // Cultista removido do meio da sala do Ato 3!
     hemiLight.color.setHex(0xff7043);
     hemiLight.groundColor.setHex(0x21100a);
     hemiLight.intensity = 0.85;
@@ -2182,6 +2185,42 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// Clique do mouse diretamente nos pedestais de cristais na masmorra
+window.addEventListener('pointerdown', (event) => {
+  if (currentAct !== 2 || isKnockedOut || isWakingUp) return;
+  if (event.target.closest('button, .hud, .dialogue-box, .top-actions-bar, .modal-backdrop')) return;
+
+  const mouse = new THREE.Vector2(
+    (event.clientX / window.innerWidth) * 2 - 1,
+    -(event.clientY / window.innerHeight) * 2 + 1
+  );
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  if (dungeonEnv && dungeonEnv.colorCrystals) {
+    const targets = [];
+    dungeonEnv.colorCrystals.forEach((cc) => {
+      if (cc.gemMesh) targets.push(cc.gemMesh);
+      if (cc.pillarMesh) targets.push(cc.pillarMesh);
+    });
+    const intersects = raycaster.intersectObjects(targets, true);
+    if (intersects.length > 0) {
+      const hitObj = intersects[0].object;
+      const cc = dungeonEnv.colorCrystals.find(
+        (c) => c.gemMesh === hitObj || c.pillarMesh === hitObj || c.gemMesh === hitObj.parent
+      );
+      if (cc) {
+        const dist = Math.hypot(player.group.position.x - cc.x, player.group.position.z - cc.z);
+        if (dist <= 4.0) {
+          handleCrystalPedestalTouch(cc);
+        } else {
+          typeWriterDialogue('MUITO DISTANTE', 'Aproxime-se mais do pedestal para tocar no cubo elemental.');
+        }
+      }
+    }
+  }
+});
+
 // PUZZLE 1: BINARY LEVERS
 function updateBinaryModalUI() {
   const bits = questState.binaryBits;
@@ -2221,7 +2260,16 @@ function resetPuzzles(resetAll = true) {
 
   if (resetAll || !questState.hasCthulhuRune) {
     questState.colorSequence = [];
-    updateColorSequenceUI();
+    if (dungeonEnv && dungeonEnv.colorCrystals) {
+      dungeonEnv.colorCrystals.forEach((c) => {
+        c.isActive = false;
+        if (c.gemMat) {
+          c.gemMat.emissive.setHex(0x000000);
+          c.gemMat.emissiveIntensity = 0;
+        }
+        if (c.pointLight) c.pointLight.intensity = 0;
+      });
+    }
   }
 
   if (resetAll || !questState.hasCultistEmblem) {
@@ -2250,10 +2298,7 @@ function resetPuzzles(resetAll = true) {
   }
 
   if (dungeonEnv && dungeonEnv.pathPuzzle) {
-    dungeonEnv.pathPuzzle.resetPathTiles();
-    if (resetAll) {
-      dungeonEnv.pathPuzzle.rerollSafePath();
-    }
+    dungeonEnv.pathPuzzle.rerollSafePath();
   }
 }
 
@@ -2297,62 +2342,77 @@ btnCloseBinaryEl.addEventListener('click', () => {
   binaryModalEl.classList.add('hidden');
 });
 
-// PUZZLE 2: COLOR CRYSTALS
-function updateColorSequenceUI() {
-  const names = {
-    red: '🌋 Chama',
-    blue: '🌊 Abismo',
-    yellow: '☀️ Aurora',
-    green: '🌿 Raiz',
-  };
-  if (questState.colorSequence.length === 0) {
-    colorSequenceDisplayEl.textContent = 'Sequência: [ Nenhuma ]';
-  } else {
-    colorSequenceDisplayEl.textContent = `Sequência: ${questState.colorSequence.map((c) => names[c]).join(' ➔ ')}`;
+// PUZZLE 2: COLOR CRYSTALS (ATIVAR CADA PEDESTAL NO MUNDO 3D - SEM POP-UP)
+function handleCrystalPedestalTouch(cc) {
+  if (questState.hasCthulhuRune) {
+    typeWriterDialogue('PEDESTAL ELEMENTAL', '🔮 A Runa de Cthulhu já foi forjada e os 4 pedestais ressoam em harmonia eterna.');
+    return;
   }
-}
 
-function handleColorTouch(colorKey) {
+  // Se já está ativo nesta tentativa, avisa
+  if (questState.colorSequence.includes(cc.id)) {
+    typeWriterDialogue(cc.name, '✨ Este cubo elemental já está aceso e ressoando energia!');
+    return;
+  }
+
+  // Acende o cubo no pedestal: brilha com emissivo forte e luz pontual
   playSound('crystal');
-  questState.colorSequence.push(colorKey);
-  updateColorSequenceUI();
+  questState.colorSequence.push(cc.id);
+  cc.isActive = true;
+  if (cc.gemMat) {
+    cc.gemMat.emissive.setHex(cc.colorHex);
+    cc.gemMat.emissiveIntensity = 2.5;
+  }
+  if (cc.pointLight) {
+    cc.pointLight.intensity = 2.5;
+  }
 
-  if (questState.colorSequence.length === 4) {
-    const seq = questState.colorSequence;
-    if (seq[0] === 'red' && seq[1] === 'blue' && seq[2] === 'yellow' && seq[3] === 'green') {
-      questState.hasCthulhuRune = true;
-      playSound('victory');
-      colorModalEl.classList.add('hidden');
-      typeWriterDialogue(
-        'ENIGMA DAS CORES RESOLVIDO!',
-        '🔮 Os 4 cristais elementais ressoam em harmonia! A [RUNA DE CTHULHU] brilha diante de você!'
-      );
-      updateHUD();
-    } else {
-      playSound('hit');
-      typeWriterDialogue(
-        'SEQUÊNCIA INCORRETA',
-        '❌ A ordem das cores estava em desarmonia. O cântico ancestral foi reiniciado!'
-      );
+  // Ordem correta dada pelo Cântico das Catacumbas:
+  // 1: Chama (red), 2: Abismo (blue), 3: Aurora (yellow), 4: Raiz (green)
+  const expectedSequence = ['red', 'blue', 'yellow', 'green'];
+  const currentIndex = questState.colorSequence.length - 1;
+
+  // Verifica se o pedestal aceso é o correto nesta posição da sequência
+  if (cc.id !== expectedSequence[currentIndex]) {
+    // Errou a ordem!
+    playSound('hit');
+    typeWriterDialogue(
+      'DESARMONIA ELEMENTAL',
+      '❌ A ordem dos pedestais estava incorreta! A energia se desfez e os cubos se apagaram.'
+    );
+    setTimeout(() => {
+      if (dungeonEnv && dungeonEnv.colorCrystals) {
+        dungeonEnv.colorCrystals.forEach((c) => {
+          c.isActive = false;
+          if (c.gemMat) {
+            c.gemMat.emissive.setHex(0x000000);
+            c.gemMat.emissiveIntensity = 0;
+          }
+          if (c.pointLight) c.pointLight.intensity = 0;
+        });
+      }
       questState.colorSequence = [];
-      updateColorSequenceUI();
-    }
+    }, 500);
+    return;
+  }
+
+  // Acertou o passo atual!
+  if (questState.colorSequence.length === 4) {
+    // Todos os 4 pedestais ativados na ordem perfeita!
+    questState.hasCthulhuRune = true;
+    playSound('victory');
+    typeWriterDialogue(
+      'ENIGMA DOS CRISTAIS RESOLVIDO!',
+      '🔮 Todos os 4 cubos elementais brilham em sintonia cósmica! A [RUNA DE CTHULHU] materializou-se sobre o altar!'
+    );
+    updateHUD();
+  } else {
+    typeWriterDialogue(
+      cc.name,
+      `✨ O cubo do pedestal começou a brilhar intensamente! (${questState.colorSequence.length}/4 cubos ativos)`
+    );
   }
 }
-
-document.querySelector('#btnColorRed').addEventListener('click', () => handleColorTouch('red'));
-document.querySelector('#btnColorBlue').addEventListener('click', () => handleColorTouch('blue'));
-document.querySelector('#btnColorYellow').addEventListener('click', () => handleColorTouch('yellow'));
-document.querySelector('#btnColorGreen').addEventListener('click', () => handleColorTouch('green'));
-
-btnResetColorSeqEl.addEventListener('click', () => {
-  questState.colorSequence = [];
-  updateColorSequenceUI();
-});
-
-btnCloseColorModalEl.addEventListener('click', () => {
-  colorModalEl.classList.add('hidden');
-});
 
 // PUZZLE 3: NUMERIC SAFE
 function updateSafeDialsUI() {
@@ -2510,8 +2570,7 @@ function handleInteraction() {
     playSound('pickup');
     typeWriterDialogue(obj.clueSpeaker || 'INSCRIÇÃO', obj.clueText);
   } else if (obj.type === 'color_crystal') {
-    updateColorSequenceUI();
-    colorModalEl.classList.remove('hidden');
+    handleCrystalPedestalTouch(obj.data);
   } else if (obj.type === 'numeric_safe') {
     updateSafeDialsUI();
     safeModalEl.classList.remove('hidden');
@@ -2745,7 +2804,8 @@ function animate(currentTime) {
 
       if (playerUpdateRes && playerUpdateRes.finishedFall) {
         player.isFalling = false;
-        triggerKnockout('Você caiu no abismo sem fundo de um buraco da masmorra!');
+        triggerKnockout(player.fallReason || 'Você caiu no abismo sem fundo de um buraco da masmorra!');
+        player.fallReason = null;
       }
 
       const targetCamX = THREE.MathUtils.clamp(
@@ -2775,6 +2835,20 @@ function animate(currentTime) {
         const flicker = Math.sin(elapsed * 12 + i * 1.7) * 0.25 + Math.cos(elapsed * 8 + i * 2.3) * 0.15;
         al.light.intensity = al.baseIntensity + flicker;
       });
+
+      // Animate Color Crystal Cubes (flutuação e rotação suave dos cubos)
+      if (dungeonEnv && dungeonEnv.colorCrystals) {
+        dungeonEnv.colorCrystals.forEach((cc) => {
+          if (cc.gemMesh) {
+            cc.gemMesh.rotation.y += dt * (cc.isActive ? 2.5 : 0.8);
+            if (cc.isActive) {
+              cc.gemMesh.position.y = 1.9 + Math.sin(elapsed * 4 + cc.order) * 0.08;
+            } else {
+              cc.gemMesh.position.y = 1.9;
+            }
+          }
+        });
+      }
 
       // Update Traps
       dungeonEnv.traps.forEach((trap) => {
@@ -2820,66 +2894,47 @@ function animate(currentTime) {
         }
       });
 
-      // Check Chamber 4 Spike Corridor Puzzle (Corredor de Espinhos, Estilo Undertale)
+      // Check Chamber 4 Undertale Spike Corridor Puzzle (Corredor de Espinhos)
       if (
         dungeonEnv &&
         dungeonEnv.pathPuzzle &&
         !player.isFalling &&
         !isKnockedOut &&
-        player.group.position.x >= 3.5 &&
+        player.group.position.x >= 5.0 &&
         player.group.position.x <= 17.0 &&
-        player.group.position.z >= -5.5 &&
-        player.group.position.z <= 5.5
+        player.group.position.z >= -6.5 &&
+        player.group.position.z <= 6.5
       ) {
-        for (const tile of dungeonEnv.pathPuzzle.tiles) {
-          const distToTile = Math.hypot(
-            player.group.position.x - tile.x,
-            player.group.position.z - tile.z
-          );
-          if (distToTile < 1.2) {
-            if (tile.isSafe) {
-              // Pedra segura: brilha verde suavemente
-              if (!tile.isStepped) {
-                tile.isStepped = true;
-                tile.mat.emissive.setHex(0x00aa44);
-                playSound('pickup');
-              }
-            } else {
-              // Pedra falsa: dispara espinhos!
-              if (!tile.isTriggered) {
-                tile.isTriggered = true;
-                tile.spikeActive = true;
-                tile.spikeTimer = 0;
-                if (tile.spikeMesh) tile.spikeMesh.visible = true;
-                // Faz a laje pisada brilhar vermelho
-                tile.mat.emissive.setHex(0xcc1111);
-                playSound('hit');
-              }
+        const px = player.group.position.x;
+        const pz = player.group.position.z;
+
+        // Verifica se o jogador pisou exatamente em uma das lajes das colunas
+        // Se estiver no vão entre as colunas, o jogador pode circular livremente em diagonal!
+        const tile = dungeonEnv.pathPuzzle.tiles.find(
+          (t) =>
+            Math.abs(px - t.x) <= (t.halfW || 0.8) &&
+            Math.abs(pz - t.z) <= (t.halfH || 2.14)
+        );
+
+        if (tile) {
+          if (tile.isSafe) {
+            // Acertou a laje: espinhos somem e fica livre para passar!
+            if (!tile.isStepped) {
+              tile.isStepped = true;
+              if (tile.spikeGroup) tile.spikeGroup.visible = false;
+              if (tile.baseMat) tile.baseMat.emissive.setHex(0x004d20);
+              playSound('pickup');
             }
-          }
-        }
-        // Atualiza animação dos espinhos ativos e aplica dano contínuo
-        for (const tile of dungeonEnv.pathPuzzle.tiles) {
-          if (tile.spikeActive && tile.spikeMesh && tile.spikeMat) {
-            tile.spikeTimer += dt;
-            const cycle = tile.spikeTimer % 1.0;
-            let frameIdx = 0;
-            if (cycle > 0.15 && cycle < 0.65) {
-              frameIdx = Math.min(4, Math.floor(((cycle - 0.15) / 0.5) * 5));
-            }
-            if (dungeonEnv.pathPuzzle.spikeFrames && dungeonEnv.pathPuzzle.spikeFrames[frameIdx]) {
-              tile.spikeMat.map = dungeonEnv.pathPuzzle.spikeFrames[frameIdx];
-              tile.spikeMat.needsUpdate = true;
-            }
-            // Aplica dano se o jogador ainda estiver em cima
-            const dist = Math.hypot(player.group.position.x - tile.x, player.group.position.z - tile.z);
-            if (dist < 1.2 && frameIdx >= 2) {
-              player.hp -= 25 * dt;
-              updateHUD();
-              if (player.hp <= 0) {
-                player.hp = 0;
-                triggerKnockout('Os espinhos do corredor perfuraram suas pernas! Você caiu no chão da masmorra!');
-              }
+          } else {
+            // Errou o caminho: o piso abre um buraco sem fundo e o jogador cai!
+            if (!tile.isFallen) {
+              tile.isFallen = true;
+              if (tile.spikeGroup) tile.spikeGroup.visible = false;
+              if (tile.baseMesh) tile.baseMesh.visible = false;
+              if (tile.holeMesh) tile.holeMesh.visible = true;
+              player.fallReason = 'Você pisou no ladrilho errado e despencou no abismo sob os espinhos!';
+              player.triggerHoleFall();
+              playSound('fall');
             }
           }
         }

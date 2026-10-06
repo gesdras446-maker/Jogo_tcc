@@ -156,29 +156,66 @@ export function createAct3Environment(scene) {
   exitIsland.position.set(34, -0.25, 0);
   act3Group.add(exitIsland);
 
-  // D. Toxic Acid Pool in Chamber 1 (X: -12 to -4, Z: -6 to -1)
+  // D. Toxic Acid Pool in Chamber 1 (X: -12 to -4, Z: -9 to +9 - Cobrindo do topo ao chão)
   const acidPoolMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 5),
+    new THREE.PlaneGeometry(8, 18),
     acidMat
   );
   acidPoolMesh.rotation.x = -Math.PI / 2;
-  acidPoolMesh.position.set(-8, 0.02, -3.5);
+  acidPoolMesh.position.set(-8, 0.02, 0);
   act3Group.add(acidPoolMesh);
 
-  // Border stone trim around acid pool
-  const acidTrim = new THREE.Mesh(
-    new THREE.RingGeometry(2.5, 3.2, 4),
-    new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9 })
+  // Passarela de pedra segura através da abertura e saída do desenho de losango (X: -12 a -4, Z: -1 a +1)
+  const safeWalkway = new THREE.Mesh(
+    new THREE.PlaneGeometry(8.0, 2.0),
+    new THREE.MeshStandardMaterial({ color: 0x1e272c, roughness: 0.85 })
   );
-  acidTrim.rotation.x = -Math.PI / 2;
-  acidTrim.position.set(-8, 0.04, -3.5);
-  act3Group.add(acidTrim);
+  safeWalkway.rotation.x = -Math.PI / 2;
+  safeWalkway.position.set(-8, 0.035, 0);
+  act3Group.add(safeWalkway);
+
+  // Borda geométrica do losango (o desenho original do ácido) com abertura no Oeste (entrada) e Leste (saída)
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9 });
+  const beamGeo = new THREE.BoxGeometry(4.2, 0.08, 0.65);
+
+  // 1. Braço Superior-Esquerdo (liga a abertura Oeste ao vértice Norte)
+  const beamTopLeft = new THREE.Mesh(beamGeo, trimMat);
+  beamTopLeft.position.set(-9.8, 0.05, -1.8);
+  beamTopLeft.rotation.y = -Math.PI / 4;
+  act3Group.add(beamTopLeft);
+
+  // 2. Braço Superior-Direito (liga o vértice Norte à abertura Leste)
+  const beamTopRight = new THREE.Mesh(beamGeo, trimMat);
+  beamTopRight.position.set(-6.2, 0.05, -1.8);
+  beamTopRight.rotation.y = Math.PI / 4;
+  act3Group.add(beamTopRight);
+
+  // 3. Braço Inferior-Esquerdo (liga a abertura Oeste ao vértice Sul)
+  const beamBottomLeft = new THREE.Mesh(beamGeo, trimMat);
+  beamBottomLeft.position.set(-9.8, 0.05, 1.8);
+  beamBottomLeft.rotation.y = Math.PI / 4;
+  act3Group.add(beamBottomLeft);
+
+  // 4. Braço Inferior-Direito (liga o vértice Sul à abertura Leste)
+  const beamBottomRight = new THREE.Mesh(beamGeo, trimMat);
+  beamBottomRight.position.set(-6.2, 0.05, 1.8);
+  beamBottomRight.rotation.y = -Math.PI / 4;
+  act3Group.add(beamBottomRight);
+
+  // Áreas perigosas de ácido (ao Norte e ao Sul da abertura/passarela segura)
+  acidHazards.push({
+    minX: -12.0,
+    maxX: -4.0,
+    minZ: -9.0,
+    maxZ: -1.0,
+    damage: 25,
+  });
 
   acidHazards.push({
     minX: -12.0,
     maxX: -4.0,
-    minZ: -6.0,
-    maxZ: -1.0,
+    minZ: 1.0,
+    maxZ: 9.0,
     damage: 25,
   });
 
@@ -609,8 +646,8 @@ export function createAct3Environment(scene) {
   act3Group.add(lavaLight2);
   animatedLights.push({ light: lavaLight2, baseIntensity: 4.0, speed: 7.5 });
 
-  const acidLight = new THREE.PointLight(0x00e676, 3.0, 12);
-  acidLight.position.set(-8, 2.0, -3.5);
+  const acidLight = new THREE.PointLight(0x00e676, 3.0, 16);
+  acidLight.position.set(-8, 2.5, 0);
   act3Group.add(acidLight);
   animatedLights.push({ light: acidLight, baseIntensity: 3.0, speed: 4.0 });
 
