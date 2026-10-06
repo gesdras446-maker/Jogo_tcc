@@ -163,9 +163,9 @@ export class Player {
     if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
     if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
 
-    // Control key for sprint (corrida rápida) & Shift key for sneak (passos silenciosos)
-    this.isSprinting = Boolean(keys['ControlLeft'] || keys['ControlRight']);
-    this.isSneaking = !this.isSprinting && Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
+    // Shift key for sprint (corrida rápida) & C key for sneak (modo silencioso / passos suaves)
+    this.isSprinting = Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
+    this.isSneaking = !this.isSprinting && Boolean(keys['KeyC']);
 
     let currentSpeed = this.baseSpeed;
     if (this.isSprinting) {

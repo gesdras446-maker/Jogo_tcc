@@ -27,10 +27,7 @@ canvas {
 
 /* Discreet Top Corner Menu Button */
 .btn-top-menu {
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  z-index: 20;
+  position: relative;
   background: rgba(18, 24, 36, 0.85);
   border: 1.5px solid #455a64;
   color: #cfd8dc;
@@ -559,13 +556,25 @@ canvas {
 
 .puzzle-btn.primary:hover { background: linear-gradient(180deg, #2196f3, #1e88e5); }
 
-.puzzle-btn.secondary {
-  background: #263238;
-  border: 2px solid #455a64;
-  color: #eceff1;
-}
+.puzzle-btn.secondary { background: #263238; border: 2px solid #455a64; color: #eceff1; }
 
 .puzzle-btn.secondary:hover { background: #37474f; }
+
+/* Botão de pular puzzle (modo apresentação/demo) */
+.puzzle-btn.skip-demo {
+  background: linear-gradient(180deg, #6d4c0a, #3e2a04);
+  border: 2px dashed #ff8f00;
+  color: #ffe082;
+  font-size: 12px;
+  opacity: 0.85;
+  flex: none;
+  padding: 10px 14px;
+}
+.puzzle-btn.skip-demo:hover {
+  background: linear-gradient(180deg, #ff8f00, #e65100);
+  color: #fff;
+  opacity: 1;
+}
 
 /* Controls & How To Play Overlay */
 .controls-overlay {

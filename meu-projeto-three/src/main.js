@@ -12,7 +12,7 @@ const app = document.querySelector('#app');
 app.innerHTML = `
   <!-- Top Right Actions Bar -->
   <div class="top-actions-bar">
-    <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/4</span>)</button>
+    <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/3</span>)</button>
     <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
   </div>
 
@@ -244,6 +244,7 @@ app.innerHTML = `
         <button class="puzzle-btn primary" id="btnStartQte">🏹 Iniciar Disparos (QTE)</button>
         <button class="puzzle-btn secondary" id="btnResetTargets" style="display: none;">🔄 Tentar Novamente</button>
         <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
+        <button class="puzzle-btn skip-demo" id="btnSkipQte" title="Modo apresentação — pula o puzzle instantaneamente">⏭️ Pular (Demo)</button>
       </div>
     </div>
   </div>
@@ -275,21 +276,21 @@ app.innerHTML = `
 
         <div class="control-key-card">
           <div class="keys-display">
-            <span class="key-cap single">SHIFT</span>
+            <span class="key-cap single">C</span>
           </div>
           <div class="key-info">
-            <span class="key-title">Passos Silenciosos (Furtividade)</span>
-            <span class="key-desc">Segure SHIFT para andar em silêncio! Os monstros são cegos e só te ouvem caso faça barulho!</span>
+            <span class="key-title">Modo Silencioso (Furtividade)</span>
+            <span class="key-desc">Segure C para andar em silêncio! Os monstros são cegos e só te ouvem caso faça barulho!</span>
           </div>
         </div>
 
         <div class="control-key-card">
           <div class="keys-display">
-            <span class="key-cap single">CTRL</span>
+            <span class="key-cap single">SHIFT</span>
           </div>
           <div class="key-info">
             <span class="key-title">Correr (Disparada Rápida)</span>
-            <span class="key-desc">Segure CTRL para correr velozmente! Cuidado: o som alto dos passos alertará os monstros!</span>
+            <span class="key-desc">Segure SHIFT para correr velozmente! Cuidado: o som alto dos passos alertará os monstros!</span>
           </div>
         </div>
 
@@ -337,23 +338,23 @@ app.innerHTML = `
       </div>
       <div class="victory-buttons">
         <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
-        <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
+        <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/3</span>)</button>
         <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
       </div>
     </div>
   </div>
 
-  <!-- SECRET ENDING OVERLAY (#3 - EU SINTO QUE TEM ALGUMA COISA DE ERRADO COM AQUELE LADO) -->
+  <!-- SECRET ENDING OVERLAY (#2 - EU SINTO QUE TEM ALGUMA COISA DE ERRADO COM AQUELE LADO) -->
   <div class="secret-ending-overlay hidden" id="secretEndingOverlay">
     <div class="secret-ending-card">
       <div class="secret-ending-badge">🏆 CONQUISTA DE FINAL DESBLOQUEADA!</div>
       <h2 class="secret-ending-title">
-        FINAL #3
+        FINAL #2
         <span>"Eu sinto que tem alguma coisa de errado com aquele lado"</span>
       </h2>
       
       <div class="secret-ending-image-wrapper">
-        <img class="secret-ending-image" src="/ending_pixel_art.jpg" alt="Final #3: Eu sinto que tem alguma coisa de errado com aquele lado" />
+        <img class="secret-ending-image" src="/ending_pixel_art.jpg" alt="Final #2: Eu sinto que tem alguma coisa de errado com aquele lado" />
       </div>
 
       <div class="secret-ending-quote">
@@ -366,13 +367,13 @@ app.innerHTML = `
 
       <div class="secret-ending-actions">
         <button class="secret-ending-btn primary" id="btnSecretPlayAgain">🔄 Jogar Novamente</button>
-        <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/4</span>)</button>
+        <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/3</span>)</button>
         <button class="secret-ending-btn secondary" id="btnSecretMainMenu">🏠 Menu Principal</button>
       </div>
     </div>
   </div>
 
-  <!-- ENDINGS & ACHIEVEMENTS GALLERY MODAL (COLEÇÃO N/4) -->
+  <!-- ENDINGS & ACHIEVEMENTS GALLERY MODAL (COLEÇÃO N/3) -->
   <div class="endings-modal-overlay hidden" id="endingsModal">
     <div class="endings-modal-card">
       <div class="endings-modal-header">
@@ -380,7 +381,7 @@ app.innerHTML = `
         <div class="endings-progress-wrapper">
           <div class="endings-progress-text">
             <span>Progresso Total:</span>
-            <span id="endingsProgressText">0 de 4 Descobertos (0%)</span>
+            <span id="endingsProgressText">0 de 3 Descobertos (0%)</span>
           </div>
           <div class="endings-progress-bg">
             <div class="endings-progress-fill" id="endingsProgressFill"></div>
@@ -407,7 +408,7 @@ app.innerHTML = `
       <div class="menu-buttons">
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
-        <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/4</span>)</button>
+        <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/3</span>)</button>
         <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
         <button class="menu-btn" id="btnSaveGame" style="display: none;">💾 Salvar Jogo</button>
@@ -656,21 +657,13 @@ const endingsModalEl = document.querySelector('#endingsModal');
 const btnCloseEndingsModalEl = document.querySelector('#btnCloseEndingsModal');
 
 // ========================================================
-// 4 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (N/4)
+// 3 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (N/3)
 // ========================================================
-const TOTAL_ENDINGS = 4;
+const TOTAL_ENDINGS = 3;
 const ENDINGS_DATA = [
   {
-    id: 1,
-    number: '#1',
-    title: 'Além da Porta Ancestral',
-    desc: 'Ao cruzar o abismo de chamas, você abriu a pesada porta dos ancestrais e escapou com vida e sanidade preservadas para a luz da superfície.',
-    icon: '🚪',
-    image: null,
-  },
-  {
     id: 2,
-    number: '#2',
+    number: '#1',
     title: 'As Sombras do Bueiro',
     desc: 'Você optou por descer no bueiro fétido, rastejando pela imundície dos esgotos esquecidos até emergir em um beco sombrio da cidade.',
     icon: '🕳️',
@@ -678,7 +671,7 @@ const ENDINGS_DATA = [
   },
   {
     id: 3,
-    number: '#3',
+    number: '#2',
     title: 'Eu sinto que tem alguma coisa de errado com aquele lado',
     desc: 'Seus instintos salvaram a sua vida. Ao pressentir a emboscada na rua escura, você deu meia-volta e retornou em segurança.',
     icon: '🏃‍♂️',
@@ -686,7 +679,7 @@ const ENDINGS_DATA = [
   },
   {
     id: 4,
-    number: '#4',
+    number: '#3',
     title: 'O Receptáculo de Cthulhu',
     desc: 'Você se prostrou perante o Cultista Supremo, aceitou o ritual profano e seu corpo tornou-se o novo receptáculo terreno do Grande Cthulhu!',
     icon: '🐙',
@@ -1301,6 +1294,30 @@ btnCloseTargetModalEl.addEventListener('click', () => {
   targetModalEl.classList.add('hidden');
 });
 
+// Botão de pular o QTE para apresentação/demo
+const btnSkipQteEl = document.querySelector('#btnSkipQte');
+if (btnSkipQteEl) {
+  btnSkipQteEl.addEventListener('click', () => {
+    if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+    qteActive = false;
+    qteCanInput = false;
+    qteCurrentIndex = QTE_STEPS.length;
+    // Marca todos os alvos como acertados visualmente
+    if (act3Env && act3Env.targets) {
+      act3Env.targets.forEach((t) => {
+        t.hit = true;
+        if (t.orb) t.orb.material.emissiveIntensity = 2.5;
+      });
+    }
+    [0, 1, 2, 3].forEach((i) => {
+      const dot = document.querySelector(`#tdot${i}`);
+      if (dot) dot.classList.add('active');
+    });
+    if (targetProgressTextEl) targetProgressTextEl.textContent = '(4 / 4)';
+    onQteCompleteSuccess();
+  });
+}
+
 function updateSoundUI() {
   volumeSliderEl.value = soundState.masterVolume;
   volumeValueEl.textContent = `${soundState.masterVolume}%`;
@@ -1539,6 +1556,7 @@ let isKnockedOut = false;
 let isVictory = false;
 let isWakingUp = false;
 let isSecretEnding = false;
+let isActTransitioning = false;
 let lastNarrativeZone = -1;
 let currentPromptObject = null;
 let typewriterTimeout = null;
@@ -1579,6 +1597,7 @@ function setAct(act) {
   isKnockedOut = false;
   isVictory = false;
   isSecretEnding = false;
+  isActTransitioning = false;
   knockoutOverlayEl.classList.add('hidden');
   victoryOverlayEl.classList.add('hidden');
   secretEndingOverlayEl.classList.add('hidden');
@@ -1734,20 +1753,34 @@ function triggerKnockout(reason = 'Você perdeu a consciência...') {
   isKnockedOut = true;
   player.isFalling = false;
   player.fallTimer = 0;
+  player.moving = false;
   playSound('hit');
 
   knockoutOverlayEl.classList.remove('hidden');
-  document.querySelector('#knockoutText').innerHTML = `
-    ${reason}<br><br>
-    Sua visão se apaga na mais profunda escuridão... O cultista te arrasta de volta à cela de sacrifício.
-  `;
+  if (currentAct === 3) {
+    document.querySelector('#knockoutText').innerHTML = `
+      ${reason}<br><br>
+      As cinzas e vapores do abismo nublam sua mente... Você recobra os sentidos no início da câmara vulcânica!
+    `;
+    btnWakeUpCellEl.textContent = '🔥 Levantar-se nas Cinzas';
+  } else {
+    document.querySelector('#knockoutText').innerHTML = `
+      ${reason}<br><br>
+      Sua visão se apaga na mais profunda escuridão... O cultista te arrasta de volta à cela de sacrifício.
+    `;
+    btnWakeUpCellEl.textContent = '👁️ Acordar na Cela';
+  }
 }
 
 btnWakeUpCellEl.addEventListener('click', () => {
   knockoutOverlayEl.classList.add('hidden');
   isKnockedOut = false;
-  resetPuzzles(false);
-  performEyeWakeUpTransition();
+  if (currentAct === 3) {
+    setAct(3);
+  } else {
+    resetPuzzles(false);
+    performEyeWakeUpTransition();
+  }
 });
 
 let act3ChoiceDialogShown = false;
@@ -1766,19 +1799,11 @@ function triggerEnding(endingId) {
   const victoryQuoteEl = document.querySelector('#victoryQuote');
   const victoryTextEl = document.querySelector('#victoryText');
 
-  if (victoryBadgeEl) victoryBadgeEl.textContent = `🏆 CONQUISTA DE FINAL #${ending.id} DESBLOQUEADA!`;
+  if (victoryBadgeEl) victoryBadgeEl.textContent = `🏆 CONQUISTA DE FINAL ${ending.number} DESBLOQUEADA!`;
   if (victoryIconLargeEl) victoryIconLargeEl.textContent = ending.icon;
   if (victoryTitleEl) victoryTitleEl.textContent = `FINAL ${ending.number}: ${ending.title.toUpperCase()}`;
 
-  if (endingId === 1) {
-    if (victoryQuoteEl) victoryQuoteEl.textContent = '"A pesada porta dos ancestrais rangeu... e a brisa da noite tocou sua pele mais uma vez."';
-    if (victoryTextEl) {
-      victoryTextEl.innerHTML = `
-        <strong>PARABÉNS!</strong> Você escolheu abrir a Porta Ancestral e deixar para trás o covil das cinzas e magma.<br><br>
-        Subindo degraus milenares de pedra, você alcançou os limites de uma floresta calma e silenciosa sob a luz do luar. Você escapou do abismo com vida, liberdade e sanidade preservadas!
-      `;
-    }
-  } else if (endingId === 2) {
+  if (endingId === 2) {
     if (victoryQuoteEl) victoryQuoteEl.textContent = '"O fedor nauseante de lodo e ferrugem inundou seus pulmões enquanto você rastejava na escuridão."';
     if (victoryTextEl) {
       victoryTextEl.innerHTML = `
@@ -2004,7 +2029,25 @@ btnRestartActEl.addEventListener('click', () => {
     questState.gateOpen = false;
     questState.activePedestals = 0;
     resetPuzzles(true);
+  } else if (currentAct === 3) {
+    act3ChoiceDialogShown = false;
+    if (act3Env && act3Env.bridge) {
+      act3Env.bridge.isRaised = false;
+      act3Env.bridge.isRaising = false;
+      act3Env.bridge.currentY = -2.5;
+      act3Env.bridge.mesh.position.y = -2.5;
+      if (!act3Env.obstacles.includes(act3Env.bridge.obstacle)) {
+        act3Env.obstacles.push(act3Env.bridge.obstacle);
+      }
+    }
+    if (act3Env && act3Env.targets) {
+      act3Env.targets.forEach((t) => {
+        t.hit = false;
+        if (t.orb) t.orb.material.emissiveIntensity = 0.8;
+      });
+    }
   }
+  isActTransitioning = false;
   setAct(currentAct);
   isGameOver = false;
   closeMenu();
@@ -2687,13 +2730,17 @@ function animate(currentTime) {
       }
     } else if (currentAct === 2) {
       // Act 2: Dungeon
+      const activeKeys = isActTransitioning ? {} : keys;
       const playerUpdateRes = player.update(
-        keys,
+        activeKeys,
         dt,
         dungeonEnv.bounds,
         cameraAngle,
         dungeonEnv.obstacles
       );
+      if (isActTransitioning) {
+        player.moving = false;
+      }
       player.animate(elapsed);
 
       if (playerUpdateRes && playerUpdateRes.finishedFall) {
@@ -2773,37 +2820,65 @@ function animate(currentTime) {
         }
       });
 
-      // Check Chamber 5 Tile Path Puzzle (Trilha das Lajes Rúnicas e Buracos)
+      // Check Chamber 4 Spike Corridor Puzzle (Corredor de Espinhos, Estilo Undertale)
       if (
         dungeonEnv &&
         dungeonEnv.pathPuzzle &&
         !player.isFalling &&
         !isKnockedOut &&
-        player.group.position.x >= 20.5 &&
-        player.group.position.x <= 34.0 &&
-        player.group.position.z >= 1.0 &&
-        player.group.position.z <= 9.0
+        player.group.position.x >= 3.5 &&
+        player.group.position.x <= 17.0 &&
+        player.group.position.z >= -5.5 &&
+        player.group.position.z <= 5.5
       ) {
         for (const tile of dungeonEnv.pathPuzzle.tiles) {
           const distToTile = Math.hypot(
             player.group.position.x - tile.x,
             player.group.position.z - tile.z
           );
-          if (distToTile < 1.05) {
+          if (distToTile < 1.2) {
             if (tile.isSafe) {
+              // Pedra segura: brilha verde suavemente
               if (!tile.isStepped) {
                 tile.isStepped = true;
-                tile.mat.emissive.setHex(0x00e676);
+                tile.mat.emissive.setHex(0x00aa44);
                 playSound('pickup');
               }
             } else {
-              // Laje falsa desmorona em buraco!
-              if (!tile.isCollapsed) {
-                tile.isCollapsed = true;
-                tile.mesh.visible = false;
-                player.triggerHoleFall();
-                playSound('fall');
-                break;
+              // Pedra falsa: dispara espinhos!
+              if (!tile.isTriggered) {
+                tile.isTriggered = true;
+                tile.spikeActive = true;
+                tile.spikeTimer = 0;
+                if (tile.spikeMesh) tile.spikeMesh.visible = true;
+                // Faz a laje pisada brilhar vermelho
+                tile.mat.emissive.setHex(0xcc1111);
+                playSound('hit');
+              }
+            }
+          }
+        }
+        // Atualiza animação dos espinhos ativos e aplica dano contínuo
+        for (const tile of dungeonEnv.pathPuzzle.tiles) {
+          if (tile.spikeActive && tile.spikeMesh && tile.spikeMat) {
+            tile.spikeTimer += dt;
+            const cycle = tile.spikeTimer % 1.0;
+            let frameIdx = 0;
+            if (cycle > 0.15 && cycle < 0.65) {
+              frameIdx = Math.min(4, Math.floor(((cycle - 0.15) / 0.5) * 5));
+            }
+            if (dungeonEnv.pathPuzzle.spikeFrames && dungeonEnv.pathPuzzle.spikeFrames[frameIdx]) {
+              tile.spikeMat.map = dungeonEnv.pathPuzzle.spikeFrames[frameIdx];
+              tile.spikeMat.needsUpdate = true;
+            }
+            // Aplica dano se o jogador ainda estiver em cima
+            const dist = Math.hypot(player.group.position.x - tile.x, player.group.position.z - tile.z);
+            if (dist < 1.2 && frameIdx >= 2) {
+              player.hp -= 25 * dt;
+              updateHUD();
+              if (player.hp <= 0) {
+                player.hp = 0;
+                triggerKnockout('Os espinhos do corredor perfuraram suas pernas! Você caiu no chão da masmorra!');
               }
             }
           }
@@ -2828,7 +2903,7 @@ function animate(currentTime) {
           playSound('hit');
           typeWriterDialogue(
             'ALERTA!',
-            `🩸 O ${enemy.name} ouviu seus passos e te atacou! Use SHIFT para andar em silêncio!`
+            `🩸 O ${enemy.name} ouviu seus passos e te atacou! Use C para andar em silêncio!`
           );
           updateHUD();
 
@@ -2844,7 +2919,8 @@ function animate(currentTime) {
         player.group.position.x >= 44.0 &&
         Math.abs(player.group.position.z) < 3.0 &&
         !isVictory &&
-        !player.isFalling
+        !player.isFalling &&
+        !isActTransitioning
       ) {
         if (
           questState.activePedestals >= 3 &&
@@ -2853,11 +2929,15 @@ function animate(currentTime) {
           questState.hasCultistEmblem &&
           questState.gateOpen
         ) {
+          isActTransitioning = true;
+          player.moving = false;
+          playSound('pickup');
           typeWriterDialogue(
             'DESCENDO AO ABISMO',
             '🚪 Você atravessou o Grande Portão e desceu as escadarias arcanas... O ar fica sufocante e rios de lava fervente se abrem à sua frente!',
             () => {
               setAct(3);
+              isActTransitioning = false;
             }
           );
         } else {
@@ -2991,7 +3071,7 @@ function animate(currentTime) {
           playSound('hit');
           typeWriterDialogue(
             'ALERTA MAGMÁTICO!',
-            `🩸 O ${enemy.name} ouviu seus passos sobre as pedras vulcânicas e atacou! Use SHIFT!`
+            `🩸 O ${enemy.name} ouviu seus passos sobre as pedras vulcânicas e atacou! Use C!`
           );
           updateHUD();
 
@@ -3002,7 +3082,7 @@ function animate(currentTime) {
         }
       });
 
-      // Anúncio dramático das 3 Escolhas ao cruzar a ponte e pisar no santuário final (X >= 27.5)
+      // Anúncio dramático das Escolhas ao cruzar a ponte e pisar no santuário final (X >= 27.5)
       if (
         player.group.position.x >= 27.5 &&
         act3Env.bridge.isRaised &&
@@ -3012,7 +3092,7 @@ function animate(currentTime) {
         act3ChoiceDialogShown = true;
         typeWriterDialogue(
           'ENCRUZILHADA DO DESTINO',
-          '🔥 Você atravessou o abismo de chamas! Três caminhos se revelam no santuário: a Porta Ancestral à esquerda, o Bueiro Fétido à direita, ou o Cultista Supremo ao centro aguardando para o despertar de Cthulhu!'
+          '🔥 Você atravessou o abismo de chamas! Dois caminhos se revelam no santuário: o Bueiro Fétido subterrâneo à direita, ou o Cultista Supremo ao centro aguardando para o despertar de Cthulhu!'
         );
       }
 

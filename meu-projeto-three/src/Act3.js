@@ -476,50 +476,8 @@ export function createAct3Environment(scene) {
   });
 
   // ========================================================
-  // E. AS 3 ESCOLHAS DO DESTINO FINAL (ALÉM DA PONTE DE BASALTO)
+  // E. AS ESCOLHAS DO DESTINO FINAL (ALÉM DA PONTE DE BASALTO)
   // ========================================================
-
-  // 1. ESCOLHA 1: A PORTA ANCESTRAL (Z = -5.0, X = 39.5) -> Final #1
-  const doorArchGroup = new THREE.Group();
-  doorArchGroup.position.set(39.5, 0, -5.0);
-
-  const doorArchMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.7, metalness: 0.2 });
-  const doorPostL = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
-  doorPostL.position.set(0, 2.1, -1.6);
-  doorArchGroup.add(doorPostL);
-
-  const doorPostR = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
-  doorPostR.position.set(0, 2.1, 1.6);
-  doorArchGroup.add(doorPostR);
-
-  const doorLintel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 4.0), doorArchMat);
-  doorLintel.position.set(0, 4.2, 0);
-  doorArchGroup.add(doorLintel);
-
-  // Folhas da Porta de Carvalho Reforçado
-  const doorPlankMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.8 });
-  const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.8, 2.6), doorPlankMat);
-  doorLeaf.position.set(0, 2.0, 0);
-  doorArchGroup.add(doorLeaf);
-
-  // Luz do Luar / Sol que escapa pela porta
-  const doorLight = new THREE.PointLight(0xffecb3, 3.5, 9);
-  doorLight.position.set(-0.5, 2.5, 0);
-  doorArchGroup.add(doorLight);
-
-  act3Group.add(doorArchGroup);
-  obstacles.push({ minX: 38.6, maxX: 40.4, minZ: -6.8, maxZ: -3.2 });
-
-  interactiveObjects.push({
-    id: 'door_choice',
-    type: 'ending_choice',
-    endingId: 1,
-    choiceName: 'A Porta Ancestral',
-    x: 38.5,
-    z: -5.0,
-    radius: 3.2,
-    prompt: '[E] Abrir a Porta Ancestral (Escapar para a Superfície)',
-  });
 
   // 2. ESCOLHA 2: O BUEIRO FÉTIDO SUBTERRÂNEO (Z = +5.0, X = 39.5) -> Final #2
   const manholeGroup = new THREE.Group();
@@ -679,10 +637,12 @@ export function createAct3Environment(scene) {
         tm.orb.position.y = 3.2 + Math.sin(elapsed * 2.5 + i * 1.2) * 0.25;
       });
 
-      // Animate swirling portal
-      if (portalEnergy) {
-        portalLight.intensity = 3.5 + Math.sin(elapsed * 5) * 0.8;
-      }
+      // Animate ambient volcanic lights
+      animatedLights.forEach((al) => {
+        if (al.light) {
+          al.light.intensity = al.baseIntensity + Math.sin(elapsed * al.speed) * 0.8;
+        }
+      });
     },
   };
 }

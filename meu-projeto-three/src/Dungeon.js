@@ -1089,50 +1089,18 @@ export function createDungeonEnvironment(scene) {
   });
 
   // ========================================================
-  // 6. PUZZLE DA CÂMARA 5: A TRILHA DAS LAJES & BURACOS COM POEMA
+  // 6. PUZZLE DA CÂMARA 4: CORREDOR DE ESPINHOS (ESTILO UNDERTALE)
   // ========================================================
-  // Canvas textures para os 3 símbolos rúnicos do piso
-  function createRuneTileTex(symbolIcon, symbolName, color) {
-    const c = document.createElement('canvas');
-    c.width = 256;
-    c.height = 256;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#22252c';
-    ctx.fillRect(0, 0, 256, 256);
-    ctx.strokeStyle = '#3d4450';
-    ctx.lineWidth = 12;
-    ctx.strokeRect(6, 6, 244, 244);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(18, 18, 220, 220);
+  // Grade de pedras: 4 colunas x 3 fileiras no Salão dos Espinhos
+  // Uma das fileiras em cada coluna é segura - as outras disparam espinhos!
+  // O jogador descobre a ordem correta pela estela rúnica na entrada.
 
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '72px sans-serif';
-    ctx.fillText(symbolIcon, 128, 110);
+  // Posições das colunas (no Salão dos Espinhos: X: 2 a 18, Z: -6.5 a 6.5)
+  const SPIKE_COL_X = [5.0, 8.5, 12.0, 15.5];
+  // Posições das fileiras (norte, centro, sul)
+  const SPIKE_ROW_Z = [-4.0, 0.0, 4.0];
 
-    ctx.fillStyle = color;
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText(symbolName, 128, 195);
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }
-
-  const tileTexSerpente = createRuneTileTex('🐍', 'SERPENTE', '#00e676');
-  const tileTexCorvo = createRuneTileTex('🦅', 'CORVO', '#40c4ff');
-  const tileTexChama = createRuneTileTex('🔥', 'CHAMA', '#ff5722');
-
-  const ROW_CONFIGS = [
-    { rowIdx: 0, z: 2.5, name: 'Serpente', icon: '🐍', tex: tileTexSerpente, color: 0x00e676 },
-    { rowIdx: 1, z: 5.0, name: 'Corvo', icon: '🦅', tex: tileTexCorvo, color: 0x40c4ff },
-    { rowIdx: 2, z: 7.5, name: 'Chama', icon: '🔥', tex: tileTexChama, color: 0xff5722 },
-  ];
-
-  const COL_X = [22.0, 25.5, 29.0, 32.5];
-
-  // Gerador de Caminho Aleatório (4 passos, cada um escolhe uma das 3 linhas: 0, 1 ou 2)
+  // Gerador de caminho seguro aleatório (4 passos, cada um escolhe 1 das 3 fileiras)
   let safePath = [
     Math.floor(Math.random() * 3),
     Math.floor(Math.random() * 3),
@@ -1140,87 +1108,110 @@ export function createDungeonEnvironment(scene) {
     Math.floor(Math.random() * 3),
   ];
 
-  const POEM_STANZAS = [
-    [
-      '1º Siga a Serpente na névoa escura do Norte 🐍,',
-      '1º Voe com o Corvo que plana ao Centro da morte 🦅,',
-      '1º Busque a Chama que brilha ao Sul como guia 🔥,'
-    ],
-    [
-      '2º Na toca da Serpente gélida à esquerda a terra é fria 🐍,',
-      '2º No pouso do Corvo ao Centro a sombra desvia 🦅,',
-      '2º Nas cinzas da Chama ao Sul a luz renascia 🔥,'
-    ],
-    [
-      '3º Onde os olhos da Serpente encaram o poço ao Norte 🐍,',
-      '3º Onde as asas do Corvo abraçam o Centro do abismo 🦅,',
-      '3º Onde o calor da Chama ao Sul afasta o perigo 🔥,'
-    ],
-    [
-      '4º E sob o rastro da Serpente o caminho triunfa ao Norte! 🐍',
-      '4º E no canto final do Corvo ao Centro encontra a sorte! 🦅',
-      '4º E na brasa viva da Chama ao Sul o destino é forte! 🔥'
-    ]
-  ];
+  // Textura de pedra simples para as lajes (sem ícones - estilo Undertale puro)
+  function createStoneTileTex(isDark) {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 128;
+    const ctx = c.getContext('2d');
+    // Base stone
+    ctx.fillStyle = isDark ? '#1a1d24' : '#252830';
+    ctx.fillRect(0, 0, 128, 128);
+    // Stone cracks
+    ctx.strokeStyle = isDark ? '#2a2e38' : '#333844';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(4, 4, 120, 120);
+    // Small diagonal crack lines for texture
+    ctx.strokeStyle = isDark ? '#1e222b' : '#2d3240';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const sx = 10 + i * 28;
+      ctx.beginPath(); ctx.moveTo(sx, 20); ctx.lineTo(sx + 15, 45); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx + 10, 80); ctx.lineTo(sx + 5, 110); ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const safeFloorTex = createStoneTileTex(false);
+  const dangerFloorTex = createStoneTileTex(true);
+
+  // Dica rúnica simples - descreve posição (Norte/Centro/Sul) para cada coluna
+  const POSITION_NAMES = ['Norte', 'Centro', 'Sul'];
+  const COLUMN_LABELS = ['1ª Pedra', '2ª Pedra', '3ª Pedra', '4ª Pedra'];
 
   function getPoemText() {
     const lines = [
-      '📜 "Ó TU QUE DESEJAS CRUZAR A CÂMARA DO ALTAR:',
-      'Ouça os versos das sombras antes de pisar:\n',
-      POEM_STANZAS[0][safePath[0]],
-      POEM_STANZAS[1][safePath[1]],
-      POEM_STANZAS[2][safePath[2]],
-      POEM_STANZAS[3][safePath[3]],
-      '\n⚠️ Aquele que pisar no ladrilho falso, cairá no abismo eterno sem retorno!"'
+      '📜 "CORREDOR DOS ESPINHOS - AVISO:',
+      'Pise com cuidado, apenas uma pedra por coluna é segura.',
+      'As outras escondem espinhos letais!\n',
+      `1ª coluna: pise ao ${POSITION_NAMES[safePath[0]]},`,
+      `2ª coluna: pise ao ${POSITION_NAMES[safePath[1]]},`,
+      `3ª coluna: pise ao ${POSITION_NAMES[safePath[2]]},`,
+      `4ª coluna: pise ao ${POSITION_NAMES[safePath[3]]}.`,
+      '\n⚠️ Pisar fora da pedra segura ativará os espinhos!"'
     ];
     return lines.join('\n');
   }
 
   const pathTiles = [];
 
-  COL_X.forEach((x, colIdx) => {
-    ROW_CONFIGS.forEach((rc) => {
-      // 1. Buraco subjacente no chão (sempre presente por baixo)
-      const holeMat = new THREE.MeshLambertMaterial({
-        map: holeTexture,
-        transparent: true,
-        side: THREE.DoubleSide,
-      });
-      const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.3), holeMat);
-      holeMesh.rotation.x = -Math.PI / 2;
-      holeMesh.position.set(x, 0.02, rc.z);
-      dungeonGroup.add(holeMesh);
+  SPIKE_COL_X.forEach((x, colIdx) => {
+    SPIKE_ROW_Z.forEach((z, rowIdx) => {
+      const isSafe = rowIdx === safePath[colIdx];
 
-      // 2. Laje rúnica cobrindo o buraco
+      // Laje de pedra no chão (parece igual visualmente - o perigo é oculto!)
+      const tileTex = isSafe ? safeFloorTex : dangerFloorTex;
       const tileMat = new THREE.MeshStandardMaterial({
-        map: rc.tex,
-        roughness: 0.8,
-        metalness: 0.1,
+        map: tileTex,
+        roughness: 0.9,
+        metalness: 0.05,
+        emissive: new THREE.Color(0x000000),
       });
-      const tileMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 2.3), tileMat);
+      const tileMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 2.8), tileMat);
       tileMesh.rotation.x = -Math.PI / 2;
-      tileMesh.position.set(x, 0.035, rc.z);
+      tileMesh.position.set(x, 0.03, z);
       dungeonGroup.add(tileMesh);
+
+      // Para as pedras FALSAS: adiciona espinhos retráteis que ficam escondidos
+      let spikeMesh = null;
+      let spikeMat = null;
+      if (!isSafe) {
+        spikeMat = new THREE.MeshBasicMaterial({
+          map: spikeFrames[0],
+          transparent: true,
+          side: THREE.DoubleSide,
+        });
+        spikeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), spikeMat);
+        spikeMesh.rotation.x = -Math.PI / 2;
+        spikeMesh.position.set(x, 0.04, z);
+        spikeMesh.visible = false; // começa escondido!
+        dungeonGroup.add(spikeMesh);
+      }
 
       pathTiles.push({
         colIdx,
-        rowIdx: rc.rowIdx,
+        rowIdx,
         x,
-        z: rc.z,
-        name: rc.name,
+        z,
+        name: POSITION_NAMES[rowIdx],
         mesh: tileMesh,
-        holeMesh,
+        spikeMesh,
+        spikeMat,
         mat: tileMat,
-        isSafe: rc.rowIdx === safePath[colIdx],
-        isCollapsed: false,
+        isSafe,
+        isTriggered: false,
         isStepped: false,
+        spikeTimer: 0,
+        spikeActive: false,
       });
     });
   });
 
-  // Placa Rúnica do Poema (Estela à esquerda do caminho)
+  // Estela com instruções na entrada do corredor
   const poemMonumentGroup = new THREE.Group();
-  poemMonumentGroup.position.set(20.0, 0, 5.0);
+  poemMonumentGroup.position.set(3.0, 0, -5.5);
 
   const pmBase = new THREE.Mesh(
     new THREE.BoxGeometry(1.2, 2.2, 0.8),
@@ -1229,31 +1220,34 @@ export function createDungeonEnvironment(scene) {
   pmBase.position.y = 1.1;
   poemMonumentGroup.add(pmBase);
 
-  const pmLight = new THREE.PointLight(0x40c4ff, 2.0, 7);
+  const pmLight = new THREE.PointLight(0xffe0b2, 2.0, 7);
   pmLight.position.set(0, 1.8, 0);
   poemMonumentGroup.add(pmLight);
 
   dungeonGroup.add(poemMonumentGroup);
-  obstacles.push({ minX: 19.3, maxX: 20.7, minZ: 4.5, maxZ: 5.5 });
+  obstacles.push({ minX: 2.3, maxX: 3.7, minZ: -6.0, maxZ: -5.0 });
 
   const poemObject = {
     id: 'poem_clue_monument',
     type: 'lore_clue',
-    clueSpeaker: 'ESTELA DO POEMA DAS CATACUMBAS',
+    clueSpeaker: 'ESTELA DO CORREDOR DOS ESPINHOS',
     clueText: getPoemText(),
-    x: 20.0,
-    z: 5.0,
+    x: 3.0,
+    z: -5.5,
     radius: 3.0,
-    prompt: '[E] Ler Placa Rúnica (Poema do Caminho Sagrado)',
+    prompt: '[E] Ler Estela (Dica do Corredor de Espinhos)',
   };
   interactiveObjects.push(poemObject);
 
   function resetPathTiles() {
     pathTiles.forEach((tile) => {
-      tile.isCollapsed = false;
+      tile.isTriggered = false;
       tile.isStepped = false;
-      tile.mesh.visible = true;
+      tile.spikeActive = false;
+      tile.spikeTimer = 0;
       tile.mat.emissive.setHex(0x000000);
+      if (tile.spikeMesh) tile.spikeMesh.visible = false;
+      if (tile.spikeMat) tile.spikeMat.map = spikeFrames[0];
     });
   }
 
@@ -1264,10 +1258,11 @@ export function createDungeonEnvironment(scene) {
       Math.floor(Math.random() * 3),
       Math.floor(Math.random() * 3),
     ];
-    poemObject.clueText = getPoemText();
+    // Atualiza quais tiles são seguros
     pathTiles.forEach((tile) => {
       tile.isSafe = tile.rowIdx === safePath[tile.colIdx];
     });
+    poemObject.clueText = getPoemText();
     resetPathTiles();
   }
 
@@ -1277,6 +1272,7 @@ export function createDungeonEnvironment(scene) {
     getPoemText,
     resetPathTiles,
     rerollSafePath,
+    spikeFrames,
   };
 
   // Escape Gate (Impede 100% o acesso à escadaria de fuga sem resolver os enigmas)
