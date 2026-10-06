@@ -156,68 +156,84 @@ export function createAct3Environment(scene) {
   exitIsland.position.set(34, -0.25, 0);
   act3Group.add(exitIsland);
 
-  // D. Toxic Acid Pool in Chamber 1 (X: -12 to -4, Z: -9 to +9 - Cobrindo do topo ao chão)
+  // D. Toxic Acid Pool in Chamber 1 (X: -18 to -2, Z: -9 to +9 - Cobrindo do topo ao chão)
   const acidPoolMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 18),
+    new THREE.PlaneGeometry(16, 18),
     acidMat
   );
   acidPoolMesh.rotation.x = -Math.PI / 2;
-  acidPoolMesh.position.set(-8, 0.02, 0);
+  acidPoolMesh.position.set(-10, 0.02, 0);
   act3Group.add(acidPoolMesh);
 
-  // Passarela de pedra segura através da abertura e saída do desenho de losango (X: -12 a -4, Z: -1 a +1)
-  const safeWalkway = new THREE.Mesh(
-    new THREE.PlaneGeometry(8.0, 2.0),
-    new THREE.MeshStandardMaterial({ color: 0x1e272c, roughness: 0.85 })
-  );
-  safeWalkway.rotation.x = -Math.PI / 2;
-  safeWalkway.position.set(-8, 0.035, 0);
-  act3Group.add(safeWalkway);
-
-  // Borda geométrica do losango (o desenho original do ácido) com abertura no Oeste (entrada) e Leste (saída)
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9 });
-  const beamGeo = new THREE.BoxGeometry(4.2, 0.08, 0.65);
-
-  // 1. Braço Superior-Esquerdo (liga a abertura Oeste ao vértice Norte)
-  const beamTopLeft = new THREE.Mesh(beamGeo, trimMat);
-  beamTopLeft.position.set(-9.8, 0.05, -1.8);
-  beamTopLeft.rotation.y = -Math.PI / 4;
-  act3Group.add(beamTopLeft);
-
-  // 2. Braço Superior-Direito (liga o vértice Norte à abertura Leste)
-  const beamTopRight = new THREE.Mesh(beamGeo, trimMat);
-  beamTopRight.position.set(-6.2, 0.05, -1.8);
-  beamTopRight.rotation.y = Math.PI / 4;
-  act3Group.add(beamTopRight);
-
-  // 3. Braço Inferior-Esquerdo (liga a abertura Oeste ao vértice Sul)
-  const beamBottomLeft = new THREE.Mesh(beamGeo, trimMat);
-  beamBottomLeft.position.set(-9.8, 0.05, 1.8);
-  beamBottomLeft.rotation.y = Math.PI / 4;
-  act3Group.add(beamBottomLeft);
-
-  // 4. Braço Inferior-Direito (liga o vértice Sul à abertura Leste)
-  const beamBottomRight = new THREE.Mesh(beamGeo, trimMat);
-  beamBottomRight.position.set(-6.2, 0.05, 1.8);
-  beamBottomRight.rotation.y = -Math.PI / 4;
-  act3Group.add(beamBottomRight);
-
-  // Áreas perigosas de ácido (ao Norte e ao Sul da abertura/passarela segura)
-  acidHazards.push({
-    minX: -12.0,
-    maxX: -4.0,
-    minZ: -9.0,
-    maxZ: -1.0,
-    damage: 25,
+  // Trilha segura de pedra preta idêntica ao desenho fornecido pelo usuário
+  const pathMat = new THREE.MeshStandardMaterial({
+    color: 0x141619,
+    roughness: 0.9,
+    metalness: 0.2,
   });
 
-  acidHazards.push({
-    minX: -12.0,
-    maxX: -4.0,
-    minZ: 1.0,
-    maxZ: 9.0,
-    damage: 25,
+  const pathGroup = new THREE.Group();
+
+  // 1. Caminho reto da esquerda (entrada no ácido)
+  const leftPath = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.5), pathMat);
+  leftPath.rotation.x = -Math.PI / 2;
+  leftPath.position.set(-15.5, 0.035, 0);
+  pathGroup.add(leftPath);
+
+  // 2. Caminho reto da direita (saída do ácido)
+  const rightPath = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.5), pathMat);
+  rightPath.rotation.x = -Math.PI / 2;
+  rightPath.position.set(-4.5, 0.035, 0);
+  pathGroup.add(rightPath);
+
+  // Ângulo e comprimento dos braços do losango: liga (-13, 0) a (-10, ±3.5) e depois a (-7, 0)
+  const armAngle = Math.atan2(3.5, 3.0); // ~0.862 rad (~49.4 graus)
+  const armLength = Math.hypot(3.0, 3.5); // ~4.61m
+
+  // 3. Braço Superior-Esquerdo do Losango (de (-13, 0) até (-10, -3.5))
+  const armTopLeft = new THREE.Mesh(new THREE.PlaneGeometry(armLength + 0.3, 1.5), pathMat);
+  armTopLeft.rotation.x = -Math.PI / 2;
+  armTopLeft.rotation.z = armAngle;
+  armTopLeft.position.set(-11.5, 0.035, -1.75);
+  pathGroup.add(armTopLeft);
+
+  // 4. Braço Superior-Direito do Losango (de (-10, -3.5) até (-7, 0))
+  const armTopRight = new THREE.Mesh(new THREE.PlaneGeometry(armLength + 0.3, 1.5), pathMat);
+  armTopRight.rotation.x = -Math.PI / 2;
+  armTopRight.rotation.z = -armAngle;
+  armTopRight.position.set(-8.5, 0.035, -1.75);
+  pathGroup.add(armTopRight);
+
+  // 5. Braço Inferior-Esquerdo do Losango (de (-13, 0) até (-10, +3.5))
+  const armBottomLeft = new THREE.Mesh(new THREE.PlaneGeometry(armLength + 0.3, 1.5), pathMat);
+  armBottomLeft.rotation.x = -Math.PI / 2;
+  armBottomLeft.rotation.z = -armAngle;
+  armBottomLeft.position.set(-11.5, 0.035, 1.75);
+  pathGroup.add(armBottomLeft);
+
+  // 6. Braço Inferior-Direito do Losango (de (-10, +3.5) até (-7, 0))
+  const armBottomRight = new THREE.Mesh(new THREE.PlaneGeometry(armLength + 0.3, 1.5), pathMat);
+  armBottomRight.rotation.x = -Math.PI / 2;
+  armBottomRight.rotation.z = armAngle;
+  armBottomRight.position.set(-8.5, 0.035, 1.75);
+  pathGroup.add(armBottomRight);
+
+  // Junções circulares suaves nos 4 vértices para acabamento contínuo perfeito
+  const jointGeo = new THREE.CircleGeometry(0.85, 16);
+  const jointPoints = [
+    { x: -13.0, z: 0.0 },  // Bifurcação Esquerda
+    { x: -7.0, z: 0.0 },   // Junção Direita
+    { x: -10.0, z: -3.5 }, // Vértice Superior
+    { x: -10.0, z: 3.5 },  // Vértice Inferior
+  ];
+  jointPoints.forEach((pt) => {
+    const jMesh = new THREE.Mesh(jointGeo, pathMat);
+    jMesh.rotation.x = -Math.PI / 2;
+    jMesh.position.set(pt.x, 0.036, pt.z);
+    pathGroup.add(jMesh);
   });
+
+  act3Group.add(pathGroup);
 
   // ========================================================
   // 3. THE RISING MAGMA BRIDGE
@@ -646,10 +662,10 @@ export function createAct3Environment(scene) {
   act3Group.add(lavaLight2);
   animatedLights.push({ light: lavaLight2, baseIntensity: 4.0, speed: 7.5 });
 
-  const acidLight = new THREE.PointLight(0x00e676, 3.0, 16);
-  acidLight.position.set(-8, 2.5, 0);
+  const acidLight = new THREE.PointLight(0x00e676, 3.5, 20);
+  acidLight.position.set(-10, 2.8, 0);
   act3Group.add(acidLight);
-  animatedLights.push({ light: acidLight, baseIntensity: 3.0, speed: 4.0 });
+  animatedLights.push({ light: acidLight, baseIntensity: 3.5, speed: 4.0 });
 
   scene.add(act3Group);
 

@@ -3089,21 +3089,41 @@ function animate(currentTime) {
         }
       }
 
-      // Check Acid Hazards
-      for (const ah of act3Env.acidHazards) {
-        if (
-          player.group.position.x >= ah.minX &&
-          player.group.position.x <= ah.maxX &&
-          player.group.position.z >= ah.minZ &&
-          player.group.position.z <= ah.maxZ
-        ) {
-          player.hp -= ah.damage * dt;
+      // Check Acid Hazard in Chamber 1 (Ácido cobre todo o vão, seguro apenas na trilha preta)
+      if (
+        player.group.position.x >= -18.0 &&
+        player.group.position.x <= -2.0 &&
+        player.group.position.z >= -9.0 &&
+        player.group.position.z <= 9.0
+      ) {
+        const px = player.group.position.x;
+        const pz = player.group.position.z;
+        let onSafePath = false;
+
+        if (px >= -18.0 && px <= -13.0) {
+          // Trilha reta da esquerda
+          if (Math.abs(pz) <= 0.85) onSafePath = true;
+        } else if (px >= -7.0 && px <= -2.0) {
+          // Trilha reta da direita
+          if (Math.abs(pz) <= 0.85) onSafePath = true;
+        } else if (px > -13.0 && px < -7.0) {
+          // Losango central: bifurcação para cima e para baixo
+          const dx = Math.abs(px - (-10.0));
+          const targetZ = 3.5 * (1.0 - dx / 3.0);
+          // Caminho superior (-targetZ) ou caminho inferior (+targetZ)
+          if (Math.abs(pz - (-targetZ)) <= 0.95 || Math.abs(pz - targetZ) <= 0.95) {
+            onSafePath = true;
+          }
+        }
+
+        if (!onSafePath) {
+          player.hp -= 25 * dt;
           player.noiseLevel = 2;
           playSound('hit');
           updateHUD();
           if (player.hp <= 0) {
             player.hp = 0;
-            triggerKnockout('Você pisou no poço de ácido corrosivo e suas forças se esvaíram!');
+            triggerKnockout('Você caiu no ácido corrosivo e suas forças se esvaíram!');
           }
         }
       }
