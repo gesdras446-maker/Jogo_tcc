@@ -12,7 +12,7 @@ const app = document.querySelector('#app');
 app.innerHTML = `
   <!-- Top Right Actions Bar -->
   <div class="top-actions-bar">
-    <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/3</span>)</button>
+    <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/2</span>)</button>
     <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
   </div>
 
@@ -29,16 +29,16 @@ app.innerHTML = `
     </div>
 
     <div class="hud-stealth-card">
-      <span>👂 RUÍDO (SOM):</span>
-      <span class="stealth-status silent" id="stealthStatus">🔇 PARADO (SILENCIOSO)</span>
+      <span class="hud-stealth-label">RUÍDO (SOM):</span>
+      <span class="stealth-status silent" id="stealthStatus">PARADO (SILENCIOSO)</span>
     </div>
 
     <div class="hud-inventory-card">
-      <div class="hud-inventory-title">📜 SELOS PARA ABRIR O PORTÃO</div>
+      <div class="hud-inventory-title">SELOS PARA ABRIR O PORTÃO</div>
       <div class="hud-items-row">
-        <div class="hud-item-slot" id="slotBronzeKey">🗝️ Chave [ ]</div>
-        <div class="hud-item-slot" id="slotCthulhuRune">🔮 Runa [ ]</div>
-        <div class="hud-item-slot" id="slotCultistEmblem">📜 Emblema [ ]</div>
+        <div class="hud-item-slot" id="slotBronzeKey">Chave [ ]</div>
+        <div class="hud-item-slot" id="slotCthulhuRune">Runa [ ]</div>
+        <div class="hud-item-slot" id="slotCultistEmblem">Emblema [ ]</div>
       </div>
     </div>
   </div>
@@ -171,12 +171,6 @@ app.innerHTML = `
       </div>
 
       <div class="relic-game-wrapper">
-        <!-- Corner target preview (Idêntico ao Kabuto nas Ruínas de Alph da imagem de referência!) -->
-        <div class="relic-preview-corner">
-          <span>ALVO 🎯</span>
-          <canvas class="relic-preview-canvas" id="relicPreviewCanvas" width="72" height="72"></canvas>
-        </div>
-
         <!-- 4x4 Grid Board -->
         <div class="relic-grid-board" id="relicGridBoard">
           <!-- 16 slots gerados dinamicamente com borda vermelha de seleção -->
@@ -189,7 +183,9 @@ app.innerHTML = `
 
       <div class="relic-actions">
         <button class="puzzle-btn primary" id="btnSolveRelic">⚡ Encaixar Selo</button>
+        <button class="puzzle-btn secondary" id="btnScrambleRelic">🔄 Embaralhar</button>
         <button class="puzzle-btn secondary" id="btnCloseRelicModal">Fechar</button>
+        <button class="puzzle-btn skip-demo" id="btnSkipRelic" title="Modo apresentação — pula o puzzle instantaneamente">⏭️ Pular (Demo)</button>
       </div>
     </div>
   </div>
@@ -200,7 +196,7 @@ app.innerHTML = `
       <div class="target-header">
         <div class="target-title">⚡ BALISTA RÚNICA: QUICK TIME EVENT</div>
         <div class="target-clue-box" id="qteInstructionBox">
-          🎯 <strong>Mecanismo de Disparo Rápido:</strong> Mire nos 4 Pilares! Pressione a tecla rúnica indicada antes que o tempo esgote para calibrar cada disparo!
+          🎯 <strong>Mecanismo de Disparo Rápido (QTE):</strong> Pressione a tecla rúnica antes que o anel se feche! ⚠️ <em>Erros ou lentidão causam coice de lava (-20 HP)!</em>
         </div>
       </div>
 
@@ -211,8 +207,10 @@ app.innerHTML = `
           <div class="target-dot" id="tdot1"></div>
           <div class="target-dot" id="tdot2"></div>
           <div class="target-dot" id="tdot3"></div>
+          <div class="target-dot" id="tdot4"></div>
+          <div class="target-dot" id="tdot5"></div>
         </div>
-        <span id="targetProgressText">(0 / 4)</span>
+        <span id="targetProgressText">(0 / 6)</span>
       </div>
 
       <div class="qte-arena">
@@ -237,7 +235,7 @@ app.innerHTML = `
       </div>
 
       <div style="color: #ffe0b2; font-size: 14px; font-weight: bold; min-height: 22px; text-align: center;" id="targetFeedbackText">
-        Mire a balista e inicie o teste de reflexos rápidos para os 4 disparos!
+        Mire a balista e inicie o teste de reflexos rápidos para os disparos!
       </div>
 
       <div class="target-actions">
@@ -249,13 +247,32 @@ app.innerHTML = `
     </div>
   </div>
 
-  <!-- Controls & How To Play Overlay -->
+  <!-- PLACA DE PEDRA DO MONÓLITO ANCESTRAL (MODAL DE DICA) -->
+  <div class="stone-plaque-modal-overlay hidden" id="stonePlaqueModal">
+    <div class="stone-plaque-card">
+      <div class="stone-plaque-header">
+        <div class="stone-plaque-icon">🏛️</div>
+        <div class="stone-plaque-title">MONÓLITO DAS LÂMINAS VELADAS</div>
+        <div class="stone-plaque-subtitle">Inscrições ancestrais esculpidas na rocha negra</div>
+      </div>
+      <div class="stone-plaque-divider"></div>
+      <div class="stone-plaque-content" id="stonePlaqueText">
+        <!-- Inscrição poética gerada dinamicamente -->
+      </div>
+      <div class="stone-plaque-divider"></div>
+      <div class="stone-plaque-actions">
+        <button class="puzzle-btn primary" id="btnCloseStonePlaque">✕ Fechar Inscrição [ESC]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls & How To Play Overlay (Pergaminho Antigo) -->
   <div class="controls-overlay hidden" id="controlsOverlay">
     <div class="controls-card">
+      <button class="controls-close-btn" id="btnCloseControls" type="button" title="Voltar ao Menu">✕</button>
+
       <div class="controls-header">
-        <div class="controls-badge">GUIA & COMANDOS</div>
-        <h2 class="controls-title">COMO JOGAR</h2>
-        <p class="controls-subtitle">Você caminha sozinho na calada da noite sob o viaduto... Fique atento aos seus arredores.</p>
+        <h2 class="controls-title">COMANDOS</h2>
       </div>
 
       <div class="controls-grid">
@@ -280,7 +297,7 @@ app.innerHTML = `
           </div>
           <div class="key-info">
             <span class="key-title">Modo Silencioso (Furtividade)</span>
-            <span class="key-desc">Segure C para andar em silêncio! Os monstros são cegos e só te ouvem caso faça barulho!</span>
+            <span class="key-desc">Segure C para andar em silêncio (os monstros não ouvem seus passos)</span>
           </div>
         </div>
 
@@ -290,7 +307,7 @@ app.innerHTML = `
           </div>
           <div class="key-info">
             <span class="key-title">Correr (Disparada Rápida)</span>
-            <span class="key-desc">Segure SHIFT para correr velozmente! Cuidado: o som alto dos passos alertará os monstros!</span>
+            <span class="key-desc">Segure SHIFT para correr rápido (passos altos alertam monstros)</span>
           </div>
         </div>
 
@@ -300,19 +317,14 @@ app.innerHTML = `
           </div>
           <div class="key-info">
             <span class="key-title">Interagir / Investigar</span>
-            <span class="key-desc">Aproxime-se de objetos, alavancas, cofres ou monumentos e pressione E</span>
+            <span class="key-desc">Pressione E para investigar objetos, alavancas e portas</span>
           </div>
         </div>
       </div>
 
-      <div class="controls-story-box">
-        ⚠️ <strong>Atenção:</strong> Cuidado com os buracos profundos e armadilhas de espinhos!
+      <div class="controls-click-hint">
+        ▶ Clique na tela ou pressione ESPAÇO para começar
       </div>
-
-      <button class="btn-start-game" id="btnStartGame">
-        <span>▶️ INICIAR JORNADA</span>
-        <small>(Ou pressione ESPAÇO para começar)</small>
-      </button>
     </div>
   </div>
 
@@ -330,31 +342,34 @@ app.innerHTML = `
   <div class="victory-overlay hidden" id="victoryOverlay">
     <div class="victory-modal-card">
       <div class="victory-badge" id="victoryBadge">🏆 CONQUISTA DE FINAL DESBLOQUEADA!</div>
-      <div class="victory-icon-large" id="victoryIconLarge">🚪</div>
-      <div class="victory-title" id="victoryTitle">🏆 FINAL #1: ALÉM DA PORTA ANCESTRAL</div>
+      <div class="victory-icon-large" id="victoryIconLarge">🐙</div>
+      <h2 class="victory-title" id="victoryTitle">🏆 FINAL #4: O RECEPTÁCULO DE CTHULHU</h2>
+      <div class="victory-image-wrapper hidden" id="victoryImageWrapper">
+        <img class="victory-image" id="victoryImage" src="/assets/cthulhu.png" alt="O Receptáculo de Cthulhu" />
+      </div>
       <div class="victory-quote" id="victoryQuote">"A luz do mundo exterior penetra seus olhos uma vez mais..."</div>
       <div class="victory-text" id="victoryText">
         PARABÉNS! Você quebrou os selos arcanos e escapou com vida das profundezas cósmicas!
       </div>
       <div class="victory-buttons">
         <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
-        <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/3</span>)</button>
+        <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
       </div>
     </div>
   </div>
 
-  <!-- SECRET ENDING OVERLAY (#2 - EU SINTO QUE TEM ALGUMA COISA DE ERRADO COM AQUELE LADO) -->
+  <!-- SECRET ENDING OVERLAY (#3 - EU SINTO QUE TEM ALGUMA COISA DE ERRADO COM AQUELE LADO) -->
   <div class="secret-ending-overlay hidden" id="secretEndingOverlay">
     <div class="secret-ending-card">
       <div class="secret-ending-badge">🏆 CONQUISTA DE FINAL DESBLOQUEADA!</div>
       <h2 class="secret-ending-title">
-        FINAL #2
+        FINAL #3
         <span>"Eu sinto que tem alguma coisa de errado com aquele lado"</span>
       </h2>
       
       <div class="secret-ending-image-wrapper">
-        <img class="secret-ending-image" src="/ending_pixel_art.jpg" alt="Final #2: Eu sinto que tem alguma coisa de errado com aquele lado" />
+        <img class="secret-ending-image" src="/ending_pixel_art.jpg" alt="Final #3: Eu sinto que tem alguma coisa de errado com aquele lado" />
       </div>
 
       <div class="secret-ending-quote">
@@ -367,24 +382,27 @@ app.innerHTML = `
 
       <div class="secret-ending-actions">
         <button class="secret-ending-btn primary" id="btnSecretPlayAgain">🔄 Jogar Novamente</button>
-        <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/3</span>)</button>
+        <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="secret-ending-btn secondary" id="btnSecretMainMenu">🏠 Menu Principal</button>
       </div>
     </div>
   </div>
 
-  <!-- ENDINGS & ACHIEVEMENTS GALLERY MODAL (COLEÇÃO N/3) -->
+  <!-- ENDINGS & ACHIEVEMENTS GALLERY MODAL (COLEÇÃO DEMO 2/4) -->
   <div class="endings-modal-overlay hidden" id="endingsModal">
     <div class="endings-modal-card">
       <div class="endings-modal-header">
         <div class="endings-modal-title">🏆 GALERIA DE FINAIS & CONQUISTAS</div>
         <div class="endings-progress-wrapper">
           <div class="endings-progress-text">
-            <span>Progresso Total:</span>
-            <span id="endingsProgressText">0 de 3 Descobertos (0%)</span>
+            <span>Progresso da Demo:</span>
+            <span id="endingsProgressText">0 de 2 Descobertos (0%)</span>
           </div>
           <div class="endings-progress-bg">
             <div class="endings-progress-fill" id="endingsProgressFill"></div>
+          </div>
+          <div class="endings-demo-subtext">
+            🎮 <strong>Versão Demo:</strong> 2 finais disponíveis para alcançar • 4 finais no jogo completo
           </div>
         </div>
       </div>
@@ -408,7 +426,7 @@ app.innerHTML = `
       <div class="menu-buttons">
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
-        <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/3</span>)</button>
+        <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/2</span>)</button>
         <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
         <button class="menu-btn" id="btnSaveGame" style="display: none;">💾 Salvar Jogo</button>
@@ -615,7 +633,7 @@ const menuTitleEl = document.querySelector('#menuTitle');
 const menuSubtitleEl = document.querySelector('#menuSubtitle');
 
 const controlsOverlayEl = document.querySelector('#controlsOverlay');
-const btnStartGameEl = document.querySelector('#btnStartGame');
+const btnCloseControlsEl = document.querySelector('#btnCloseControls');
 
 const btnNewGameEl = document.querySelector('#btnNewGame');
 const btnContinueEl = document.querySelector('#btnContinue');
@@ -657,33 +675,48 @@ const endingsModalEl = document.querySelector('#endingsModal');
 const btnCloseEndingsModalEl = document.querySelector('#btnCloseEndingsModal');
 
 // ========================================================
-// 3 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (N/3)
+// 4 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (2 DISPONÍVEIS NA DEMO)
 // ========================================================
-const TOTAL_ENDINGS = 3;
+const TOTAL_ENDINGS = 4;
+const DEMO_TOTAL_ENDINGS = 2;
+const DEMO_AVAILABLE_IDS = [3, 4];
+
 const ENDINGS_DATA = [
   {
-    id: 2,
+    id: 1,
     number: '#1',
-    title: 'As Sombras do Bueiro',
-    desc: 'Você optou por descer no bueiro fétido, rastejando pela imundície dos esgotos esquecidos até emergir em um beco sombrio da cidade.',
+    title: 'Desbloqueado só na versão completa',
+    desc: 'Este final não pode ser alcançado nesta versão demo. Estará disponível no lançamento da versão completa do jogo!',
+    icon: '🚪',
+    image: null,
+    availableInDemo: false,
+  },
+  {
+    id: 2,
+    number: '#2',
+    title: 'Desbloqueado só na versão completa',
+    desc: 'Este final não pode ser alcançado nesta versão demo. Estará disponível no lançamento da versão completa do jogo!',
     icon: '🕳️',
     image: null,
+    availableInDemo: false,
   },
   {
     id: 3,
-    number: '#2',
+    number: '#3',
     title: 'Eu sinto que tem alguma coisa de errado com aquele lado',
     desc: 'Seus instintos salvaram a sua vida. Ao pressentir a emboscada na rua escura, você deu meia-volta e retornou em segurança.',
     icon: '🏃‍♂️',
     image: '/ending_pixel_art.jpg',
+    availableInDemo: true,
   },
   {
     id: 4,
-    number: '#3',
+    number: '#4',
     title: 'O Receptáculo de Cthulhu',
     desc: 'Você se prostrou perante o Cultista Supremo, aceitou o ritual profano e seu corpo tornou-se o novo receptáculo terreno do Grande Cthulhu!',
     icon: '🐙',
-    image: null,
+    image: '/assets/cthulhu.png',
+    availableInDemo: true,
   },
 ];
 
@@ -692,13 +725,22 @@ function getUnlockedEndings() {
     const raw = localStorage.getItem('dungeon_unlocked_endings');
     if (!raw) return [];
     const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    if (!Array.isArray(list)) return [];
+    // Apenas os 2 finais permitidos na Demo podem ser considerados desbloqueados nesta demo!
+    const valid = list.filter((id) => DEMO_AVAILABLE_IDS.includes(id));
+    if (valid.length !== list.length) {
+      localStorage.setItem('dungeon_unlocked_endings', JSON.stringify(valid));
+    }
+    return valid;
   } catch (e) {
     return [];
   }
 }
 
 function unlockEnding(id) {
+  if (!DEMO_AVAILABLE_IDS.includes(id)) {
+    return;
+  }
   const current = getUnlockedEndings();
   if (!current.includes(id)) {
     current.push(id);
@@ -711,17 +753,17 @@ function unlockEnding(id) {
 function updateEndingsUI() {
   const unlocked = getUnlockedEndings();
   const count = unlocked.length;
-  const countStr = `${count}/${TOTAL_ENDINGS}`;
+  const countStr = `${count}/${DEMO_TOTAL_ENDINGS}`;
 
   document.querySelectorAll('.endings-counter-val').forEach((el) => {
     el.textContent = countStr;
   });
 
-  const progressPct = Math.round((count / TOTAL_ENDINGS) * 100);
+  const progressPct = Math.round((count / DEMO_TOTAL_ENDINGS) * 100);
   const endingsProgressTextEl = document.querySelector('#endingsProgressText');
   const endingsProgressFillEl = document.querySelector('#endingsProgressFill');
   if (endingsProgressTextEl) {
-    endingsProgressTextEl.textContent = `${count} de ${TOTAL_ENDINGS} Descobertos (${progressPct}%)`;
+    endingsProgressTextEl.textContent = `${count} de ${DEMO_TOTAL_ENDINGS} Descobertos (${progressPct}%)`;
   }
   if (endingsProgressFillEl) {
     endingsProgressFillEl.style.width = `${progressPct}%`;
@@ -730,14 +772,34 @@ function updateEndingsUI() {
   const grid = document.querySelector('#endingsGrid');
   if (grid) {
     grid.innerHTML = ENDINGS_DATA.map((ending) => {
+      if (!ending.availableInDemo) {
+        return `
+          <div class="ending-item-card locked demo-locked">
+            <div class="ending-card-icon">🔒</div>
+            <div class="ending-card-content">
+              <div class="ending-card-tag demo-tag">${ending.number} • 🔒 BLOQUEADO NA DEMO</div>
+              <div class="ending-card-name">Desbloqueado só na versão completa</div>
+              <div class="ending-card-desc">Este final não pode ser alcançado nesta versão demo. Estará disponível no lançamento da versão completa do jogo!</div>
+            </div>
+          </div>
+        `;
+      }
+
       const isUnlocked = unlocked.includes(ending.id);
       return `
         <div class="ending-item-card ${isUnlocked ? 'unlocked' : 'locked'}">
           <div class="ending-card-icon">${isUnlocked ? ending.icon : '🔒'}</div>
           <div class="ending-card-content">
-            <div class="ending-card-tag">${ending.number} • ${isUnlocked ? '✓ DESBLOQUEADO' : 'BLOQUEADO'}</div>
-            <div class="ending-card-name">${isUnlocked ? ending.title : '??? (Não Descoberto)'}</div>
-            <div class="ending-card-desc">${isUnlocked ? ending.desc : 'Explore os cenários e tome diferentes decisões para descobrir este final.'}</div>
+            <div class="ending-card-tag ${isUnlocked ? '' : 'demo-avail'}">
+              ${ending.number} • ${isUnlocked ? '✓ DESBLOQUEADO' : 'DISPONÍVEL NA DEMO'}
+            </div>
+            <div class="ending-card-name">
+              ${isUnlocked ? ending.title : '??? (Não Descoberto)'}
+              <span class="badge-demo-version">Demo</span>
+            </div>
+            <div class="ending-card-desc">
+              ${isUnlocked ? ending.desc : 'Explore os cenários e tome diferentes decisões para descobrir este final da demo.'}
+            </div>
             ${isUnlocked && ending.image ? `<img class="ending-thumb-preview" src="${ending.image}" alt="${ending.title}" />` : ''}
           </div>
         </div>
@@ -797,6 +859,7 @@ const relicStatusTextEl = document.querySelector('#relicStatusText');
 const btnScrambleRelicEl = document.querySelector('#btnScrambleRelic');
 const btnSolveRelicEl = document.querySelector('#btnSolveRelic');
 const btnCloseRelicModalEl = document.querySelector('#btnCloseRelicModal');
+const btnSkipRelicEl = document.querySelector('#btnSkipRelic');
 
 const targetModalEl = document.querySelector('#targetShootingModal');
 const targetFeedbackTextEl = document.querySelector('#targetFeedbackText');
@@ -1028,18 +1091,29 @@ btnSolveRelicEl.addEventListener('click', () => {
   checkRelicPuzzleWin();
 });
 
+if (btnSkipRelicEl) {
+  btnSkipRelicEl.addEventListener('click', () => {
+    relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
+    renderRelicBoard();
+    checkRelicPuzzleWin();
+  });
+}
+
 btnCloseRelicModalEl.addEventListener('click', () => {
   relicModalEl.classList.add('hidden');
 });
 
 // ========================================================
 // ATO 3 PUZZLE 2: BALISTA RÚNICA - QUICK TIME EVENT (QTE)
+// Estilo Spider-Man com anel retrátil e punição de dano de vida!
 // ========================================================
 const QTE_STEPS = [
-  { id: 1, name: 'PILAR DO FOGO', symbol: '🔥', key: 'q', keyDisplay: 'Q', color: '#ff5722', duration: 2500 },
-  { id: 2, name: 'PILAR DO SANGUE', symbol: '🩸', key: 'e', keyDisplay: 'E', color: '#ff1744', duration: 2300 },
-  { id: 3, name: 'PILAR DO RAIO', symbol: '⚡', key: 'r', keyDisplay: 'R', color: '#00e5ff', duration: 2000 },
-  { id: 4, name: 'PILAR DO VAZIO', symbol: '👁️', key: ' ', keyDisplay: 'ESPAÇO', color: '#d500f9', duration: 1800 },
+  { id: 1, name: '1º DISPARO: PILAR DO FOGO', symbol: '🔥', key: 'q', keyDisplay: 'Q', color: '#ff5722', duration: 2500 },
+  { id: 2, name: '2º DISPARO: PULSO DE SANGUE', symbol: '🩸', key: 'e', keyDisplay: 'E', color: '#ff1744', duration: 2300 },
+  { id: 3, name: '3º DISPARO: CONDUTOR DE RAIO', symbol: '⚡', key: 'r', keyDisplay: 'R', color: '#00e5ff', duration: 2100 },
+  { id: 4, name: '4º DISPARO: TRAVA DO ABISMO', symbol: '⚔️', key: 'f', keyDisplay: 'F', color: '#ffa726', duration: 2000 },
+  { id: 5, name: '5º DISPARO: CANALIZAÇÃO RÚNICA', symbol: '👁️', key: 'c', keyDisplay: 'C', color: '#e040fb', duration: 1900 },
+  { id: 6, name: 'DISPARO FINAL: SOBRECARGA!', symbol: '💥', key: ' ', keyDisplay: 'ESPAÇO', color: '#76ff03', duration: 2200 },
 ];
 
 let qteCurrentIndex = 0;
@@ -1050,16 +1124,16 @@ let qteStartTime = 0;
 let qteMaxDuration = 2500;
 
 function updateQteUI() {
-  [0, 1, 2, 3].forEach((i) => {
+  for (let i = 0; i < QTE_STEPS.length; i++) {
     const dot = document.querySelector(`#tdot${i}`);
     if (dot) {
       if (i < qteCurrentIndex) dot.classList.add('active');
       else dot.classList.remove('active');
     }
-  });
+  }
 
   if (targetProgressTextEl) {
-    targetProgressTextEl.textContent = `(${qteCurrentIndex} / 4)`;
+    targetProgressTextEl.textContent = `(${qteCurrentIndex} / ${QTE_STEPS.length})`;
   }
 }
 
@@ -1068,21 +1142,47 @@ function openQteModal() {
   qteActive = false;
   qteCanInput = false;
   qteCurrentIndex = 0;
+  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
   updateQteUI();
-  if (btnStartQteEl) btnStartQteEl.style.display = 'inline-block';
+
+  if (btnStartQteEl) {
+    btnStartQteEl.style.display = 'inline-block';
+    btnStartQteEl.textContent = '🏹 Iniciar Disparos (QTE)';
+  }
   if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
+
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = 'Mire a balista e inicie o teste de reflexos rápidos para os 4 disparos!';
+    targetFeedbackTextEl.textContent = 'Pressione [INICIAR] ou aperte [ESPAÇO] para começar o teste de reflexos rápidos!';
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
+
   const qteTargetNameEl = document.querySelector('#qteTargetName');
   const qteTargetIconEl = document.querySelector('#qteTargetIcon');
   const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
   const qteTimerFillEl = document.querySelector('#qteTimerFill');
-  if (qteTargetNameEl) qteTargetNameEl.textContent = '1º ALVO: PILAR DO FOGO';
-  if (qteTargetIconEl) qteTargetIconEl.textContent = '🔥';
-  if (qteKeyLetterEl) qteKeyLetterEl.textContent = 'Q';
+  const qtePulseRingEl = document.querySelector('#qtePulseRing');
+  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+
+  if (qteTargetNameEl) {
+    qteTargetNameEl.textContent = 'PRONTO PARA MIRAR?';
+    qteTargetNameEl.style.color = '#ff9100';
+  }
+  if (qteTargetIconEl) qteTargetIconEl.textContent = '🎯';
+  if (qteKeyLetterEl) {
+    qteKeyLetterEl.textContent = '▶';
+    qteKeyLetterEl.style.color = '#ff7043';
+  }
   if (qteTimerFillEl) qteTimerFillEl.style.width = '100%';
+  if (qtePulseRingEl) {
+    qtePulseRingEl.classList.add('idle');
+    qtePulseRingEl.style.transform = '';
+    qtePulseRingEl.style.opacity = '0.7';
+    qtePulseRingEl.style.borderColor = '#ff7043';
+  }
+  if (qteKeyBtnEl) {
+    qteKeyBtnEl.style.borderColor = '#ff7043';
+    qteKeyBtnEl.style.boxShadow = '0 0 25px rgba(255, 112, 67, 0.5)';
+  }
 }
 
 function startQteSequence() {
@@ -1114,7 +1214,7 @@ function promptNextQteTarget() {
 
   if (qteTargetIconEl) qteTargetIconEl.textContent = step.symbol;
   if (qteTargetNameEl) {
-    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}º ALVO: ${step.name}`;
+    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_STEPS.length} - ${step.name}`;
     qteTargetNameEl.style.color = step.color;
   }
   if (qteKeyLetterEl) {
@@ -1123,14 +1223,15 @@ function promptNextQteTarget() {
   }
   if (qteKeyBtnEl) {
     qteKeyBtnEl.style.borderColor = step.color;
-    qteKeyBtnEl.style.boxShadow = `0 0 25px ${step.color}88`;
+    qteKeyBtnEl.style.boxShadow = `0 0 30px ${step.color}99`;
   }
   if (qtePulseRingEl) {
+    qtePulseRingEl.classList.remove('idle');
     qtePulseRingEl.style.borderColor = step.color;
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `⚡ DISPARO ATIVO! Pressione [${step.keyDisplay}] ou clique no centro rápido!`;
+    targetFeedbackTextEl.textContent = `⚡ DISPARO EM ANDAMENTO! Pressione [${step.keyDisplay}] ou clique no centro rápido!`;
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
 
@@ -1144,14 +1245,23 @@ function runQteTimerLoop() {
     if (!qteActive || !qteCanInput) return;
 
     const elapsed = now - qteStartTime;
-    const remainingPct = Math.max(0, 1 - elapsed / qteMaxDuration);
+    const remainingRatio = Math.max(0, 1 - elapsed / qteMaxDuration);
+
     const qteTimerFillEl = document.querySelector('#qteTimerFill');
     if (qteTimerFillEl) {
-      qteTimerFillEl.style.width = `${remainingPct * 100}%`;
+      qteTimerFillEl.style.width = `${remainingRatio * 100}%`;
+    }
+
+    // Spider-Man style shrinking ring that collapses onto the key button!
+    const qtePulseRingEl = document.querySelector('#qtePulseRing');
+    if (qtePulseRingEl) {
+      const ringScale = 1.05 + remainingRatio * 1.15;
+      qtePulseRingEl.style.transform = `scale(${ringScale})`;
+      qtePulseRingEl.style.opacity = `${0.35 + remainingRatio * 0.65}`;
     }
 
     if (elapsed >= qteMaxDuration) {
-      onQteTimeOut();
+      onQteMissError('timeout');
       return;
     }
 
@@ -1165,14 +1275,15 @@ function handleQteInput(inputKey) {
   if (!qteActive || !qteCanInput) return;
   const step = QTE_STEPS[qteCurrentIndex];
 
-  const pressed = inputKey.toLowerCase();
-  const isMatch = (pressed === step.key) || 
-                  (step.key === ' ' && (pressed === ' ' || pressed === 'space' || pressed === 'spacebar'));
+  const pressed = (inputKey || '').toLowerCase();
+  const isMatch =
+    pressed === step.key.toLowerCase() ||
+    (step.key === ' ' && (pressed === ' ' || pressed === 'space' || pressed === 'spacebar'));
 
   if (isMatch) {
     onQteHitSuccess();
   } else {
-    onQteMissError();
+    onQteMissError('wrong_key');
   }
 }
 
@@ -1183,10 +1294,13 @@ function onQteHitSuccess() {
   playSound('pickup');
   const step = QTE_STEPS[qteCurrentIndex];
 
-  if (act3Env && act3Env.targets && act3Env.targets[qteCurrentIndex]) {
-    act3Env.targets[qteCurrentIndex].hit = true;
-    if (act3Env.targets[qteCurrentIndex].orb) {
-      act3Env.targets[qteCurrentIndex].orb.material.emissiveIntensity = 2.5;
+  // Hit target in 3D world
+  if (act3Env && act3Env.targets) {
+    const tIdx = qteCurrentIndex % act3Env.targets.length;
+    const targetObj = act3Env.targets[tIdx];
+    if (targetObj) {
+      targetObj.hit = true;
+      if (targetObj.orb) targetObj.orb.material.emissiveIntensity = 2.5;
     }
   }
 
@@ -1197,7 +1311,7 @@ function onQteHitSuccess() {
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! O ${step.name} acendeu em chamas sagradas!`;
+    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! ${step.name} calibrado!`;
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
@@ -1205,17 +1319,22 @@ function onQteHitSuccess() {
   updateQteUI();
 
   if (qteCurrentIndex >= QTE_STEPS.length) {
-    setTimeout(onQteCompleteSuccess, 500);
+    setTimeout(onQteCompleteSuccess, 450);
   } else {
-    setTimeout(promptNextQteTarget, 600);
+    setTimeout(promptNextQteTarget, 500);
   }
 }
 
-function onQteMissError() {
+function onQteMissError(reason = 'wrong_key') {
   qteCanInput = false;
   qteActive = false;
   if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
   playSound('hit');
+
+  // PUNISHMENT: Dano de 20 HP no jogador!
+  const damageTaken = 20;
+  player.hp = Math.max(1, player.hp - damageTaken);
+  updateHUD();
 
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
   if (qteKeyBtnEl) {
@@ -1223,26 +1342,31 @@ function onQteMissError() {
     setTimeout(() => qteKeyBtnEl.classList.remove('miss-error'), 450);
   }
 
+  if (targetModalEl) {
+    targetModalEl.classList.add('qte-damage-flash');
+    setTimeout(() => targetModalEl.classList.remove('qte-damage-flash'), 500);
+  }
+
+  const qtePulseRingEl = document.querySelector('#qtePulseRing');
+  if (qtePulseRingEl) {
+    qtePulseRingEl.classList.add('idle');
+    qtePulseRingEl.style.transform = '';
+  }
+
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = '❌ TECLA INCORRETA! O tiro errou o pilar e o mecanismo travou!';
+    if (reason === 'timeout') {
+      targetFeedbackTextEl.textContent = `⏱️ TEMPO ESGOTADO! O tiro falhou e o coice de lava feriu você (-${damageTaken} HP)!`;
+    } else {
+      targetFeedbackTextEl.textContent = `❌ TECLA ERRADA! A balista explodiu energia de lava em você (-${damageTaken} HP)!`;
+    }
     targetFeedbackTextEl.style.color = '#ff1744';
   }
 
-  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'inline-block';
-}
-
-function onQteTimeOut() {
-  qteCanInput = false;
-  qteActive = false;
-  if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
-  playSound('hit');
-
-  if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = '⏱️ TEMPO ESGOTADO! O pulso de magma passou e o disparo falhou!';
-    targetFeedbackTextEl.style.color = '#ff9100';
+  if (btnStartQteEl) btnStartQteEl.style.display = 'none';
+  if (btnResetTargetsEl) {
+    btnResetTargetsEl.style.display = 'inline-block';
+    btnResetTargetsEl.textContent = '🔄 Tentar Novamente';
   }
-
-  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'inline-block';
 }
 
 function onQteCompleteSuccess() {
@@ -1253,7 +1377,7 @@ function onQteCompleteSuccess() {
   playSound('victory');
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 PILARES CALIBRADOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
+    targetFeedbackTextEl.textContent = '🌟 TODOS OS ALVOS DESTRUÍDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
@@ -1281,7 +1405,11 @@ if (btnResetTargetsEl) {
 
 if (qteKeyBtnEl) {
   qteKeyBtnEl.addEventListener('click', () => {
-    if (qteActive && qteCanInput && qteCurrentIndex < QTE_STEPS.length) {
+    if (!qteActive) {
+      startQteSequence();
+      return;
+    }
+    if (qteCanInput && qteCurrentIndex < QTE_STEPS.length) {
       handleQteInput(QTE_STEPS[qteCurrentIndex].key);
     }
   });
@@ -1302,18 +1430,17 @@ if (btnSkipQteEl) {
     qteActive = false;
     qteCanInput = false;
     qteCurrentIndex = QTE_STEPS.length;
-    // Marca todos os alvos como acertados visualmente
     if (act3Env && act3Env.targets) {
       act3Env.targets.forEach((t) => {
         t.hit = true;
         if (t.orb) t.orb.material.emissiveIntensity = 2.5;
       });
     }
-    [0, 1, 2, 3].forEach((i) => {
+    for (let i = 0; i < QTE_STEPS.length; i++) {
       const dot = document.querySelector(`#tdot${i}`);
       if (dot) dot.classList.add('active');
-    });
-    if (targetProgressTextEl) targetProgressTextEl.textContent = '(4 / 4)';
+    }
+    if (targetProgressTextEl) targetProgressTextEl.textContent = `(${QTE_STEPS.length} / ${QTE_STEPS.length})`;
     onQteCompleteSuccess();
   });
 }
@@ -1482,65 +1609,65 @@ function updateHUD() {
 
     if (player.isSneaking && player.moving) {
       stealthStatusEl.className = 'stealth-status silent';
-      stealthStatusEl.textContent = '🔇 FURTIVO (SILENCIOSO)';
+      stealthStatusEl.textContent = 'FURTIVO (SILENCIOSO)';
     } else if (player.moving) {
       stealthStatusEl.className = 'stealth-status walking';
-      stealthStatusEl.textContent = '🚶 PASSOS NORMAIS (AUDÍVEL)';
+      stealthStatusEl.textContent = 'PASSOS NORMAIS (AUDÍVEL)';
     } else {
       stealthStatusEl.className = 'stealth-status silent';
-      stealthStatusEl.textContent = '🔇 PARADO (SILENCIOSO)';
+      stealthStatusEl.textContent = 'PARADO (SILENCIOSO)';
     }
 
     const titleEl = document.querySelector('.hud-inventory-title');
     if (currentAct === 3) {
-      if (titleEl) titleEl.textContent = '🌋 OBJETIVOS DO ABISMO DE LAVA';
+      if (titleEl) titleEl.textContent = 'OBJETIVOS DO ABISMO DE LAVA';
       if (questState.relicPuzzleSolved) {
         slotBronzeKeyEl.classList.add('acquired');
-        slotBronzeKeyEl.textContent = '🏛️ Relíquia [✓]';
+        slotBronzeKeyEl.textContent = 'Relíquia [✓]';
       } else {
         slotBronzeKeyEl.classList.remove('acquired');
-        slotBronzeKeyEl.textContent = '🏛️ Relíquia [ ]';
+        slotBronzeKeyEl.textContent = 'Relíquia [ ]';
       }
 
       if (questState.targetPuzzleSolved) {
         slotCthulhuRuneEl.classList.add('acquired');
-        slotCthulhuRuneEl.textContent = '🎯 4 Alvos [✓]';
+        slotCthulhuRuneEl.textContent = '4 Alvos [✓]';
       } else {
         slotCthulhuRuneEl.classList.remove('acquired');
-        slotCthulhuRuneEl.textContent = '🎯 4 Alvos [ ]';
+        slotCthulhuRuneEl.textContent = '4 Alvos [ ]';
       }
 
       if (act3Env && act3Env.bridge && act3Env.bridge.isRaised) {
         slotCultistEmblemEl.classList.add('acquired');
-        slotCultistEmblemEl.textContent = '🌉 Ponte [✓]';
+        slotCultistEmblemEl.textContent = 'Ponte [✓]';
       } else {
         slotCultistEmblemEl.classList.remove('acquired');
-        slotCultistEmblemEl.textContent = '🌉 Ponte [ ]';
+        slotCultistEmblemEl.textContent = 'Ponte [ ]';
       }
     } else {
-      if (titleEl) titleEl.textContent = '📜 SELOS PARA ABRIR O PORTÃO';
+      if (titleEl) titleEl.textContent = 'SELOS PARA ABRIR O PORTÃO';
       if (questState.hasBronzeKey) {
         slotBronzeKeyEl.classList.add('acquired');
-        slotBronzeKeyEl.textContent = '🗝️ Chave [✓]';
+        slotBronzeKeyEl.textContent = 'Chave [✓]';
       } else {
         slotBronzeKeyEl.classList.remove('acquired');
-        slotBronzeKeyEl.textContent = '🗝️ Chave [ ]';
+        slotBronzeKeyEl.textContent = 'Chave [ ]';
       }
 
       if (questState.hasCthulhuRune) {
         slotCthulhuRuneEl.classList.add('acquired');
-        slotCthulhuRuneEl.textContent = '🔮 Runa [✓]';
+        slotCthulhuRuneEl.textContent = 'Runa [✓]';
       } else {
         slotCthulhuRuneEl.classList.remove('acquired');
-        slotCthulhuRuneEl.textContent = '🔮 Runa [ ]';
+        slotCthulhuRuneEl.textContent = 'Runa [ ]';
       }
 
       if (questState.hasCultistEmblem) {
         slotCultistEmblemEl.classList.add('acquired');
-        slotCultistEmblemEl.textContent = '📜 Emblema [✓]';
+        slotCultistEmblemEl.textContent = 'Emblema [✓]';
       } else {
         slotCultistEmblemEl.classList.remove('acquired');
-        slotCultistEmblemEl.textContent = '📜 Emblema [ ]';
+        slotCultistEmblemEl.textContent = 'Emblema [ ]';
       }
     }
   } else {
@@ -1566,6 +1693,18 @@ function typeWriterDialogue(speaker, fullText, onComplete) {
   if (typewriterTimeout) {
     clearTimeout(typewriterTimeout);
     typewriterTimeout = null;
+  }
+
+  const isCultist = speaker && (
+    speaker.toUpperCase().includes('CULTISTA') ||
+    speaker.toUpperCase().includes('SEQUESTRADOR') ||
+    speaker.toUpperCase().includes('VILÃO')
+  );
+
+  if (isCultist) {
+    dialogueContainerEl.classList.add('cultist-dialogue-mode');
+  } else {
+    dialogueContainerEl.classList.remove('cultist-dialogue-mode');
   }
 
   dialogueSpeakerEl.textContent = speaker;
@@ -1789,12 +1928,13 @@ btnWakeUpCellEl.addEventListener('click', () => {
 let act3ChoiceDialogShown = false;
 
 function triggerEnding(endingId) {
+  if (!DEMO_AVAILABLE_IDS.includes(endingId)) return;
   if (isVictory) return;
   isVictory = true;
   unlockEnding(endingId);
   playSound('victory');
 
-  const ending = ENDINGS_DATA.find((e) => e.id === endingId) || ENDINGS_DATA[0];
+  const ending = ENDINGS_DATA.find((e) => e.id === endingId) || ENDINGS_DATA[3];
 
   const victoryBadgeEl = document.querySelector('#victoryBadge');
   const victoryIconLargeEl = document.querySelector('#victoryIconLarge');
@@ -1806,15 +1946,14 @@ function triggerEnding(endingId) {
   if (victoryIconLargeEl) victoryIconLargeEl.textContent = ending.icon;
   if (victoryTitleEl) victoryTitleEl.textContent = `FINAL ${ending.number}: ${ending.title.toUpperCase()}`;
 
-  if (endingId === 2) {
-    if (victoryQuoteEl) victoryQuoteEl.textContent = '"O fedor nauseante de lodo e ferrugem inundou seus pulmões enquanto você rastejava na escuridão."';
-    if (victoryTextEl) {
-      victoryTextEl.innerHTML = `
-        <strong>FUGA PELAS SOMBRAS!</strong> Você optou por descer na podridão dos bueiros subterrâneos.<br><br>
-        Rastejando por horas a fio entre águas turvas e canos esquecidos, você finalmente emergiu por uma grade de drenagem nos fundos de um cais portuário. Você sobreviveu... mas os sussurros fétidos do esgoto jamais deixarão a sua mente.
-      `;
+  const victoryImageWrapperEl = document.querySelector('#victoryImageWrapper');
+  const victoryImageEl = document.querySelector('#victoryImage');
+
+  if (endingId === 4) {
+    if (victoryImageWrapperEl && victoryImageEl) {
+      victoryImageEl.src = '/assets/cthulhu.png';
+      victoryImageWrapperEl.classList.remove('hidden');
     }
-  } else if (endingId === 4) {
     if (victoryQuoteEl) victoryQuoteEl.textContent = '"Ph\'nglui mglw\'nafh Cthulhu R\'lyeh wgah\'nagl fhtagn... O despertar cósmico começou."';
     if (victoryTextEl) {
       victoryTextEl.innerHTML = `
@@ -1822,13 +1961,17 @@ function triggerEnding(endingId) {
         Tentáculos de energia cósmica envolveram seu corpo enquanto sua consciência mortal se dissolvia no infinito do cosmo. Você não é mais apenas um humano... você é o Receptáculo Sagrado que trará o reinado das profundezas à Terra!
       `;
     }
+  } else {
+    if (victoryImageWrapperEl) {
+      victoryImageWrapperEl.classList.add('hidden');
+    }
   }
 
   victoryOverlayEl.classList.remove('hidden');
 }
 
 function triggerVictory() {
-  triggerEnding(1);
+  triggerEnding(4);
 }
 
 btnPlayAgainEl.addEventListener('click', () => {
@@ -2011,7 +2154,19 @@ function startGameFromControls() {
   saveProgress();
 }
 
-btnStartGameEl.addEventListener('click', startGameFromControls);
+if (btnCloseControlsEl) {
+  btnCloseControlsEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    controlsOverlayEl.classList.add('hidden');
+    openMenu();
+  });
+}
+
+// Click anywhere on overlay or card to start playing!
+controlsOverlayEl.addEventListener('click', (e) => {
+  if (e.target.closest('#btnCloseControls')) return;
+  startGameFromControls();
+});
 
 btnContinueEl.addEventListener('click', () => {
   if (loadProgress()) {
@@ -2088,9 +2243,21 @@ btnBackFromSettingsEl.addEventListener('click', () => {
 const keys = {};
 window.addEventListener('keydown', (e) => {
   // Handle QTE Keyboard Input
-  if (qteActive && qteCanInput && !targetModalEl.classList.contains('hidden')) {
-    const k = e.key.toLowerCase();
-    if (['q', 'e', 'r', ' '].includes(k) || e.code === 'Space') {
+  if (!targetModalEl.classList.contains('hidden')) {
+    if (e.code === 'Escape') {
+      qteActive = false;
+      qteCanInput = false;
+      if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+      targetModalEl.classList.add('hidden');
+      return;
+    }
+    if (!qteActive) {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        startQteSequence();
+        return;
+      }
+    } else if (qteCanInput) {
       e.preventDefault();
       handleQteInput(e.key);
       return;
@@ -2533,10 +2700,14 @@ function handleInteraction() {
       } else {
         typeWriterDialogue('FONTE SAGRADA', 'A fonte de sangue já foi consumida.');
       }
+    } else if (obj.type === 'locked_demo_ending') {
+      playSound('hit');
+      typeWriterDialogue(
+        obj.dialogueSpeaker || 'CAMINHO BLOQUEADO',
+        obj.dialogueText || '🔒 Este final não está disponível na versão demo! Estará acessível na versão completa do jogo.'
+      );
     } else if (obj.type === 'ending_choice') {
       triggerEnding(obj.endingId);
-    } else if (obj.type === 'escape_portal') {
-      triggerEnding(1);
     }
     return;
   }
@@ -3167,7 +3338,7 @@ function animate(currentTime) {
         act3ChoiceDialogShown = true;
         typeWriterDialogue(
           'ENCRUZILHADA DO DESTINO',
-          '🔥 Você atravessou o abismo de chamas! Dois caminhos se revelam no santuário: o Bueiro Fétido subterrâneo à direita, ou o Cultista Supremo ao centro aguardando para o despertar de Cthulhu!'
+          '🔥 Você atravessou o abismo de chamas! No santuário sagrado você avista a Porta Ancestral à esquerda, o Bueiro Fétido à direita e o Cultista Supremo perante o altar ao centro!'
         );
       }
 

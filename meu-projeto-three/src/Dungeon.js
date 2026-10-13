@@ -524,7 +524,6 @@ export function createDungeonEnvironment(scene) {
   const holeCoords = [
     { x: -28.0, z: -5.5 }, // Cela de Sacrifício (espaço aberto sem encostar nas paredes)
     { x: 0.0, z: 16.0 },   // Catacumbas dos Cristais (centro aberto, longe das paredes e placas)
-    { x: 32.0, z: -7.0 },  // Câmara do Grande Altar (área interna livre, sem encostar nas paredes)
   ];
 
   holeCoords.forEach((hc) => {
@@ -1112,16 +1111,17 @@ export function createDungeonEnvironment(scene) {
   // Ao pisar na pedra correta: os espinhos somem e o caminho fica aberto.
   // Ao pisar na pedra errada: o piso se abre em um buraco sem fundo e o jogador cai!
 
-  const SPIKE_COL_X = [5.2, 8.6, 12.0, 15.4]; // 1.8m de folga segura entre colunas (largura de cada coluna: 1.6)
-  const SPIKE_ROW_Z = [-4.333, 0.0, 4.333];    // centros das 3 fileiras (Norte, Centro, Sul)
-  const ROW_LABELS = ['Norte (Cima)', 'Centro (Meio)', 'Sul (Baixo)'];
+  const SPIKE_COL_X = [5.2, 7.7, 10.2, 12.7, 15.2]; // 5 colunas com 1.1m de folga segura entre lajes (permite andar em diagonal)
+  const SPIKE_ROW_Z = [-4.4, -2.2, 0.0, 2.2, 4.4];   // 5 fileiras equilibradas em Z de -6.5 a +6.5
+  const ROW_LABELS = ['Norte Extremo', 'Norte Médio', 'Centro', 'Sul Médio', 'Sul Extremo'];
 
-  // Gerador de caminho seguro aleatório (4 passos, 1 fileira correta por coluna)
+  // Gerador de caminho seguro aleatório 5x5 (5 passos, 1 fileira correta por coluna)
   let safePath = [
-    Math.floor(Math.random() * 3),
-    Math.floor(Math.random() * 3),
-    Math.floor(Math.random() * 3),
-    Math.floor(Math.random() * 3),
+    Math.floor(Math.random() * 5),
+    Math.floor(Math.random() * 5),
+    Math.floor(Math.random() * 5),
+    Math.floor(Math.random() * 5),
+    Math.floor(Math.random() * 5),
   ];
 
   // Textura gótica de pedra para os blocos do piso (com bordas chanfradas e ranhuras de cantaria)
@@ -1152,45 +1152,61 @@ export function createDungeonEnvironment(scene) {
 
   const dungeonSlabTex = createDungeonSlabTex();
 
-  // Estrofes poéticas e misteriosas (sem indicar diretamente a direção)
+  // Estrofes poéticas e misteriosas (sem números, puro lirismo arcano)
   const POETIC_STANZAS = [
-    // 1ª Coluna (Passo I)
+    // Coluna 1
     [
-      'I. O sopro inicial sussurra onde as sombras tocam o teto mais alto...',     // Norte (Cima)
-      'I. No primeiro passo, a coragem não hesita: siga o prumo reto pelo coração do corredor...', // Centro (Meio)
-      'I. A primeira chama aquece o chão onde a rocha repousa nas profundezas mais baixas...' // Sul (Baixo)
+      'O sopro inicial sussurra onde as sombras tocam a muralha mais alta ao norte...',
+      'A brisa gélida desce rente à encosta superior do salão...',
+      'A coragem não hesita: avance com firmeza cortando exatamente pelo coração do corredor...',
+      'O calor de pedra abriga os passos na faixa inclinada ao sul...',
+      'A chama primordial repousa onde a rocha descansa nas profundezas mais baixas ao sul...'
     ],
-    // 2ª Coluna (Passo II)
+    // Coluna 2
     [
-      'II. Na segunda passagem, os ventos setentrionais chamam seus passos para a margem superior...', // Norte (Cima)
-      'II. No segundo avanço, mantenha a retidão: nem às cinzas, nem aos cumes, apenas o meio sustenta...', // Centro (Meio)
-      'II. No segundo avanço, o peso da pedra firme descansa onde o calor meridional se abriga...' // Sul (Baixo)
+      'As sombras densas chamam seus passos para o cume mais elevado ao norte...',
+      'A névoa rala paira na margem elevada rente ao lado setentrional...',
+      'Mantenha a retidão: nem às cinzas, nem aos cumes, apenas o leito do meio sustenta...',
+      'O abrigo de pedra oferece refúgio na passagem meridional...',
+      'O peso da terra firme descansa onde o calor profundo se abriga nas margens baixas...'
     ],
-    // 3ª Coluna (Passo III)
+    // Coluna 3
     [
-      'III. O terceiro mistério busca o abraço frio da escuridão rente à muralha do topo...', // Norte (Cima)
-      'III. Ao terceiro pulso, a trilha justa é a linha reta que divide o abismo em metades perfeitas...', // Centro (Meio)
-      'III. Ao terceiro pulso, procure a firmeza nas lajes aquecidas pelo leito inferior...' // Sul (Baixo)
+      'A escuridão busca o abraço frio da muralha superior do topo...',
+      'As runas silenciosas ecoam na elevação setentrional...',
+      'A trilha justa é a linha reta que divide o abismo em metades perfeitas no centro...',
+      'O pulso da terra ressoa nas pedras abaixo do centro em direção ao sul...',
+      'Procure a firmeza nas lajes aquecidas pelo leito inferior...'
     ],
-    // 4ª Coluna (Passo IV)
+    // Coluna 4
     [
-      'IV. E no derradeiro salto à liberdade, a salvação aguarda onde o olhar se ergue ao alto...', // Norte (Cima)
-      'IV. E no derradeiro salto à liberdade, cruze firme e sereno cortando exatamente pelo centro...', // Centro (Meio)
-      'IV. E no derradeiro salto à liberdade, curve-se e pise onde o solo mergulha no fundo...' // Sul (Baixo)
+      'O eco das correntes ressoa onde as pedras do topo se encontram ao norte...',
+      'A corrente de ar guia o caminho pela margem alta do salão...',
+      'Avance com equilíbrio cruzando com retidão através do meio...',
+      'A terra vibra onde os passos encontram a descida meridional...',
+      'Curve-se e busque o solo firme no leito mais fundo ao sul...'
+    ],
+    // Coluna 5
+    [
+      'A salvação aguarda onde o olhar se ergue rente à muralha do alto...',
+      'A passagem derradeira se revela onde o sopro do norte se esvai...',
+      'Cruze firme e sereno cortando diretamente pelo coração do salão...',
+      'A saída sussurra onde a encosta suave abraça o sul...',
+      'O último salto descansa na rocha mais funda das profundezas...'
     ]
   ];
 
   function getPoemText() {
     return [
-      '📜 "CÂNTICO DAS LÂMINAS VELADAS:',
-      'Quatro passos separam a alma mortal da ruína eterna.',
+      '📜 CÂNTICO DAS LÂMINAS VELADAS',
       'Decifre os sussurros das pedras para que as lanças se recolham sob seus pés:\n',
       POETIC_STANZAS[0][safePath[0]],
       POETIC_STANZAS[1][safePath[1]],
       POETIC_STANZAS[2][safePath[2]],
       POETIC_STANZAS[3][safePath[3]],
-      '\n⚠️ Quem ignorar a canção da rocha despencará no vazio sem retorno."'
-    ].join('\n');
+      POETIC_STANZAS[4][safePath[4]],
+      '\n⚠️ Quem ignorar a canção da rocha despencará no vazio sem retorno.'
+    ].join('\n\n');
   }
 
   const pathTiles = [];
@@ -1199,14 +1215,14 @@ export function createDungeonEnvironment(scene) {
     SPIKE_ROW_Z.forEach((z, rowIdx) => {
       const isSafe = rowIdx === safePath[colIdx];
 
-      // 1. Laje de pedra no piso (1.6m de largura x 4.28m de comprimento em Z)
+      // 1. Laje de pedra no piso (1.4m de largura x 2.1m de comprimento em Z)
       const slabMat = new THREE.MeshStandardMaterial({
         map: dungeonSlabTex,
         roughness: 0.85,
         metalness: 0.1,
         emissive: new THREE.Color(0x000000),
       });
-      const slabMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 4.28), slabMat);
+      const slabMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 2.1), slabMat);
       slabMesh.rotation.x = -Math.PI / 2;
       slabMesh.position.set(x, 0.025, z);
       dungeonGroup.add(slabMesh);
@@ -1217,13 +1233,13 @@ export function createDungeonEnvironment(scene) {
         transparent: true,
         side: THREE.DoubleSide,
       });
-      const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 4.15), holeMat);
+      const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), holeMat);
       holeMesh.rotation.x = -Math.PI / 2;
       holeMesh.position.set(x, 0.03, z);
       holeMesh.visible = false;
       dungeonGroup.add(holeMesh);
 
-      // 3. Espinhos estáticos afiados sobre o ladrilho (estilo Undertale - visíveis inicialmente!)
+      // 3. Espinhos estáticos afiados sobre o ladrilho
       const spikeGroup = new THREE.Group();
       const spikeMat = new THREE.MeshBasicMaterial({
         map: spikeFrames[4],
@@ -1231,15 +1247,10 @@ export function createDungeonEnvironment(scene) {
         side: THREE.DoubleSide,
       });
 
-      const sMesh1 = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.9), spikeMat);
-      sMesh1.rotation.x = -Math.PI / 2;
-      sMesh1.position.set(x, 0.04, z - 1.05);
-      spikeGroup.add(sMesh1);
-
-      const sMesh2 = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.9), spikeMat);
-      sMesh2.rotation.x = -Math.PI / 2;
-      sMesh2.position.set(x, 0.04, z + 1.05);
-      spikeGroup.add(sMesh2);
+      const sMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.8), spikeMat);
+      sMesh.rotation.x = -Math.PI / 2;
+      sMesh.position.set(x, 0.04, z);
+      spikeGroup.add(sMesh);
 
       dungeonGroup.add(spikeGroup);
 
@@ -1248,8 +1259,8 @@ export function createDungeonEnvironment(scene) {
         rowIdx,
         x,
         z,
-        halfW: 0.8,
-        halfH: 2.14,
+        halfW: 0.7,
+        halfH: 1.05,
         name: ROW_LABELS[rowIdx],
         baseMesh: slabMesh,
         baseMat: slabMat,
@@ -1262,33 +1273,69 @@ export function createDungeonEnvironment(scene) {
     });
   });
 
-  // Estela ancestral com as dicas na entrada do corredor (X = 3.2, Z = -4.5)
+  // MONÓLITO ANCESTRAL DAS LÂMINAS VELADAS (X = 3.2, Z = -4.5)
   const poemMonumentGroup = new THREE.Group();
   poemMonumentGroup.position.set(3.2, 0, -4.5);
 
-  const pmBase = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 2.2, 0.8),
-    new THREE.MeshStandardMaterial({ color: 0x2b303c, roughness: 0.7 })
+  // Plinto inferior de pedra
+  const pmStep1 = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.35, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0x1f242d, roughness: 0.85 })
   );
-  pmBase.position.y = 1.1;
-  poemMonumentGroup.add(pmBase);
+  pmStep1.position.y = 0.175;
+  poemMonumentGroup.add(pmStep1);
 
-  const pmLight = new THREE.PointLight(0xffe0b2, 2.0, 7);
-  pmLight.position.set(0, 1.8, 0);
+  // Plinto intermediário
+  const pmStep2 = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.3, 1.3),
+    new THREE.MeshStandardMaterial({ color: 0x282f3a, roughness: 0.8 })
+  );
+  pmStep2.position.y = 0.45;
+  poemMonumentGroup.add(pmStep2);
+
+  // Obelisco Monolítico em formato piramidal afilado
+  const pmPillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.35, 0.58, 2.7, 4),
+    new THREE.MeshStandardMaterial({
+      color: 0x181c22,
+      roughness: 0.35,
+      metalness: 0.45,
+    })
+  );
+  pmPillar.rotation.y = Math.PI / 4;
+  pmPillar.position.y = 1.95;
+  poemMonumentGroup.add(pmPillar);
+
+  // Cristal de topo rúnico emite brilho místico
+  const pmCrystal = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.28, 0),
+    new THREE.MeshStandardMaterial({
+      color: 0x00e5ff,
+      emissive: 0x00e5ff,
+      emissiveIntensity: 2.2,
+      roughness: 0.2,
+    })
+  );
+  pmCrystal.position.y = 3.45;
+  poemMonumentGroup.add(pmCrystal);
+
+  // Luz mística do Monólito
+  const pmLight = new THREE.PointLight(0x00e5ff, 2.2, 8);
+  pmLight.position.set(0, 3.4, 0);
   poemMonumentGroup.add(pmLight);
 
   dungeonGroup.add(poemMonumentGroup);
-  obstacles.push({ minX: 2.6, maxX: 3.8, minZ: -5.0, maxZ: -4.0 });
+  obstacles.push({ minX: 2.4, maxX: 4.0, minZ: -5.3, maxZ: -3.7 });
 
   const poemObject = {
     id: 'poem_clue_monument',
-    type: 'lore_clue',
-    clueSpeaker: 'ESTELA DOS ESPINHOS RETRÁTEIS',
+    type: 'stone_monolith_clue',
+    clueSpeaker: 'MONÓLITO DAS LÂMINAS VELADAS',
     clueText: getPoemText(),
     x: 3.2,
     z: -4.5,
     radius: 3.2,
-    prompt: '[E] Ler Estela (Cântico das Lâminas Veladas)',
+    prompt: '[E] Tocar Monólito (Placa de Inscrição Ancestral)',
   };
   interactiveObjects.push(poemObject);
 
@@ -1305,10 +1352,11 @@ export function createDungeonEnvironment(scene) {
 
   function rerollSafePath() {
     safePath = [
-      Math.floor(Math.random() * 3),
-      Math.floor(Math.random() * 3),
-      Math.floor(Math.random() * 3),
-      Math.floor(Math.random() * 3),
+      Math.floor(Math.random() * 5),
+      Math.floor(Math.random() * 5),
+      Math.floor(Math.random() * 5),
+      Math.floor(Math.random() * 5),
+      Math.floor(Math.random() * 5),
     ];
     pathTiles.forEach((tile) => {
       tile.isSafe = tile.rowIdx === safePath[tile.colIdx];

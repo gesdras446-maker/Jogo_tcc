@@ -471,68 +471,63 @@ export function createAct3Environment(scene) {
     prompt: '[E] Mirar Balista Rúnica (Tiro ao Alvo)',
   });
 
-  // C. Estela do Mecanismo da Balista Ancestral (Mecanismo de Disparo Rápido)
-  const clueGroup = new THREE.Group();
-  clueGroup.position.set(-8.0, 0, 5.0);
 
-  const cMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 2.4, 0.8),
-    new THREE.MeshStandardMaterial({ color: 0x2e3542, roughness: 0.7 })
-  );
-  cMesh.position.y = 1.2;
-  clueGroup.add(cMesh);
-
-  act3Group.add(clueGroup);
-  obstacles.push({ minX: -8.8, maxX: -7.2, minZ: 4.4, maxZ: 5.6 });
-
-  interactiveObjects.push({
-    id: 'target_clue_monument',
-    type: 'lore_clue',
-    clueSpeaker: 'MECANISMO DA BALISTA ANCESTRAL',
-    clueText:
-      '📜 "A Balista de Basalto canaliza as runas primordiais dos 4 elementos. Para calibrá-la contra o abismo, o operador deve engatilhar disparos de reflexo rápido no instante exato do pulso! Mantenha os olhos atentos e as mãos firmes!"',
-    x: -8.0,
-    z: 5.0,
-    radius: 2.8,
-    prompt: '[E] Ler Mecanismo da Balista Ancestral',
-  });
-
-  // D. Fonte de Sangue Curativo (Recupera Vida)
-  const fountainGroup = new THREE.Group();
-  fountainGroup.position.set(-16.0, 0, 5.5);
-
-  const fountainBasin = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.3, 1.5, 0.8, 12),
-    new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.6 })
-  );
-  fountainBasin.position.y = 0.4;
-  fountainGroup.add(fountainBasin);
-
-  const bloodWater = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.1, 1.1, 0.1, 12),
-    new THREE.MeshBasicMaterial({ color: 0xb71c1c })
-  );
-  bloodWater.position.y = 0.8;
-  fountainGroup.add(bloodWater);
-
-  act3Group.add(fountainGroup);
-  obstacles.push({ minX: -17.5, maxX: -14.5, minZ: 4.2, maxZ: 6.8 });
-
-  interactiveObjects.push({
-    id: 'healing_fountain',
-    type: 'healing_source',
-    searched: false,
-    x: -16.0,
-    z: 5.5,
-    radius: 3.0,
-    prompt: '[E] Beber Sangue Vital da Fonte (+40 HP)',
-  });
 
   // ========================================================
   // E. AS ESCOLHAS DO DESTINO FINAL (ALÉM DA PONTE DE BASALTO)
   // ========================================================
 
-  // 2. ESCOLHA 2: O BUEIRO FÉTIDO SUBTERRÂNEO (Z = +5.0, X = 39.5) -> Final #2
+  // 1. ESCOLHA 1: A PORTA ANCESTRAL (Z = -5.0, X = 39.5) -> Final #1 (Indisponível na Versão Demo)
+  const doorArchGroup = new THREE.Group();
+  doorArchGroup.position.set(39.5, 0, -5.0);
+
+  const doorArchMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.7, metalness: 0.2 });
+  const doorPostL = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
+  doorPostL.position.set(0, 2.1, -1.6);
+  doorArchGroup.add(doorPostL);
+
+  const doorPostR = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), doorArchMat);
+  doorPostR.position.set(0, 2.1, 1.6);
+  doorArchGroup.add(doorPostR);
+
+  const doorLintel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.8, 4.0), doorArchMat);
+  doorLintel.position.set(0, 4.2, 0);
+  doorArchGroup.add(doorLintel);
+
+  // Folhas da Porta de Carvalho Reforçado com Correntes
+  const doorPlankMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.8 });
+  const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.8, 2.6), doorPlankMat);
+  doorLeaf.position.set(0, 2.0, 0);
+  doorArchGroup.add(doorLeaf);
+
+  // Cadeado / Correntes de selamento (Indicação visual de bloqueio na Demo)
+  const lockMat = new THREE.MeshStandardMaterial({ color: 0xff3d00, emissive: 0xd50000, emissiveIntensity: 0.5 });
+  const lockMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.6), lockMat);
+  lockMesh.position.set(-0.2, 2.0, 0);
+  doorArchGroup.add(lockMesh);
+
+  // Luz fraca avermelhada de bloqueio
+  const doorLight = new THREE.PointLight(0xff5722, 2.0, 6);
+  doorLight.position.set(-0.5, 2.2, 0);
+  doorArchGroup.add(doorLight);
+
+  act3Group.add(doorArchGroup);
+  obstacles.push({ minX: 38.6, maxX: 40.4, minZ: -6.8, maxZ: -3.2 });
+
+  interactiveObjects.push({
+    id: 'door_choice',
+    type: 'locked_demo_ending',
+    endingId: 1,
+    choiceName: 'A Porta Ancestral',
+    x: 38.5,
+    z: -5.0,
+    radius: 3.2,
+    prompt: '[E] Inspecionar Porta Ancestral (🔒 Indisponível na Demo)',
+    dialogueSpeaker: 'A PORTA ANCESTRAL',
+    dialogueText: '🔒 Os grandes portões dos ancestrais estão selados por runas mágicas nesta versão DEMO! Este final estará disponível apenas no lançamento da versão completa do jogo.',
+  });
+
+  // 2. ESCOLHA 2: O BUEIRO FÉTIDO SUBTERRÂNEO (Z = +5.0, X = 39.5) -> Final #2 (Indisponível na Versão Demo)
   const manholeGroup = new THREE.Group();
   manholeGroup.position.set(39.5, 0, 5.0);
 
@@ -552,16 +547,24 @@ export function createAct3Environment(scene) {
   manholeCover.position.y = 0.15;
   manholeGroup.add(manholeCover);
 
+  // Cadeado enferrujado na tampa
+  const manholeLock = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.3, 0.4),
+    new THREE.MeshStandardMaterial({ color: 0xd50000, emissive: 0x8b0000, emissiveIntensity: 0.5 })
+  );
+  manholeLock.position.set(0, 0.35, 0);
+  manholeGroup.add(manholeLock);
+
   // Névoa tóxica/esverdeada emanando do bueiro
   const manholeGlow = new THREE.Mesh(
     new THREE.RingGeometry(0.8, 1.4, 16),
-    new THREE.MeshBasicMaterial({ color: 0x00e676, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+    new THREE.MeshBasicMaterial({ color: 0x00e676, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
   );
   manholeGlow.rotation.x = -Math.PI / 2;
   manholeGlow.position.y = 0.3;
   manholeGroup.add(manholeGlow);
 
-  const manholeLight = new THREE.PointLight(0x00e676, 2.5, 7);
+  const manholeLight = new THREE.PointLight(0x00e676, 1.8, 6);
   manholeLight.position.set(0, 1.0, 0);
   manholeGroup.add(manholeLight);
 
@@ -570,13 +573,15 @@ export function createAct3Environment(scene) {
 
   interactiveObjects.push({
     id: 'manhole_choice',
-    type: 'ending_choice',
+    type: 'locked_demo_ending',
     endingId: 2,
     choiceName: 'O Bueiro Subterrâneo',
     x: 38.5,
     z: 5.0,
     radius: 3.2,
-    prompt: '[E] Descer pelo Bueiro Fétido (Rastejar pelos Esgotos)',
+    prompt: '[E] Inspecionar Bueiro Fétido (🔒 Indisponível na Demo)',
+    dialogueSpeaker: 'BUEIRO SUBTERRÂNEO',
+    dialogueText: '🔒 A pesada grade de ferro fundido do bueiro está soldada e emperrada nesta versão DEMO! Este final estará disponível apenas no lançamento da versão completa do jogo.',
   });
 
   // 3. ESCOLHA 3: O CULTISTA SUPREMO & RITUAL DE CTHULHU (Z = 0.0, X = 41.0) -> Final #4
