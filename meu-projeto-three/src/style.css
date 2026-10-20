@@ -1758,11 +1758,17 @@ canvas {
 }
 
 .relic-tile-slot.relic-empty-slot {
-  background: #0a0806;
+  background: #080605;
   cursor: default;
-  border: 2px dashed #3e2723;
-  box-shadow: inset 0 0 12px #000;
-  pointer-events: none;
+  border: 2px dashed #4e342e;
+  box-shadow: inset 0 0 16px #000;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.relic-tile-slot.relic-empty-slot.drag-over {
+  background: #1e1511;
+  border-color: #ffd54f;
+  box-shadow: inset 0 0 16px rgba(255, 213, 79, 0.4);
 }
 
 .relic-tile-slot.relic-can-move {
@@ -1777,6 +1783,15 @@ canvas {
   transform: scale(0.93);
   box-shadow: 0 0 18px rgba(255, 213, 79, 0.8);
   filter: brightness(1.2);
+}
+
+.relic-tile-slot.relic-selected {
+  outline: 3.5px solid #00e5ff !important;
+  outline-offset: -2px;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.9) !important;
+  transform: scale(0.95);
+  filter: brightness(1.3);
+  z-index: 5;
 }
 
 .relic-tile-canvas {
@@ -1797,18 +1812,18 @@ canvas {
 
 /* ========================================================
    ATO 3: TARGET SHOOTING PUZZLE (TIRO AO ALVO EM SEQUÊNCIA)
+   HUD FLUTUANTE CINEMÁTICO COM FUNDO TRANSLÚCIDO
    ======================================================== */
 .target-modal-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 195;
-  background: rgba(12, 8, 8, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(8, 4, 3, 0.55); /* Fundo transparente só que meio escuro */
+  backdrop-filter: blur(2.5px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  animation: modalFadeIn 0.3s ease-out;
+  animation: modalFadeIn 0.25s ease-out;
 }
 
 .target-modal-overlay.hidden {
@@ -1817,41 +1832,44 @@ canvas {
   pointer-events: none;
 }
 
-.target-modal-card {
-  width: min(720px, 94vw);
-  background: linear-gradient(180deg, #211512 0%, #140c0a 100%);
-  border: 3px solid #ff5722;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(255, 87, 34, 0.3);
+.qte-hud-container {
+  width: 100%;
+  height: 100%;
+  max-width: 950px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 20px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.qte-floating-top,
+.qte-center-arena,
+.qte-floating-bottom {
+  pointer-events: auto;
+}
+
+.qte-floating-top {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-}
-
-.target-header {
+  gap: 10px;
   text-align: center;
 }
 
-.target-title {
-  font-size: 22px;
+.qte-title-badge {
+  font-size: 20px;
   font-weight: 900;
   color: #ff7043;
   letter-spacing: 1.5px;
-}
-
-.target-clue-box {
-  background: rgba(255, 87, 34, 0.12);
-  border: 1.5px dashed #ff5722;
-  border-radius: 8px;
-  padding: 10px 16px;
-  color: #ffe0b2;
-  font-size: 13.5px;
-  text-align: center;
-  max-width: 580px;
-  line-height: 1.4;
-  margin-top: 6px;
+  text-shadow: 0 0 16px rgba(255, 87, 34, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+  background: rgba(33, 17, 13, 0.7);
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 112, 67, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
 }
 
 .target-progress-bar-row {
@@ -1860,7 +1878,11 @@ canvas {
   gap: 12px;
   font-weight: 800;
   font-size: 14px;
-  color: #ffab91;
+  color: #ffe0b2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 14px;
+  border-radius: 12px;
 }
 
 .target-dots {
@@ -1873,161 +1895,138 @@ canvas {
   height: 14px;
   border-radius: 50%;
   background: #3e2723;
-  border: 2px solid #5d4037;
+  border: 2px solid #6d4c41;
   transition: all 0.3s ease;
 }
 
 .target-dot.active {
   background: #00e676;
   border-color: #b9f6ca;
-  box-shadow: 0 0 12px #00e676;
+  box-shadow: 0 0 14px #00e676;
+}
+
+.qte-current-target-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffab91;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255, 87, 34, 0.7);
+}
+
+.qte-hint-pill {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffe082;
+  background: rgba(26, 15, 10, 0.75);
+  border: 1px dashed rgba(255, 179, 0, 0.6);
+  padding: 6px 14px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* ========================================================
-   ATO 3: QUICK TIME EVENT (QTE) ARENA
+   ATO 3: QUICK TIME EVENT (QTE) ARENA COM ANEL APROXIMADOR
    ======================================================== */
-.qte-arena {
-  width: 100%;
-  background: radial-gradient(circle at center, #2e1008 0%, #0d0604 100%);
-  border: 2px solid #4e342e;
-  border-radius: 14px;
-  padding: 22px 18px;
+.qte-center-arena {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  box-shadow: inset 0 6px 20px rgba(0, 0, 0, 0.9);
-}
-
-.qte-target-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.qte-target-icon {
-  font-size: 38px;
-  filter: drop-shadow(0 0 10px rgba(255, 87, 34, 0.7));
-  animation: qteIconBob 1s infinite alternate ease-in-out;
-}
-
-@keyframes qteIconBob {
-  0% { transform: translateY(-2px) scale(1); }
-  100% { transform: translateY(2px) scale(1.08); }
-}
-
-.qte-target-name {
-  font-size: 19px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  color: #ff5722;
-  text-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
-}
-
-.qte-timer-track {
-  width: 100%;
-  max-width: 500px;
-  height: 14px;
-  background: #190c09;
-  border: 2px solid #5d4037;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
-}
-
-.qte-timer-fill {
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, #ff1744 0%, #ff9100 50%, #00e676 100%);
-  box-shadow: 0 0 12px rgba(255, 145, 0, 0.8);
-  transition: width 0.04s linear;
-}
-
-.qte-key-container {
+  justify-content: center;
   position: relative;
-  width: 130px;
-  height: 130px;
+  margin: auto 0;
+}
+
+.qte-circle-wrapper {
+  position: relative;
+  width: 160px;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 6px 0;
 }
 
-.qte-key-pulse-ring {
+/* Anel Externo que se aproxima/encolhe (Approach Ring) */
+.qte-approach-ring {
   position: absolute;
-  inset: -12px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
-  border: 4px solid #ff5722;
+  border: 4.5px solid #ff7043;
   pointer-events: none;
   transform-origin: center center;
-  box-shadow: 0 0 20px rgba(255, 87, 34, 0.6);
-  transition: border-color 0.15s ease;
+  box-shadow: 0 0 22px rgba(255, 112, 67, 0.7);
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  will-change: transform;
 }
 
-.qte-key-pulse-ring.idle {
+.qte-approach-ring.idle {
   animation: qteRingPulse 1.2s infinite ease-out;
 }
 
-@keyframes qteRingPulse {
-  0% { transform: scale(1.0); opacity: 0.9; }
-  100% { transform: scale(1.6); opacity: 0; }
+.qte-approach-ring.sweet-spot {
+  border-color: #00e676 !important;
+  box-shadow: 0 0 32px #00e676, inset 0 0 16px rgba(0, 230, 118, 0.4) !important;
 }
 
-.qte-damage-flash {
-  animation: qteDamageFlashAnim 0.5s ease-out;
-  border-color: #ff1744 !important;
-}
-
-@keyframes qteDamageFlashAnim {
-  0% {
-    box-shadow: 0 0 65px rgba(255, 23, 68, 0.95);
-    transform: scale(0.97);
-  }
-  40% {
-    box-shadow: 0 0 40px rgba(255, 23, 68, 0.7);
-    transform: scale(1.02);
-  }
-  100% {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(255, 87, 34, 0.3);
-    transform: scale(1);
-  }
+/* Círculo Alvo de Referência (Zona onde o anel deve se encaixar) */
+.qte-inner-sweet-spot-ring {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2.5px dashed rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
 }
 
 .qte-big-key-btn {
-  width: 104px;
-  height: 104px;
+  width: 122px;
+  height: 122px;
   border-radius: 50%;
-  background: radial-gradient(circle, #2b1712 0%, #150906 100%);
-  border: 3.5px solid #ff7043;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 87, 34, 0.5);
+  background: radial-gradient(circle, #2d1813 0%, #110705 100%);
+  border: 4px solid #ff7043;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 87, 34, 0.5);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.1s ease, border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.1s ease, border-color 0.15s, box-shadow 0.15s;
   user-select: none;
+  z-index: 2;
 }
 
 .qte-big-key-btn:hover {
-  transform: scale(1.06);
+  transform: scale(1.05);
   border-color: #ffab91;
 }
 
 .qte-big-key-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
+}
+
+.qte-big-key-btn.sweet-spot {
+  border-color: #00e676 !important;
+  box-shadow: 0 0 35px #00e676 !important;
+  transform: scale(1.04);
 }
 
 .qte-big-key-btn.hit-success {
-  transform: scale(1.15);
+  transform: scale(1.18);
   border-color: #00e676 !important;
-  box-shadow: 0 0 35px #00e676 !important;
+  box-shadow: 0 0 45px #00e676 !important;
 }
 
 .qte-big-key-btn.miss-error {
   animation: targetShake 0.4s ease-in-out;
   border-color: #ff1744 !important;
-  box-shadow: 0 0 35px #ff1744 !important;
+  box-shadow: 0 0 45px #ff1744 !important;
+}
+
+.qte-target-symbol {
+  font-size: 24px;
+  filter: drop-shadow(0 0 8px rgba(255, 87, 34, 0.8));
+  line-height: 1;
 }
 
 .qte-key-letter {
@@ -2037,29 +2036,46 @@ canvas {
   letter-spacing: 1px;
   line-height: 1;
   text-shadow: 0 0 14px rgba(255, 87, 34, 0.8);
+  margin-top: 2px;
 }
 
 .qte-key-subtext {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   color: #cfd8dc;
   margin-top: 4px;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-.target-chasm-lava {
+.qte-floating-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  height: 12px;
-  background: linear-gradient(90deg, #ff3d00, #ff9100, #ff3d00);
-  border-radius: 6px;
-  box-shadow: 0 0 16px rgba(255, 87, 34, 0.8);
-  animation: lavaFlow 3s infinite linear;
 }
 
-@keyframes lavaFlow {
-  0% { filter: hue-rotate(0deg); }
-  50% { filter: hue-rotate(20deg); }
-  100% { filter: hue-rotate(0deg); }
+.target-feedback-text {
+  color: #ffe0b2;
+  font-size: 15px;
+  font-weight: 800;
+  min-height: 24px;
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(255, 112, 67, 0.5);
+}
+
+.target-actions-clean {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes qteRingPulse {
+  0% { transform: scale(1.0); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
 }
 
 @keyframes targetShake {

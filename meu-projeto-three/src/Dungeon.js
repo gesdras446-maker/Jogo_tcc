@@ -1111,11 +1111,12 @@ export function createDungeonEnvironment(scene) {
   // Ao pisar na pedra correta: os espinhos somem e o caminho fica aberto.
   // Ao pisar na pedra errada: o piso se abre em um buraco sem fundo e o jogador cai!
 
-  const SPIKE_COL_X = [5.2, 7.7, 10.2, 12.7, 15.2]; // 5 colunas com 1.1m de folga segura entre lajes (permite andar em diagonal)
+  // 5 Colunas com espaçamento reduzido (2.1m entre centros, vão livre de ~0.8m permitindo manobra diagonal segura)
+  const SPIKE_COL_X = [5.2, 7.3, 9.4, 11.5, 13.6];
   const SPIKE_ROW_Z = [-4.4, -2.2, 0.0, 2.2, 4.4];   // 5 fileiras equilibradas em Z de -6.5 a +6.5
   const ROW_LABELS = ['Norte Extremo', 'Norte Médio', 'Centro', 'Sul Médio', 'Sul Extremo'];
 
-  // Gerador de caminho seguro aleatório 5x5 (5 passos, 1 fileira correta por coluna)
+  // Gerador de caminho seguro aleatório 5x5 (5 passos, 1 fileira correta por coluna - SEMPRE ALEATÓRIO)
   let safePath = [
     Math.floor(Math.random() * 5),
     Math.floor(Math.random() * 5),
@@ -1152,33 +1153,33 @@ export function createDungeonEnvironment(scene) {
 
   const dungeonSlabTex = createDungeonSlabTex();
 
-  // Estrofes poéticas e misteriosas (sem números, puro lirismo arcano)
+  // Estrofes poéticas arcanas (SEM NENHUM NÚMERO, puramente líricas e orientadas pelos pontos do salão)
   const POETIC_STANZAS = [
-    // Coluna 1
+    // Passo Inicial
     [
-      'O sopro inicial sussurra onde as sombras tocam a muralha mais alta ao norte...',
-      'A brisa gélida desce rente à encosta superior do salão...',
-      'A coragem não hesita: avance com firmeza cortando exatamente pelo coração do corredor...',
-      'O calor de pedra abriga os passos na faixa inclinada ao sul...',
-      'A chama primordial repousa onde a rocha descansa nas profundezas mais baixas ao sul...'
+      'O sopro do abismo sussurra onde as sombras tocam a muralha setentrional no alto...',
+      'A névoa gélida rasteja rente à encosta alta do salão...',
+      'O caminho reto corta com firmeza pelo próprio coração de pedra do corredor...',
+      'O calor brando abriga os passos na descida que curva em direção ao sul...',
+      'A rocha primordial repousa firme no leito mais fundo das profundezas austrais...'
     ],
-    // Coluna 2
+    // Segundo Passo
     [
       'As sombras densas chamam seus passos para o cume mais elevado ao norte...',
-      'A névoa rala paira na margem elevada rente ao lado setentrional...',
+      'A brisa fina paira na margem elevada rente ao lado setentrional...',
       'Mantenha a retidão: nem às cinzas, nem aos cumes, apenas o leito do meio sustenta...',
       'O abrigo de pedra oferece refúgio na passagem meridional...',
       'O peso da terra firme descansa onde o calor profundo se abriga nas margens baixas...'
     ],
-    // Coluna 3
+    // Terceiro Passo
     [
       'A escuridão busca o abraço frio da muralha superior do topo...',
       'As runas silenciosas ecoam na elevação setentrional...',
-      'A trilha justa é a linha reta que divide o abismo em metades perfeitas no centro...',
+      'A trilha justa é a linha que divide o abismo em metades perfeitas no centro...',
       'O pulso da terra ressoa nas pedras abaixo do centro em direção ao sul...',
       'Procure a firmeza nas lajes aquecidas pelo leito inferior...'
     ],
-    // Coluna 4
+    // Quarto Passo
     [
       'O eco das correntes ressoa onde as pedras do topo se encontram ao norte...',
       'A corrente de ar guia o caminho pela margem alta do salão...',
@@ -1186,7 +1187,7 @@ export function createDungeonEnvironment(scene) {
       'A terra vibra onde os passos encontram a descida meridional...',
       'Curve-se e busque o solo firme no leito mais fundo ao sul...'
     ],
-    // Coluna 5
+    // Passo Final
     [
       'A salvação aguarda onde o olhar se ergue rente à muralha do alto...',
       'A passagem derradeira se revela onde o sopro do norte se esvai...',
@@ -1215,14 +1216,14 @@ export function createDungeonEnvironment(scene) {
     SPIKE_ROW_Z.forEach((z, rowIdx) => {
       const isSafe = rowIdx === safePath[colIdx];
 
-      // 1. Laje de pedra no piso (1.4m de largura x 2.1m de comprimento em Z)
+      // 1. Laje de pedra no piso (1.3m de largura x 2.0m de comprimento em Z)
       const slabMat = new THREE.MeshStandardMaterial({
         map: dungeonSlabTex,
         roughness: 0.85,
         metalness: 0.1,
         emissive: new THREE.Color(0x000000),
       });
-      const slabMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 2.1), slabMat);
+      const slabMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), slabMat);
       slabMesh.rotation.x = -Math.PI / 2;
       slabMesh.position.set(x, 0.025, z);
       dungeonGroup.add(slabMesh);
@@ -1233,7 +1234,7 @@ export function createDungeonEnvironment(scene) {
         transparent: true,
         side: THREE.DoubleSide,
       });
-      const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), holeMat);
+      const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.95), holeMat);
       holeMesh.rotation.x = -Math.PI / 2;
       holeMesh.position.set(x, 0.03, z);
       holeMesh.visible = false;
@@ -1247,7 +1248,7 @@ export function createDungeonEnvironment(scene) {
         side: THREE.DoubleSide,
       });
 
-      const sMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.8), spikeMat);
+      const sMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.8), spikeMat);
       sMesh.rotation.x = -Math.PI / 2;
       sMesh.position.set(x, 0.04, z);
       spikeGroup.add(sMesh);
@@ -1259,8 +1260,8 @@ export function createDungeonEnvironment(scene) {
         rowIdx,
         x,
         z,
-        halfW: 0.7,
-        halfH: 1.05,
+        halfW: 0.65,
+        halfH: 1.0,
         name: ROW_LABELS[rowIdx],
         baseMesh: slabMesh,
         baseMat: slabMat,
@@ -1273,9 +1274,9 @@ export function createDungeonEnvironment(scene) {
     });
   });
 
-  // MONÓLITO ANCESTRAL DAS LÂMINAS VELADAS (X = 3.2, Z = -4.5)
+  // MONÓLITO ANCESTRAL DAS LÂMINAS VELADAS (X = 3.2, Z = -3.8)
   const poemMonumentGroup = new THREE.Group();
-  poemMonumentGroup.position.set(3.2, 0, -4.5);
+  poemMonumentGroup.position.set(3.2, 0, -3.8);
 
   // Plinto inferior de pedra
   const pmStep1 = new THREE.Mesh(
@@ -1325,7 +1326,7 @@ export function createDungeonEnvironment(scene) {
   poemMonumentGroup.add(pmLight);
 
   dungeonGroup.add(poemMonumentGroup);
-  obstacles.push({ minX: 2.4, maxX: 4.0, minZ: -5.3, maxZ: -3.7 });
+  obstacles.push({ minX: 2.4, maxX: 4.0, minZ: -4.6, maxZ: -3.0 });
 
   const poemObject = {
     id: 'poem_clue_monument',
@@ -1333,9 +1334,9 @@ export function createDungeonEnvironment(scene) {
     clueSpeaker: 'MONÓLITO DAS LÂMINAS VELADAS',
     clueText: getPoemText(),
     x: 3.2,
-    z: -4.5,
+    z: -3.8,
     radius: 3.2,
-    prompt: '[E] Tocar Monólito (Placa de Inscrição Ancestral)',
+    prompt: '[E] Inspecionar Monólito Ancestral (Placa de Pedra)',
   };
   interactiveObjects.push(poemObject);
 

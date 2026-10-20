@@ -151,7 +151,7 @@ export class Player {
       if (cameraAngle) {
         this.mesh.rotation.x = cameraAngle.x;
       }
-      return { finishedFall: false };
+      return { finishedFall: false, finishedDeath: this.deathTimer >= 1.35 };
     }
 
     this.deathTimer = 0;
@@ -312,9 +312,14 @@ export class Player {
     this.group.position.set(x, 0, z);
     this.isFalling = false;
     this.fallTimer = 0;
+    this.deathTimer = 0;
     this.hp = 100;
+    this.moving = false;
     this.mesh.scale.set(1, 1, 1);
     this.mesh.position.y = 1.2;
     this.mesh.rotation.z = 0;
+    if (playerTextures.idle && playerTextures.idle[0]) {
+      this.material.map = playerTextures.idle[0];
+    }
   }
 }

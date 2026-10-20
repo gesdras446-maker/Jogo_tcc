@@ -192,57 +192,51 @@ app.innerHTML = `
 
   <!-- ATO 3 PUZZLE 2: Terminal de Disparo Rápido (Quick Time Event - QTE) -->
   <div class="target-modal-overlay hidden" id="targetShootingModal">
-    <div class="target-modal-card">
-      <div class="target-header">
-        <div class="target-title">⚡ BALISTA RÚNICA: QUICK TIME EVENT</div>
-        <div class="target-clue-box" id="qteInstructionBox">
-          🎯 <strong>Mecanismo de Disparo Rápido (QTE):</strong> Pressione a tecla rúnica antes que o anel se feche! ⚠️ <em>Erros ou lentidão causam coice de lava (-20 HP)!</em>
+    <div class="qte-hud-container">
+      <!-- TOP FLOATING HUD -->
+      <div class="qte-floating-top">
+        <div class="qte-title-badge">⚡ BALISTA RÚNICA: DISPARO RÁPIDO (QTE)</div>
+        <div class="target-progress-bar-row">
+          <span>Alvos Destruídos:</span>
+          <div class="target-dots" id="targetDots">
+            <div class="target-dot" id="tdot0"></div>
+            <div class="target-dot" id="tdot1"></div>
+            <div class="target-dot" id="tdot2"></div>
+            <div class="target-dot" id="tdot3"></div>
+          </div>
+          <span id="targetProgressText">(0 / 4)</span>
         </div>
+        <div class="qte-current-target-title" id="qteTargetName">PRONTO PARA MIRAR?</div>
+        <div class="qte-hint-pill">🎯 Aperte a tecla exatamente quando o anel externo encolher até encostar no círculo central!</div>
       </div>
 
-      <div class="target-progress-bar-row">
-        <span>Sequência de Impacto:</span>
-        <div class="target-dots" id="targetDots">
-          <div class="target-dot" id="tdot0"></div>
-          <div class="target-dot" id="tdot1"></div>
-          <div class="target-dot" id="tdot2"></div>
-          <div class="target-dot" id="tdot3"></div>
-          <div class="target-dot" id="tdot4"></div>
-          <div class="target-dot" id="tdot5"></div>
-        </div>
-        <span id="targetProgressText">(0 / 6)</span>
-      </div>
-
-      <div class="qte-arena">
-        <div class="qte-target-info" id="qteTargetInfo">
-          <span class="qte-target-icon" id="qteTargetIcon">🔥</span>
-          <span class="qte-target-name" id="qteTargetName">1º ALVO: PILAR DO FOGO</span>
-        </div>
-
-        <div class="qte-timer-track">
-          <div class="qte-timer-fill" id="qteTimerFill"></div>
-        </div>
-
-        <div class="qte-key-container">
-          <div class="qte-key-pulse-ring" id="qtePulseRing"></div>
+      <!-- CENTER QTE RING ARENA -->
+      <div class="qte-center-arena">
+        <div class="qte-circle-wrapper">
+          <!-- Outer Shrinking Approach Ring -->
+          <div class="qte-approach-ring" id="qtePulseRing"></div>
+          <!-- Inner Target Reference Ring -->
+          <div class="qte-inner-sweet-spot-ring"></div>
+          <!-- Center Button with Key Display -->
           <button class="qte-big-key-btn" id="qteKeyBtn" type="button">
+            <span class="qte-target-symbol" id="qteTargetIcon">🎯</span>
             <span class="qte-key-letter" id="qteKeyLetter">Q</span>
             <span class="qte-key-subtext">TECLE OU CLIQUE!</span>
           </button>
         </div>
-
-        <div class="target-chasm-lava"></div>
       </div>
 
-      <div style="color: #ffe0b2; font-size: 14px; font-weight: bold; min-height: 22px; text-align: center;" id="targetFeedbackText">
-        Mire a balista e inicie o teste de reflexos rápidos para os disparos!
-      </div>
-
-      <div class="target-actions">
-        <button class="puzzle-btn primary" id="btnStartQte">🏹 Iniciar Disparos (QTE)</button>
-        <button class="puzzle-btn secondary" id="btnResetTargets" style="display: none;">🔄 Tentar Novamente</button>
-        <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
-        <button class="puzzle-btn skip-demo" id="btnSkipQte" title="Modo apresentação — pula o puzzle instantaneamente">⏭️ Pular (Demo)</button>
+      <!-- BOTTOM FLOATING CONTROLS & FEEDBACK -->
+      <div class="qte-floating-bottom">
+        <div class="target-feedback-text" id="targetFeedbackText">
+          Mire a balista e inicie o teste de reflexos rápidos para os disparos!
+        </div>
+        <div class="target-actions-clean">
+          <button class="puzzle-btn primary" id="btnStartQte">🏹 Iniciar Disparos (QTE)</button>
+          <button class="puzzle-btn secondary" id="btnResetTargets" style="display: none;">🔄 Tentar Novamente</button>
+          <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
+          <button class="puzzle-btn skip-demo" id="btnSkipQte" title="Modo apresentação — pula o puzzle instantaneamente">⏭️ Pular (Demo)</button>
+        </div>
       </div>
     </div>
   </div>
@@ -850,6 +844,43 @@ const btnUnlockSafeEl = document.querySelector('#btnUnlockSafe');
 const btnCloseSafeEl = document.querySelector('#btnCloseSafe');
 
 // ========================================================
+// MONÓLITO ANCESTRAL: PLACA DE PEDRA (MODAL DE DICA)
+// ========================================================
+const stonePlaqueModalEl = document.querySelector('#stonePlaqueModal');
+const stonePlaqueTextEl = document.querySelector('#stonePlaqueText');
+const btnCloseStonePlaqueEl = document.querySelector('#btnCloseStonePlaque');
+
+function openStonePlaqueModal(poemText) {
+  if (!stonePlaqueModalEl) return;
+  playSound('pickup');
+  if (stonePlaqueTextEl) {
+    stonePlaqueTextEl.innerHTML = '';
+    const verses = (poemText || '').split('\n').filter((l) => l.trim().length > 0);
+    verses.forEach((verse, idx) => {
+      const vEl = document.createElement('div');
+      vEl.className = 'stone-plaque-verse';
+      vEl.textContent = verse;
+      stonePlaqueTextEl.appendChild(vEl);
+    });
+  }
+  stonePlaqueModalEl.classList.remove('hidden');
+}
+
+function closeStonePlaqueModal() {
+  if (!stonePlaqueModalEl) return;
+  stonePlaqueModalEl.classList.add('hidden');
+}
+
+if (btnCloseStonePlaqueEl) {
+  btnCloseStonePlaqueEl.addEventListener('click', closeStonePlaqueModal);
+}
+if (stonePlaqueModalEl) {
+  stonePlaqueModalEl.addEventListener('click', (e) => {
+    if (e.target === stonePlaqueModalEl) closeStonePlaqueModal();
+  });
+}
+
+// ========================================================
 // ATO 3 DOM: RELIC PUZZLE & TARGET SHOOTING
 // ========================================================
 const relicModalEl = document.querySelector('#relicPuzzleModal');
@@ -876,137 +907,331 @@ masterRelicCanvas.height = 256;
 
 function drawMasterRelic() {
   const ctx = masterRelicCanvas.getContext('2d');
-  // Ancient sandstone background
-  ctx.fillStyle = '#bcaaa4';
+  // Dark eldritch volcanic basalt slab background
+  ctx.fillStyle = '#2b2320';
   ctx.fillRect(0, 0, 256, 256);
 
-  // Border and tablet framing
-  ctx.strokeStyle = '#4e342e';
+  // Tablet border and deep perimeter relief carving (around outer rim only)
+  ctx.strokeStyle = '#181210';
   ctx.lineWidth = 6;
   ctx.strokeRect(3, 3, 250, 250);
 
-  // Sandstone speckles
-  for (let i = 0; i < 350; i++) {
-    ctx.fillStyle = i % 2 === 0 ? '#8d6e63' : '#d7ccc8';
-    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+  // Weathered volcanic rock speckles and organic grain
+  for (let i = 0; i < 450; i++) {
+    ctx.fillStyle = i % 3 === 0 ? '#1a1412' : i % 3 === 1 ? '#3d322d' : '#4e3f38';
+    ctx.fillRect(Math.random() * 256, Math.random() * 256, 1.8, 1.8);
   }
 
-  // Draw ancient Cthulhu Fossil Silhouette (matching user's reference image structure)
-  ctx.fillStyle = '#3e2723';
-  ctx.beginPath();
-  ctx.ellipse(128, 105, 68, 55, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // 1. DRAGON / GARGOYLE WINGS (Left & Right Flanks)
+  ctx.fillStyle = '#1c1512';
+  ctx.strokeStyle = '#120d0b';
+  ctx.lineWidth = 2;
 
-  // Carapace outer ridge
-  ctx.fillStyle = '#4e342e';
+  // Left Wing: Sharp skeletal crests & webbed membrane
   ctx.beginPath();
-  ctx.ellipse(128, 92, 54, 38, 0, 0, Math.PI * 2);
+  ctx.moveTo(85, 105);
+  ctx.quadraticCurveTo(50, 48, 15, 25); // Top wing tip
+  ctx.quadraticCurveTo(32, 60, 20, 90);  // Upper claw finger
+  ctx.quadraticCurveTo(40, 100, 24, 130); // Lower claw finger
+  ctx.quadraticCurveTo(55, 132, 82, 128); // Wing base
+  ctx.closePath();
   ctx.fill();
-
-  // Glowing eyes
-  ctx.fillStyle = '#ffd54f';
-  ctx.beginPath();
-  ctx.ellipse(108, 108, 10, 6, 0.2, 0, Math.PI * 2);
-  ctx.ellipse(148, 108, 10, 6, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d84315';
-  ctx.beginPath();
-  ctx.arc(108, 108, 3, 0, Math.PI * 2);
-  ctx.arc(148, 108, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tentacles reaching downward
-  ctx.strokeStyle = '#3e2723';
-  ctx.lineWidth = 14;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(90, 145);
-  ctx.quadraticCurveTo(68, 185, 78, 215);
-  ctx.moveTo(112, 150);
-  ctx.quadraticCurveTo(105, 192, 114, 225);
-  ctx.moveTo(144, 150);
-  ctx.quadraticCurveTo(151, 192, 142, 225);
-  ctx.moveTo(166, 145);
-  ctx.quadraticCurveTo(188, 185, 178, 215);
   ctx.stroke();
 
-  // Arcane carved glyph ridges
-  ctx.strokeStyle = '#271916';
+  // Left Wing Membrane Ribs
+  ctx.beginPath();
+  ctx.moveTo(15, 25);
+  ctx.quadraticCurveTo(45, 75, 82, 115);
+  ctx.moveTo(20, 90);
+  ctx.quadraticCurveTo(50, 105, 82, 120);
+  ctx.stroke();
+
+  // Right Wing: Sharp skeletal crests & webbed membrane
+  ctx.beginPath();
+  ctx.moveTo(171, 105);
+  ctx.quadraticCurveTo(206, 48, 241, 25); // Top wing tip
+  ctx.quadraticCurveTo(224, 60, 236, 90);  // Upper claw finger
+  ctx.quadraticCurveTo(216, 100, 232, 130); // Lower claw finger
+  ctx.quadraticCurveTo(201, 132, 174, 128); // Wing base
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Right Wing Membrane Ribs
+  ctx.beginPath();
+  ctx.moveTo(241, 25);
+  ctx.quadraticCurveTo(211, 75, 174, 115);
+  ctx.moveTo(236, 90);
+  ctx.quadraticCurveTo(206, 105, 174, 120);
+  ctx.stroke();
+
+  // 2. PETRIFIED CHITIN THORAX & SHOULDER PLATES
+  ctx.fillStyle = '#211815';
+  ctx.beginPath();
+  ctx.moveTo(90, 110);
+  ctx.lineTo(166, 110);
+  ctx.lineTo(156, 155);
+  ctx.lineTo(100, 155);
+  ctx.closePath();
+  ctx.fill();
+
+  // 3. HORNS & BROW RIDGES
+  ctx.fillStyle = '#17100e';
+  // Left demonic horn curving upward-outward
+  ctx.beginPath();
+  ctx.moveTo(92, 68);
+  ctx.quadraticCurveTo(60, 48, 48, 28);
+  ctx.quadraticCurveTo(68, 52, 96, 60);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right demonic horn curving upward-outward
+  ctx.beginPath();
+  ctx.moveTo(164, 68);
+  ctx.quadraticCurveTo(196, 48, 208, 28);
+  ctx.quadraticCurveTo(188, 52, 160, 60);
+  ctx.closePath();
+  ctx.fill();
+
+  // 4. ELDRITCH CEPHALOPOD CRANIUM / BULBOUS HEAD
+  ctx.fillStyle = '#201614';
+  ctx.beginPath();
+  ctx.ellipse(128, 72, 48, 42, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Skull ridges / carved segments
+  ctx.strokeStyle = '#120d0b';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(128, 80, 28, 0.2, Math.PI - 0.2);
+  ctx.moveTo(128, 30);
+  ctx.lineTo(128, 85);
+  ctx.moveTo(112, 34);
+  ctx.quadraticCurveTo(106, 55, 114, 76);
+  ctx.moveTo(144, 34);
+  ctx.quadraticCurveTo(150, 55, 142, 76);
   ctx.stroke();
+
+  // 5. SINISTER FIERCE SLITTED EYES (TERRIFYING CTHULHU GLOW)
+  // Eye sockets (deep carved shadows)
+  ctx.fillStyle = '#0a0605';
   ctx.beginPath();
-  ctx.arc(128, 65, 18, 0.2, Math.PI - 0.2);
-  ctx.stroke();
+  ctx.ellipse(107, 78, 14, 8, -0.22, 0, Math.PI * 2);
+  ctx.ellipse(149, 78, 14, 8, 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sinister Outer Eye Embers (Fiery Crimson Aura)
+  ctx.fillStyle = '#ff1744';
+  ctx.beginPath();
+  ctx.ellipse(107, 78, 10, 5.5, -0.22, 0, Math.PI * 2);
+  ctx.ellipse(149, 78, 10, 5.5, 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Burning Amber / Golden Iris
+  ctx.fillStyle = '#ffea00';
+  ctx.beginPath();
+  ctx.ellipse(107, 78, 6.5, 3.8, -0.22, 0, Math.PI * 2);
+  ctx.ellipse(149, 78, 6.5, 3.8, 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Predatory Vertical Slit Pupils
+  ctx.fillStyle = '#0a0505';
+  ctx.beginPath();
+  ctx.ellipse(107, 78, 2.2, 5.2, -0.22, 0, Math.PI * 2);
+  ctx.ellipse(149, 78, 2.2, 5.2, 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Auxiliary Temple Eyes (Cosmic Eldritch Multiplicity)
+  ctx.fillStyle = '#d50000';
+  ctx.beginPath();
+  ctx.ellipse(88, 68, 5, 3, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(168, 68, 5, 3, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#ffab00';
+  ctx.beginPath();
+  ctx.arc(88, 68, 1.6, 0, Math.PI * 2);
+  ctx.arc(168, 68, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 6. WRITHING BEARD OF 8 THICK MENACING TENTACLES
+  const tentacleDefs = [
+    // Outer Left: coiling outward towards lower edge
+    { sx: 104, sy: 104, c1x: 55, c1y: 135, c2x: 35, c2y: 190, ex: 38, ey: 242, w: 12 },
+    // Mid-Left Outer: coiling down-left
+    { sx: 112, sy: 108, c1x: 75, c1y: 155, c2x: 65, c2y: 205, ex: 74, ey: 248, w: 11 },
+    // Mid-Left Inner: coiling center-left
+    { sx: 120, sy: 112, c1x: 95, c1y: 165, c2x: 105, c2y: 215, ex: 102, ey: 250, w: 10 },
+    // Center Left: twisting down
+    { sx: 125, sy: 116, c1x: 114, c1y: 175, c2x: 120, c2y: 220, ex: 116, ey: 252, w: 9 },
+    // Center Right: twisting down
+    { sx: 131, sy: 116, c1x: 142, c1y: 175, c2x: 136, c2y: 220, ex: 140, ey: 252, w: 9 },
+    // Mid-Right Inner: coiling center-right
+    { sx: 136, sy: 112, c1x: 161, c1y: 165, c2x: 151, c2y: 215, ex: 154, ey: 250, w: 10 },
+    // Mid-Right Outer: coiling down-right
+    { sx: 144, sy: 108, c1x: 181, c1y: 155, c2x: 191, c2y: 205, ex: 182, ey: 248, w: 11 },
+    // Outer Right: coiling outward towards lower edge
+    { sx: 152, sy: 104, c1x: 201, c1y: 135, c2x: 221, c2y: 190, ex: 218, ey: 242, w: 12 },
+  ];
+
+  tentacleDefs.forEach((t) => {
+    // Dark tentacle flesh
+    ctx.strokeStyle = '#1b1311';
+    ctx.lineWidth = t.w;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(t.sx, t.sy);
+    ctx.bezierCurveTo(t.c1x, t.c1y, t.c2x, t.c2y, t.ex, t.ey);
+    ctx.stroke();
+
+    // Inner ridge highlight
+    ctx.strokeStyle = '#2b1f1b';
+    ctx.lineWidth = t.w * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(t.sx, t.sy);
+    ctx.bezierCurveTo(t.c1x, t.c1y, t.c2x, t.c2y, t.ex, t.ey);
+    ctx.stroke();
+
+    // Sucker nodes along tentacle curve
+    [0.35, 0.62, 0.85].forEach((pct) => {
+      // Approximate point on bezier curve
+      const bx = (1 - pct) * (1 - pct) * t.sx + 2 * (1 - pct) * pct * t.c1x + pct * pct * t.ex;
+      const by = (1 - pct) * (1 - pct) * t.sy + 2 * (1 - pct) * pct * t.c1y + pct * pct * t.ey;
+      ctx.fillStyle = '#422f28';
+      ctx.beginPath();
+      ctx.arc(bx + 3, by, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#140c0a';
+      ctx.beginPath();
+      ctx.arc(bx + 3, by, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
 }
 drawMasterRelic();
 
-// Render corner target preview (exactly like the Ruins of Alph reference image!)
+// Render corner target preview
 if (relicPreviewCanvasEl) {
   const pctx = relicPreviewCanvasEl.getContext('2d');
   pctx.drawImage(masterRelicCanvas, 0, 0, 72, 72);
 }
 
-// 4x4 Sliding Puzzle (15-puzzle) — tile value -1 = empty slot
-// Solved state: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,-1] (empty at bottom-right)
+// 4x4 Grid 15-Puzzle Sliding Board (15 stone blocks + 1 empty slot)
+// Solved state: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1]
 let relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
 
-function getEmptyIndex() {
+function getEmptyRelicIndex() {
   return relicTiles.indexOf(-1);
 }
 
-function getValidMoves(emptyIdx) {
-  // Returns indices of tiles that can slide into the empty slot (adjacent horizontally/vertically)
-  const row = Math.floor(emptyIdx / 4);
-  const col = emptyIdx % 4;
-  const moves = [];
-  if (row > 0) moves.push(emptyIdx - 4); // tile above
-  if (row < 3) moves.push(emptyIdx + 4); // tile below
-  if (col > 0) moves.push(emptyIdx - 1); // tile to the left
-  if (col < 3) moves.push(emptyIdx + 1); // tile to the right
-  return moves;
+function isRelicAdjacent(idx1, idx2) {
+  if (idx1 < 0 || idx2 < 0) return false;
+  const r1 = Math.floor(idx1 / 4);
+  const c1 = idx1 % 4;
+  const r2 = Math.floor(idx2 / 4);
+  const c2 = idx2 % 4;
+  return (Math.abs(r1 - r2) === 1 && c1 === c2) || (Math.abs(c1 - c2) === 1 && r1 === r2);
+}
+
+function getRelicNeighbors(idx) {
+  const neighbors = [];
+  const r = Math.floor(idx / 4);
+  const c = idx % 4;
+  if (r > 0) neighbors.push(idx - 4);
+  if (r < 3) neighbors.push(idx + 4);
+  if (c > 0) neighbors.push(idx - 1);
+  if (c < 3) neighbors.push(idx + 1);
+  return neighbors;
 }
 
 function scrambleRelicTiles() {
-  // Shuffle via many random valid moves (guarantees solvability)
-  let emptyIdx = getEmptyIndex();
-  let lastMoved = -1;
-  for (let i = 0; i < 300; i++) {
-    const moves = getValidMoves(emptyIdx).filter(m => m !== lastMoved);
-    const chosen = moves[Math.floor(Math.random() * moves.length)];
+  // Always begin from solved state to guarantee 100% mathematical solvability
+  relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
+  let emptyIdx = 15;
+  let lastMove = -1;
+
+  // Perform 70 random valid sliding moves
+  for (let i = 0; i < 70; i++) {
+    const validNeighbors = getRelicNeighbors(emptyIdx).filter((n) => n !== lastMove);
+    const chosen = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
     relicTiles[emptyIdx] = relicTiles[chosen];
     relicTiles[chosen] = -1;
-    lastMoved = emptyIdx;
+    lastMove = emptyIdx;
     emptyIdx = chosen;
   }
+
+  // Ensure it didn't accidentally stay solved
+  if (relicTiles[15] === -1 && relicTiles.slice(0, 15).every((v, i) => v === i)) {
+    const neighbors = getRelicNeighbors(15);
+    const chosen = neighbors[0];
+    relicTiles[15] = relicTiles[chosen];
+    relicTiles[chosen] = -1;
+  }
+
   if (relicStatusTextEl) {
-    relicStatusTextEl.textContent = 'Deslize as peças para o espaço vazio para montar a imagem!';
+    relicStatusTextEl.textContent = 'Deslize as peças de pedra para o espaço vazio para reconstituir o fóssil de Cthulhu!';
     relicStatusTextEl.style.color = '#ffd54f';
   }
   renderRelicBoard();
+}
+
+function moveRelicTile(tileIndex) {
+  if (questState.relicPuzzleSolved) return;
+  const emptyIdx = getEmptyRelicIndex();
+  if (isRelicAdjacent(tileIndex, emptyIdx)) {
+    relicTiles[emptyIdx] = relicTiles[tileIndex];
+    relicTiles[tileIndex] = -1;
+    playSound('switch');
+    renderRelicBoard();
+    checkRelicPuzzleWin();
+  }
 }
 
 function renderRelicBoard() {
   if (!relicGridBoardEl) return;
   relicGridBoardEl.innerHTML = '';
 
-  const emptyIdx = getEmptyIndex();
-  const validMoves = getValidMoves(emptyIdx);
+  const emptyIdx = getEmptyRelicIndex();
 
   relicTiles.forEach((tileValue, gridIndex) => {
     const slotEl = document.createElement('div');
-    const isEmpty = tileValue === -1;
-    const canMove = validMoves.includes(gridIndex);
-
     slotEl.className = 'relic-tile-slot';
-    if (isEmpty) {
-      slotEl.classList.add('relic-empty-slot');
-    } else if (canMove) {
-      slotEl.classList.add('relic-can-move');
-    }
 
-    if (!isEmpty) {
+    if (tileValue === -1) {
+      if (questState.relicPuzzleSolved) {
+        // Quando resolvido, desenha a 16ª peça para exibir a imagem 100% completa
+        const tileCanvas = document.createElement('canvas');
+        tileCanvas.className = 'relic-tile-canvas';
+        tileCanvas.width = 64;
+        tileCanvas.height = 64;
+        const tctx = tileCanvas.getContext('2d');
+        tctx.drawImage(masterRelicCanvas, 3 * 64, 3 * 64, 64, 64, 0, 0, 64, 64);
+        tctx.strokeStyle = '#221916';
+        tctx.lineWidth = 1.5;
+        tctx.strokeRect(0, 0, 64, 64);
+        slotEl.appendChild(tileCanvas);
+      } else {
+        // Espaço vazio para onde os blocos deslizam
+        slotEl.classList.add('relic-empty-slot');
+        slotEl.title = 'Espaço vazio (arraste ou clique em um bloco adjacente para deslizar)';
+
+        // Suporte para soltar bloco arrastado no espaço vazio
+        slotEl.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          slotEl.classList.add('drag-over');
+        });
+        slotEl.addEventListener('dragleave', () => {
+          slotEl.classList.remove('drag-over');
+        });
+        slotEl.addEventListener('drop', (e) => {
+          e.preventDefault();
+          slotEl.classList.remove('drag-over');
+          const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+          if (!isNaN(draggedIdx) && isRelicAdjacent(draggedIdx, gridIndex)) {
+            moveRelicTile(draggedIdx);
+          }
+        });
+      }
+    } else {
       const tileCanvas = document.createElement('canvas');
       tileCanvas.className = 'relic-tile-canvas';
       tileCanvas.width = 64;
@@ -1028,46 +1253,39 @@ function renderRelicBoard() {
         64
       );
 
-      tctx.strokeStyle = '#4e342e';
-      tctx.lineWidth = 2;
+      tctx.strokeStyle = '#221916';
+      tctx.lineWidth = 1.5;
       tctx.strokeRect(0, 0, 64, 64);
 
       slotEl.appendChild(tileCanvas);
-    }
 
-    if (!isEmpty) {
-      slotEl.addEventListener('click', () => {
-        onRelicTileClick(gridIndex);
-      });
+      // Se adjacente ao espaço vazio, permite deslizar por clique ou arrasto
+      if (!questState.relicPuzzleSolved && isRelicAdjacent(gridIndex, emptyIdx)) {
+        slotEl.classList.add('relic-can-move');
+        slotEl.setAttribute('draggable', 'true');
+        slotEl.title = 'Clique ou arraste para deslizar no espaço vazio!';
+
+        slotEl.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', String(gridIndex));
+        });
+
+        slotEl.addEventListener('click', () => {
+          moveRelicTile(gridIndex);
+        });
+      }
     }
 
     relicGridBoardEl.appendChild(slotEl);
   });
 }
 
-function onRelicTileClick(gridIndex) {
-  if (questState.relicPuzzleSolved) return;
-
-  const emptyIdx = getEmptyIndex();
-  const validMoves = getValidMoves(emptyIdx);
-
-  if (validMoves.includes(gridIndex)) {
-    // Slide clicked tile into empty slot
-    relicTiles[emptyIdx] = relicTiles[gridIndex];
-    relicTiles[gridIndex] = -1;
-    playSound('switch');
-    renderRelicBoard();
-    checkRelicPuzzleWin();
-  }
-}
-
 function checkRelicPuzzleWin() {
-  // Solved when tiles 0-14 are in order and -1 is at position 15
   const isComplete =
-    relicTiles[15] === -1 &&
-    relicTiles.slice(0, 15).every((val, idx) => val === idx);
+    relicTiles[15] === -1 && relicTiles.slice(0, 15).every((val, idx) => val === idx);
+
   if (isComplete) {
     questState.relicPuzzleSolved = true;
+    renderRelicBoard(); // Revela a imagem completa com a última peça
     playSound('victory');
     if (relicStatusTextEl) {
       relicStatusTextEl.textContent = '✨ RELÍQUIA RECONSTITUÍDA COM SUCESSO! A BALISTA FOI ENERGIZADA!';
@@ -1079,22 +1297,27 @@ function checkRelicPuzzleWin() {
       relicModalEl.classList.add('hidden');
       typeWriterDialogue(
         'ALTAR DA RELÍQUIA',
-        '🏛️ Com a relíquia encaixada perfeitamente, a Balista Rúnica estremece de poder! Vá até ela para disparar contra os 4 Alvos sobre o abismo de lava!'
+        '🏛️ Com a relíquia de Cthulhu reconstituída perfeitamente, a Balista Rúnica estremece de poder! Vá até ela para disparar contra os 4 Alvos sobre o abismo de lava!'
       );
     }, 1200);
+    return true;
   }
+  return false;
 }
 
 btnSolveRelicEl.addEventListener('click', () => {
+  // Encaixar Selo: alinha todas as peças e consagra o fóssil de Cthulhu
   relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
-  renderRelicBoard();
   checkRelicPuzzleWin();
 });
+
+if (btnScrambleRelicEl) {
+  btnScrambleRelicEl.addEventListener('click', scrambleRelicTiles);
+}
 
 if (btnSkipRelicEl) {
   btnSkipRelicEl.addEventListener('click', () => {
     relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
-    renderRelicBoard();
     checkRelicPuzzleWin();
   });
 }
@@ -1104,16 +1327,27 @@ btnCloseRelicModalEl.addEventListener('click', () => {
 });
 
 // ========================================================
-// ATO 3 PUZZLE 2: BALISTA RÚNICA - QUICK TIME EVENT (QTE)
-// Estilo Spider-Man com anel retrátil e punição de dano de vida!
 // ========================================================
-const QTE_STEPS = [
-  { id: 1, name: '1º DISPARO: PILAR DO FOGO', symbol: '🔥', key: 'q', keyDisplay: 'Q', color: '#ff5722', duration: 2500 },
-  { id: 2, name: '2º DISPARO: PULSO DE SANGUE', symbol: '🩸', key: 'e', keyDisplay: 'E', color: '#ff1744', duration: 2300 },
-  { id: 3, name: '3º DISPARO: CONDUTOR DE RAIO', symbol: '⚡', key: 'r', keyDisplay: 'R', color: '#00e5ff', duration: 2100 },
-  { id: 4, name: '4º DISPARO: TRAVA DO ABISMO', symbol: '⚔️', key: 'f', keyDisplay: 'F', color: '#ffa726', duration: 2000 },
-  { id: 5, name: '5º DISPARO: CANALIZAÇÃO RÚNICA', symbol: '👁️', key: 'c', keyDisplay: 'C', color: '#e040fb', duration: 1900 },
-  { id: 6, name: 'DISPARO FINAL: SOBRECARGA!', symbol: '💥', key: ' ', keyDisplay: 'ESPAÇO', color: '#76ff03', duration: 2200 },
+// ATO 3 PUZZLE 2: BALISTA RÚNICA - QUICK TIME EVENT (QTE)
+// Mecânica de Círculo Aproximador (Approach Ring) com Teclas Aleatórias
+// ========================================================
+const QTE_KEY_POOL = [
+  { key: 'q', code: 'KeyQ', display: 'Q' },
+  { key: 'e', code: 'KeyE', display: 'E' },
+  { key: 'r', code: 'KeyR', display: 'R' },
+  { key: 'f', code: 'KeyF', display: 'F' },
+  { key: ' ', code: 'Space', display: 'ESPAÇO' },
+  { key: 'w', code: 'KeyW', display: 'W' },
+  { key: 'a', code: 'KeyA', display: 'A' },
+  { key: 's', code: 'KeyS', display: 'S' },
+  { key: 'd', code: 'KeyD', display: 'D' },
+];
+
+const QTE_TARGET_STEPS = [
+  { id: 1, name: '1º ALVO: PILAR DO FOGO', symbol: '🔥', color: '#ff5722', duration: 2300 },
+  { id: 2, name: '2º ALVO: PULSO DE SANGUE', symbol: '🩸', color: '#ff1744', duration: 2150 },
+  { id: 3, name: '3º ALVO: CONDUTOR DE RAIO', symbol: '⚡', color: '#00e5ff', duration: 2000 },
+  { id: 4, name: 'DISPARO FINAL: OLHO DO VAZIO!', symbol: '👁️', color: '#76ff03', duration: 1900 },
 ];
 
 let qteCurrentIndex = 0;
@@ -1121,10 +1355,13 @@ let qteActive = false;
 let qteCanInput = false;
 let qteTimerRaf = null;
 let qteStartTime = 0;
-let qteMaxDuration = 2500;
+let qteMaxDuration = 2200;
+let currentQteKey = QTE_KEY_POOL[0];
+let currentRingScale = 2.8;
+let lastKeyDisplay = '';
 
 function updateQteUI() {
-  for (let i = 0; i < QTE_STEPS.length; i++) {
+  for (let i = 0; i < QTE_TARGET_STEPS.length; i++) {
     const dot = document.querySelector(`#tdot${i}`);
     if (dot) {
       if (i < qteCurrentIndex) dot.classList.add('active');
@@ -1133,7 +1370,7 @@ function updateQteUI() {
   }
 
   if (targetProgressTextEl) {
-    targetProgressTextEl.textContent = `(${qteCurrentIndex} / ${QTE_STEPS.length})`;
+    targetProgressTextEl.textContent = `(${qteCurrentIndex} / ${QTE_TARGET_STEPS.length})`;
   }
 }
 
@@ -1152,14 +1389,13 @@ function openQteModal() {
   if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = 'Pressione [INICIAR] ou aperte [ESPAÇO] para começar o teste de reflexos rápidos!';
+    targetFeedbackTextEl.textContent = 'Pressione [INICIAR DISPAROS] ou tecle [ESPAÇO] para começar!';
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
 
   const qteTargetNameEl = document.querySelector('#qteTargetName');
   const qteTargetIconEl = document.querySelector('#qteTargetIcon');
   const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
-  const qteTimerFillEl = document.querySelector('#qteTimerFill');
   const qtePulseRingEl = document.querySelector('#qtePulseRing');
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
 
@@ -1172,16 +1408,15 @@ function openQteModal() {
     qteKeyLetterEl.textContent = '▶';
     qteKeyLetterEl.style.color = '#ff7043';
   }
-  if (qteTimerFillEl) qteTimerFillEl.style.width = '100%';
   if (qtePulseRingEl) {
     qtePulseRingEl.classList.add('idle');
-    qtePulseRingEl.style.transform = '';
-    qtePulseRingEl.style.opacity = '0.7';
+    qtePulseRingEl.classList.remove('sweet-spot');
+    qtePulseRingEl.style.transform = 'scale(1.0)';
     qtePulseRingEl.style.borderColor = '#ff7043';
   }
   if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.remove('sweet-spot', 'hit-success', 'miss-error');
     qteKeyBtnEl.style.borderColor = '#ff7043';
-    qteKeyBtnEl.style.boxShadow = '0 0 25px rgba(255, 112, 67, 0.5)';
   }
 }
 
@@ -1196,15 +1431,20 @@ function startQteSequence() {
 }
 
 function promptNextQteTarget() {
-  if (qteCurrentIndex >= QTE_STEPS.length) {
+  if (qteCurrentIndex >= QTE_TARGET_STEPS.length) {
     onQteCompleteSuccess();
     return;
   }
 
-  const step = QTE_STEPS[qteCurrentIndex];
+  const step = QTE_TARGET_STEPS[qteCurrentIndex];
   qteCanInput = true;
   qteMaxDuration = step.duration;
   qteStartTime = performance.now();
+
+  // Sorteia tecla aleatória para cada disparo
+  const availableKeys = QTE_KEY_POOL.filter((k) => k.display !== lastKeyDisplay);
+  currentQteKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+  lastKeyDisplay = currentQteKey.display;
 
   const qteTargetIconEl = document.querySelector('#qteTargetIcon');
   const qteTargetNameEl = document.querySelector('#qteTargetName');
@@ -1214,24 +1454,25 @@ function promptNextQteTarget() {
 
   if (qteTargetIconEl) qteTargetIconEl.textContent = step.symbol;
   if (qteTargetNameEl) {
-    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_STEPS.length} - ${step.name}`;
+    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_TARGET_STEPS.length} - ${step.name}`;
     qteTargetNameEl.style.color = step.color;
   }
   if (qteKeyLetterEl) {
-    qteKeyLetterEl.textContent = step.keyDisplay;
+    qteKeyLetterEl.textContent = currentQteKey.display;
     qteKeyLetterEl.style.color = step.color;
   }
   if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.remove('sweet-spot', 'hit-success', 'miss-error');
     qteKeyBtnEl.style.borderColor = step.color;
-    qteKeyBtnEl.style.boxShadow = `0 0 30px ${step.color}99`;
   }
   if (qtePulseRingEl) {
-    qtePulseRingEl.classList.remove('idle');
+    qtePulseRingEl.classList.remove('idle', 'sweet-spot');
     qtePulseRingEl.style.borderColor = step.color;
+    qtePulseRingEl.style.transform = 'scale(2.8)';
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `⚡ DISPARO EM ANDAMENTO! Pressione [${step.keyDisplay}] ou clique no centro rápido!`;
+    targetFeedbackTextEl.textContent = `⚡ Pressione [${currentQteKey.display}] quando o anel externo encostar no círculo!`;
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
 
@@ -1245,19 +1486,26 @@ function runQteTimerLoop() {
     if (!qteActive || !qteCanInput) return;
 
     const elapsed = now - qteStartTime;
-    const remainingRatio = Math.max(0, 1 - elapsed / qteMaxDuration);
+    const progress = Math.min(1.0, elapsed / qteMaxDuration);
 
-    const qteTimerFillEl = document.querySelector('#qteTimerFill');
-    if (qteTimerFillEl) {
-      qteTimerFillEl.style.width = `${remainingRatio * 100}%`;
-    }
+    // O anel externo começa em scale 2.8 e encolhe até 0.8
+    currentRingScale = 2.8 - progress * 2.0;
 
-    // Spider-Man style shrinking ring that collapses onto the key button!
     const qtePulseRingEl = document.querySelector('#qtePulseRing');
+    const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+
     if (qtePulseRingEl) {
-      const ringScale = 1.05 + remainingRatio * 1.15;
-      qtePulseRingEl.style.transform = `scale(${ringScale})`;
-      qtePulseRingEl.style.opacity = `${0.35 + remainingRatio * 0.65}`;
+      qtePulseRingEl.style.transform = `scale(${currentRingScale})`;
+
+      // Zona de acerto perfeito (sweet spot): anel externo coincidindo com o círculo do botão
+      const inSweetSpot = currentRingScale >= 0.82 && currentRingScale <= 1.25;
+      if (inSweetSpot) {
+        qtePulseRingEl.classList.add('sweet-spot');
+        if (qteKeyBtnEl) qteKeyBtnEl.classList.add('sweet-spot');
+      } else {
+        qtePulseRingEl.classList.remove('sweet-spot');
+        if (qteKeyBtnEl) qteKeyBtnEl.classList.remove('sweet-spot');
+      }
     }
 
     if (elapsed >= qteMaxDuration) {
@@ -1271,20 +1519,38 @@ function runQteTimerLoop() {
   qteTimerRaf = requestAnimationFrame(tick);
 }
 
-function handleQteInput(inputKey) {
+function handleQteInput(inputKey, inputCode = '', isMouseClick = false) {
   if (!qteActive || !qteCanInput) return;
-  const step = QTE_STEPS[qteCurrentIndex];
 
-  const pressed = (inputKey || '').toLowerCase();
-  const isMatch =
-    pressed === step.key.toLowerCase() ||
-    (step.key === ' ' && (pressed === ' ' || pressed === 'space' || pressed === 'spacebar'));
+  // Validação da tecla (se foi clique com o mouse no botão, consideramos a tecla correta)
+  if (!isMouseClick) {
+    const pressedKey = (inputKey || '').toLowerCase();
+    const pressedCode = (inputCode || '').toLowerCase();
 
-  if (isMatch) {
-    onQteHitSuccess();
-  } else {
-    onQteMissError('wrong_key');
+    const isMatch =
+      currentQteKey.key === ' '
+        ? pressedKey === ' ' || pressedKey === 'space' || pressedCode === 'space'
+        : pressedKey === currentQteKey.key.toLowerCase() ||
+          pressedCode === `key${currentQteKey.key.toLowerCase()}`;
+
+    if (!isMatch) {
+      onQteMissError('wrong_key');
+      return;
+    }
   }
+
+  // Validação do timing do círculo que encolhe (deve acertar quando os anéis se encontram!)
+  if (currentRingScale > 1.25) {
+    onQteMissError('too_early');
+    return;
+  }
+  if (currentRingScale < 0.82) {
+    onQteMissError('too_late');
+    return;
+  }
+
+  // Acerto perfeito no alinhamento dos círculos!
+  onQteHitSuccess();
 }
 
 function onQteHitSuccess() {
@@ -1292,36 +1558,38 @@ function onQteHitSuccess() {
   if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
 
   playSound('pickup');
-  const step = QTE_STEPS[qteCurrentIndex];
+  const step = QTE_TARGET_STEPS[qteCurrentIndex];
 
-  // Hit target in 3D world
+  // Acerta o alvo 3D respectivo
   if (act3Env && act3Env.targets) {
     const tIdx = qteCurrentIndex % act3Env.targets.length;
     const targetObj = act3Env.targets[tIdx];
     if (targetObj) {
       targetObj.hit = true;
-      if (targetObj.orb) targetObj.orb.material.emissiveIntensity = 2.5;
+      if (targetObj.orb) targetObj.orb.material.emissiveIntensity = 3.5;
+      if (targetObj.light) targetObj.light.intensity = 4.5;
     }
   }
 
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
   if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.remove('sweet-spot');
     qteKeyBtnEl.classList.add('hit-success');
-    setTimeout(() => qteKeyBtnEl.classList.remove('hit-success'), 350);
+    setTimeout(() => qteKeyBtnEl.classList.remove('hit-success'), 400);
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! ${step.name} calibrado!`;
+    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! ${step.name} destruído!`;
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
   qteCurrentIndex++;
   updateQteUI();
 
-  if (qteCurrentIndex >= QTE_STEPS.length) {
-    setTimeout(onQteCompleteSuccess, 450);
+  if (qteCurrentIndex >= QTE_TARGET_STEPS.length) {
+    setTimeout(onQteCompleteSuccess, 500);
   } else {
-    setTimeout(promptNextQteTarget, 500);
+    setTimeout(promptNextQteTarget, 550);
   }
 }
 
@@ -1331,33 +1599,32 @@ function onQteMissError(reason = 'wrong_key') {
   if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
   playSound('hit');
 
-  // PUNISHMENT: Dano de 20 HP no jogador!
-  const damageTaken = 20;
+  // Dano leve de coice (5 HP)
+  const damageTaken = 5;
   player.hp = Math.max(1, player.hp - damageTaken);
   updateHUD();
 
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+  const qtePulseRingEl = document.querySelector('#qtePulseRing');
   if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.remove('sweet-spot');
     qteKeyBtnEl.classList.add('miss-error');
     setTimeout(() => qteKeyBtnEl.classList.remove('miss-error'), 450);
   }
-
-  if (targetModalEl) {
-    targetModalEl.classList.add('qte-damage-flash');
-    setTimeout(() => targetModalEl.classList.remove('qte-damage-flash'), 500);
-  }
-
-  const qtePulseRingEl = document.querySelector('#qtePulseRing');
   if (qtePulseRingEl) {
+    qtePulseRingEl.classList.remove('sweet-spot');
     qtePulseRingEl.classList.add('idle');
-    qtePulseRingEl.style.transform = '';
   }
 
   if (targetFeedbackTextEl) {
-    if (reason === 'timeout') {
-      targetFeedbackTextEl.textContent = `⏱️ TEMPO ESGOTADO! O tiro falhou e o coice de lava feriu você (-${damageTaken} HP)!`;
+    if (reason === 'too_early') {
+      targetFeedbackTextEl.textContent = `⚠️ MUITO CEDO! Espere o anel externo encostar no círculo do botão!`;
+    } else if (reason === 'too_late') {
+      targetFeedbackTextEl.textContent = `⏱️ TARDE DEMAIS! O anel já havia encolhido demais!`;
+    } else if (reason === 'timeout') {
+      targetFeedbackTextEl.textContent = `⏱️ TEMPO ESGOTADO! O anel fechou antes do disparo!`;
     } else {
-      targetFeedbackTextEl.textContent = `❌ TECLA ERRADA! A balista explodiu energia de lava em você (-${damageTaken} HP)!`;
+      targetFeedbackTextEl.textContent = `❌ TECLA INCORRETA! Era a tecla [${currentQteKey.display}]!`;
     }
     targetFeedbackTextEl.style.color = '#ff1744';
   }
@@ -1377,7 +1644,7 @@ function onQteCompleteSuccess() {
   playSound('victory');
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = '🌟 TODOS OS ALVOS DESTRUÍDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
+    targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 ALVOS DESTRUÍDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
@@ -1409,8 +1676,8 @@ if (qteKeyBtnEl) {
       startQteSequence();
       return;
     }
-    if (qteCanInput && qteCurrentIndex < QTE_STEPS.length) {
-      handleQteInput(QTE_STEPS[qteCurrentIndex].key);
+    if (qteCanInput && qteCurrentIndex < QTE_TARGET_STEPS.length) {
+      handleQteInput('', '', true);
     }
   });
 }
@@ -1422,25 +1689,25 @@ btnCloseTargetModalEl.addEventListener('click', () => {
   targetModalEl.classList.add('hidden');
 });
 
-// Botão de pular o QTE para apresentação/demo
 const btnSkipQteEl = document.querySelector('#btnSkipQte');
 if (btnSkipQteEl) {
   btnSkipQteEl.addEventListener('click', () => {
     if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
     qteActive = false;
     qteCanInput = false;
-    qteCurrentIndex = QTE_STEPS.length;
+    qteCurrentIndex = QTE_TARGET_STEPS.length;
     if (act3Env && act3Env.targets) {
       act3Env.targets.forEach((t) => {
         t.hit = true;
-        if (t.orb) t.orb.material.emissiveIntensity = 2.5;
+        if (t.orb) t.orb.material.emissiveIntensity = 3.0;
+        if (t.light) t.light.intensity = 4.0;
       });
     }
-    for (let i = 0; i < QTE_STEPS.length; i++) {
+    for (let i = 0; i < QTE_TARGET_STEPS.length; i++) {
       const dot = document.querySelector(`#tdot${i}`);
       if (dot) dot.classList.add('active');
     }
-    if (targetProgressTextEl) targetProgressTextEl.textContent = `(${QTE_STEPS.length} / ${QTE_STEPS.length})`;
+    if (targetProgressTextEl) targetProgressTextEl.textContent = `(${QTE_TARGET_STEPS.length} / ${QTE_TARGET_STEPS.length})`;
     onQteCompleteSuccess();
   });
 }
@@ -1890,9 +2157,24 @@ function triggerVillainWakeUpSpeech() {
   });
 }
 
+let isPlayerDying = false;
+let pendingKnockoutReason = '';
+
+function startPlayerDeath(reason = 'Você perdeu a consciência...') {
+  if (isPlayerDying || isKnockedOut || player.isFalling) return;
+  isPlayerDying = true;
+  pendingKnockoutReason = reason;
+  player.hp = 0;
+  player.moving = false;
+  player.deathTimer = 0;
+  playSound('hit');
+  updateHUD();
+}
+
 function triggerKnockout(reason = 'Você perdeu a consciência...') {
   if (isKnockedOut) return;
   isKnockedOut = true;
+  isPlayerDying = false;
   player.isFalling = false;
   player.fallTimer = 0;
   player.moving = false;
@@ -1917,6 +2199,7 @@ function triggerKnockout(reason = 'Você perdeu a consciência...') {
 btnWakeUpCellEl.addEventListener('click', () => {
   knockoutOverlayEl.classList.add('hidden');
   isKnockedOut = false;
+  isPlayerDying = false;
   if (currentAct === 3) {
     setAct(3);
   } else {
@@ -2206,6 +2489,7 @@ btnRestartActEl.addEventListener('click', () => {
     }
   }
   isActTransitioning = false;
+  isPlayerDying = false;
   setAct(currentAct);
   isGameOver = false;
   closeMenu();
@@ -2259,7 +2543,16 @@ window.addEventListener('keydown', (e) => {
       }
     } else if (qteCanInput) {
       e.preventDefault();
-      handleQteInput(e.key);
+      handleQteInput(e.key, e.code);
+      return;
+    }
+  }
+
+  // Handle Stone Plaque Modal closing
+  if (stonePlaqueModalEl && !stonePlaqueModalEl.classList.contains('hidden')) {
+    if (e.code === 'Escape' || e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      closeStonePlaqueModal();
       return;
     }
   }
@@ -2276,6 +2569,10 @@ window.addEventListener('keydown', (e) => {
   }
 
   if (e.code === 'Escape') {
+    if (stonePlaqueModalEl && !stonePlaqueModalEl.classList.contains('hidden')) {
+      closeStonePlaqueModal();
+      return;
+    }
     if (!endingsModalEl.classList.contains('hidden')) {
       endingsModalEl.classList.add('hidden');
       return;
@@ -2328,6 +2625,7 @@ window.addEventListener('keydown', (e) => {
     !safeModalEl.classList.contains('hidden') ||
     !relicModalEl.classList.contains('hidden') ||
     !targetModalEl.classList.contains('hidden') ||
+    (stonePlaqueModalEl && !stonePlaqueModalEl.classList.contains('hidden')) ||
     isWakingUp
   ) {
     return;
@@ -2668,8 +2966,6 @@ function handleInteraction() {
     const obj = currentPromptObject;
     if (obj.type === 'relic_puzzle') {
       if (!questState.relicPuzzleSolved) {
-        // Reset to solved state then scramble fresh each time the modal opens
-        relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
         scrambleRelicTiles();
       } else {
         renderRelicBoard();
@@ -2702,9 +2998,37 @@ function handleInteraction() {
       }
     } else if (obj.type === 'locked_demo_ending') {
       playSound('hit');
+      player.moving = false;
+      const speaker = obj.choiceName ? obj.choiceName.toUpperCase() : (obj.dialogueSpeaker || 'CAMINHO INDISPONÍVEL');
       typeWriterDialogue(
-        obj.dialogueSpeaker || 'CAMINHO BLOQUEADO',
-        obj.dialogueText || '🔒 Este final não está disponível na versão demo! Estará acessível na versão completa do jogo.'
+        speaker,
+        'Esse caminho não está disponível nesse momento.',
+        () => {
+          setTimeout(() => {
+            dialogueContainerEl.classList.add('hidden');
+            isVictory = true;
+
+            const victoryBadgeEl = document.querySelector('#victoryBadge');
+            const victoryIconLargeEl = document.querySelector('#victoryIconLarge');
+            const victoryTitleEl = document.querySelector('#victoryTitle');
+            const victoryQuoteEl = document.querySelector('#victoryQuote');
+            const victoryTextEl = document.querySelector('#victoryText');
+            const victoryImageWrapperEl = document.querySelector('#victoryImageWrapper');
+
+            if (victoryBadgeEl) victoryBadgeEl.textContent = '🔒 DEMO FINALIZADA';
+            if (victoryIconLargeEl) victoryIconLargeEl.textContent = '⛔';
+            if (victoryTitleEl) victoryTitleEl.textContent = speaker;
+            if (victoryImageWrapperEl) victoryImageWrapperEl.classList.add('hidden');
+            if (victoryQuoteEl) victoryQuoteEl.textContent = '"Esse caminho não está disponível nesse momento."';
+            if (victoryTextEl) {
+              victoryTextEl.innerHTML = `
+                <strong>FIM DA DEMO:</strong> Esse caminho não está disponível nesse momento.<br><br>
+                Você alcançou os limites desta versão demonstrativa. O restante deste caminho estará acessível na versão completa do jogo!
+              `;
+            }
+            victoryOverlayEl.classList.remove('hidden');
+          }, 900);
+        }
       );
     } else if (obj.type === 'ending_choice') {
       triggerEnding(obj.endingId);
@@ -2737,6 +3061,8 @@ function handleInteraction() {
   if (obj.type === 'binary_lever') {
     updateBinaryModalUI();
     binaryModalEl.classList.remove('hidden');
+  } else if (obj.type === 'stone_monolith_clue') {
+    openStonePlaqueModal(obj.clueText);
   } else if (obj.type === 'lore_clue') {
     playSound('pickup');
     typeWriterDialogue(obj.clueSpeaker || 'INSCRIÇÃO', obj.clueText);
@@ -2846,6 +3172,7 @@ function openEscapeGate() {
 }
 
 function restartGame() {
+  isPlayerDying = false;
   if (currentAct === 2) {
     questState.hasBronzeKey = false;
     questState.hasCthulhuRune = false;
@@ -2895,7 +3222,6 @@ function animate(currentTime) {
     colorModalEl.classList.contains('hidden') &&
     safeModalEl.classList.contains('hidden') &&
     relicModalEl.classList.contains('hidden') &&
-    targetModalEl.classList.contains('hidden') &&
     isGameStarted
   ) {
     if (currentAct === 1) {
@@ -2960,7 +3286,7 @@ function animate(currentTime) {
       }
     } else if (currentAct === 2) {
       // Act 2: Dungeon
-      const activeKeys = isActTransitioning ? {} : keys;
+      const activeKeys = (isActTransitioning || isPlayerDying) ? {} : keys;
       const playerUpdateRes = player.update(
         activeKeys,
         dt,
@@ -2968,10 +3294,16 @@ function animate(currentTime) {
         cameraAngle,
         dungeonEnv.obstacles
       );
-      if (isActTransitioning) {
+      if (isActTransitioning || isPlayerDying) {
         player.moving = false;
       }
       player.animate(elapsed);
+
+      // Checa se a animação de morte do personagem terminou
+      if (isPlayerDying && playerUpdateRes && playerUpdateRes.finishedDeath) {
+        isPlayerDying = false;
+        triggerKnockout(pendingKnockoutReason);
+      }
 
       if (playerUpdateRes && playerUpdateRes.finishedFall) {
         player.isFalling = false;
@@ -3042,7 +3374,7 @@ function animate(currentTime) {
             player.group.position.x - trap.x,
             player.group.position.z - trap.z
           );
-          if (trap.isActive && distToSpike < trap.radius && !player.isFalling) {
+          if (trap.isActive && distToSpike < trap.radius && !player.isFalling && !isPlayerDying) {
             player.hp -= trap.damage * dt;
             player.noiseLevel = 3;
             playSound('hit');
@@ -3050,7 +3382,7 @@ function animate(currentTime) {
 
             if (player.hp <= 0) {
               player.hp = 0;
-              triggerKnockout('Você pisou em uma armadilha fatal de espinhos e caiu desacordado!');
+              startPlayerDeath('Você pisou em uma armadilha fatal de espinhos e caiu desacordado!');
             }
           }
         } else if (trap.type === 'hole') {
@@ -3071,8 +3403,8 @@ function animate(currentTime) {
         dungeonEnv.pathPuzzle &&
         !player.isFalling &&
         !isKnockedOut &&
-        player.group.position.x >= 5.0 &&
-        player.group.position.x <= 17.0 &&
+        player.group.position.x >= 4.4 &&
+        player.group.position.x <= 14.5 &&
         player.group.position.z >= -6.5 &&
         player.group.position.z <= 6.5
       ) {
@@ -3083,8 +3415,8 @@ function animate(currentTime) {
         // Se estiver no vão entre as colunas, o jogador pode circular livremente em diagonal!
         const tile = dungeonEnv.pathPuzzle.tiles.find(
           (t) =>
-            Math.abs(px - t.x) <= (t.halfW || 0.8) &&
-            Math.abs(pz - t.z) <= (t.halfH || 2.14)
+            Math.abs(px - t.x) <= (t.halfW || 0.65) &&
+            Math.abs(pz - t.z) <= (t.halfH || 1.0)
         );
 
         if (tile) {
@@ -3123,7 +3455,7 @@ function animate(currentTime) {
           cameraAngle
         );
 
-        if (res.attacked && !player.isFalling) {
+        if (res.attacked && !player.isFalling && !isPlayerDying) {
           player.hp -= res.damage;
           player.noiseLevel = 3;
           playSound('hit');
@@ -3135,7 +3467,7 @@ function animate(currentTime) {
 
           if (player.hp <= 0) {
             player.hp = 0;
-            triggerKnockout(`O ${enemy.name} te atingiu com um golpe fulminante e você desmaiou!`);
+            startPlayerDeath(`O ${enemy.name} te atingiu com um golpe fulminante e você desmaiou!`);
           }
         }
       });
@@ -3216,14 +3548,24 @@ function animate(currentTime) {
       // Act 3: Volcanic Chasm & Magma River
       act3Env.update(dt, elapsed);
 
+      const activeKeys = (isActTransitioning || isPlayerDying || !targetModalEl.classList.contains('hidden')) ? {} : keys;
       const playerUpdateRes = player.update(
-        keys,
+        activeKeys,
         dt,
         act3Env.bounds,
         cameraAngle,
         act3Env.obstacles
       );
+      if (isActTransitioning || isPlayerDying || !targetModalEl.classList.contains('hidden')) {
+        player.moving = false;
+      }
       player.animate(elapsed);
+
+      // Checa se a animação de morte do personagem terminou
+      if (isPlayerDying && playerUpdateRes && playerUpdateRes.finishedDeath) {
+        isPlayerDying = false;
+        triggerKnockout(pendingKnockoutReason);
+      }
 
       const targetCamX = THREE.MathUtils.clamp(
         player.group.position.x,
@@ -3246,15 +3588,15 @@ function animate(currentTime) {
           player.group.position.z >= lh.minZ &&
           player.group.position.z <= lh.maxZ
         ) {
-          const onBridge = act3Env.bridge.isRaised && Math.abs(player.group.position.z) <= 2.2;
-          if (!onBridge) {
+          const onBridge = (act3Env.bridge.isRaised || act3Env.bridge.isRaising) && Math.abs(player.group.position.z) <= 2.2;
+          if (!onBridge && !isPlayerDying) {
             player.hp -= lh.damage * dt;
             player.noiseLevel = 3;
             playSound('hit');
             updateHUD();
             if (player.hp <= 0) {
               player.hp = 0;
-              triggerKnockout('Você caiu no rio de lava ardente e foi consumido pelas chamas!');
+              startPlayerDeath('Você caiu no rio de lava ardente e foi consumido pelas chamas!');
             }
           }
         }
@@ -3287,14 +3629,14 @@ function animate(currentTime) {
           }
         }
 
-        if (!onSafePath) {
+        if (!onSafePath && !isPlayerDying) {
           player.hp -= 25 * dt;
           player.noiseLevel = 2;
           playSound('hit');
           updateHUD();
           if (player.hp <= 0) {
             player.hp = 0;
-            triggerKnockout('Você caiu no ácido corrosivo e suas forças se esvaíram!');
+            startPlayerDeath('Você caiu no ácido corrosivo e suas forças se esvaíram!');
           }
         }
       }
@@ -3311,7 +3653,7 @@ function animate(currentTime) {
           cameraAngle
         );
 
-        if (res.attacked && !player.isFalling) {
+        if (res.attacked && !player.isFalling && !isPlayerDying) {
           player.hp -= res.damage;
           player.noiseLevel = 3;
           playSound('hit');
@@ -3323,7 +3665,7 @@ function animate(currentTime) {
 
           if (player.hp <= 0) {
             player.hp = 0;
-            triggerKnockout(`O ${enemy.name} te atingiu com um golpe mortal e você desmaiou nas cinzas!`);
+            startPlayerDeath(`O ${enemy.name} te atingiu com um golpe mortal e você desmaiou nas cinzas!`);
           }
         }
       });

@@ -283,19 +283,18 @@ export function createAct3Environment(scene) {
     raise() {
       if (this.isRaised) return;
       this.isRaising = true;
+      const idx = obstacles.indexOf(this.obstacle);
+      if (idx !== -1) obstacles.splice(idx, 1);
     },
     update(dt) {
       if (this.isRaising && !this.isRaised) {
-        this.currentY = THREE.MathUtils.lerp(this.currentY, this.targetY, dt * 2.5);
+        this.currentY = THREE.MathUtils.lerp(this.currentY, this.targetY, dt * 3.5);
         this.mesh.position.y = this.currentY;
         if (Math.abs(this.currentY - this.targetY) < 0.05) {
           this.currentY = this.targetY;
           this.mesh.position.y = this.targetY;
           this.isRaised = true;
           this.isRaising = false;
-          // Remove barrier obstacle so player can cross
-          const idx = obstacles.indexOf(this.obstacle);
-          if (idx !== -1) obstacles.splice(idx, 1);
         }
       }
     },
@@ -522,9 +521,9 @@ export function createAct3Environment(scene) {
     x: 38.5,
     z: -5.0,
     radius: 3.2,
-    prompt: '[E] Inspecionar Porta Ancestral (🔒 Indisponível na Demo)',
+    prompt: '[E] A Porta Ancestral',
     dialogueSpeaker: 'A PORTA ANCESTRAL',
-    dialogueText: '🔒 Os grandes portões dos ancestrais estão selados por runas mágicas nesta versão DEMO! Este final estará disponível apenas no lançamento da versão completa do jogo.',
+    dialogueText: 'Esse caminho não está disponível nesse momento.',
   });
 
   // 2. ESCOLHA 2: O BUEIRO FÉTIDO SUBTERRÂNEO (Z = +5.0, X = 39.5) -> Final #2 (Indisponível na Versão Demo)
@@ -575,13 +574,13 @@ export function createAct3Environment(scene) {
     id: 'manhole_choice',
     type: 'locked_demo_ending',
     endingId: 2,
-    choiceName: 'O Bueiro Subterrâneo',
+    choiceName: 'O Bueiro Fétido',
     x: 38.5,
     z: 5.0,
     radius: 3.2,
-    prompt: '[E] Inspecionar Bueiro Fétido (🔒 Indisponível na Demo)',
-    dialogueSpeaker: 'BUEIRO SUBTERRÂNEO',
-    dialogueText: '🔒 A pesada grade de ferro fundido do bueiro está soldada e emperrada nesta versão DEMO! Este final estará disponível apenas no lançamento da versão completa do jogo.',
+    prompt: '[E] O Bueiro Fétido',
+    dialogueSpeaker: 'O BUEIRO FÉTIDO',
+    dialogueText: 'Esse caminho não está disponível nesse momento.',
   });
 
   // 3. ESCOLHA 3: O CULTISTA SUPREMO & RITUAL DE CTHULHU (Z = 0.0, X = 41.0) -> Final #4
