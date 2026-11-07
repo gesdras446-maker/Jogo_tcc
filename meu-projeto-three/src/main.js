@@ -855,13 +855,27 @@ function openStonePlaqueModal(poemText) {
   playSound('pickup');
   if (stonePlaqueTextEl) {
     stonePlaqueTextEl.innerHTML = '';
-    const verses = (poemText || '').split('\n').filter((l) => l.trim().length > 0);
-    verses.forEach((verse, idx) => {
-      const vEl = document.createElement('div');
-      vEl.className = 'stone-plaque-verse';
-      vEl.textContent = verse;
-      stonePlaqueTextEl.appendChild(vEl);
+    const lines = (poemText || '').split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+
+    const poemBlock = document.createElement('div');
+    poemBlock.className = 'stone-plaque-poem-block';
+
+    lines.forEach((line) => {
+      const p = document.createElement('p');
+      if (line.includes('📜')) {
+        p.className = 'stone-poem-title';
+      } else if (line.includes('Decifre')) {
+        p.className = 'stone-poem-subtitle';
+      } else if (line.includes('⚠️')) {
+        p.className = 'stone-poem-warning';
+      } else {
+        p.className = 'stone-poem-line';
+      }
+      p.textContent = line;
+      poemBlock.appendChild(p);
     });
+
+    stonePlaqueTextEl.appendChild(poemBlock);
   }
   stonePlaqueModalEl.classList.remove('hidden');
 }
@@ -1531,7 +1545,7 @@ function handleQteInput(inputKey, inputCode = '', isMouseClick = false) {
       currentQteKey.key === ' '
         ? pressedKey === ' ' || pressedKey === 'space' || pressedCode === 'space'
         : pressedKey === currentQteKey.key.toLowerCase() ||
-          pressedCode === `key${currentQteKey.key.toLowerCase()}`;
+        pressedCode === `key${currentQteKey.key.toLowerCase()}`;
 
     if (!isMatch) {
       onQteMissError('wrong_key');
@@ -3425,7 +3439,10 @@ function animate(currentTime) {
             if (!tile.isStepped) {
               tile.isStepped = true;
               if (tile.spikeGroup) tile.spikeGroup.visible = false;
-              if (tile.baseMat) tile.baseMat.emissive.setHex(0x004d20);
+              if (tile.baseMat) {
+                tile.baseMat.emissive.setHex(0x00e676);
+                tile.baseMat.emissiveIntensity = 0.9;
+              }
               playSound('pickup');
             }
           } else {

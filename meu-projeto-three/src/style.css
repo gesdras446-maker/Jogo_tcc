@@ -2226,36 +2226,60 @@ canvas {
 
 .stone-plaque-content {
   width: 100%;
-  max-height: 52vh;
+  max-height: 54vh;
   overflow-y: auto;
   padding: 8px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   scrollbar-width: thin;
   scrollbar-color: #00e5ff #10141c;
 }
 
-.stone-plaque-verse {
+.stone-plaque-poem-block {
   font-family: 'Cinzel', 'Georgia', serif;
-  font-size: 15px;
-  line-height: 1.6;
   color: #eceff1;
   background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(0, 229, 255, 0.2);
+  border: 1px solid rgba(0, 229, 255, 0.25);
   border-left: 3px solid #00e5ff;
   border-radius: 8px;
-  padding: 10px 16px;
-  text-align: left;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  padding: 20px 24px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.stone-plaque-verse:first-child {
+.stone-poem-title {
   font-size: 17px;
   font-weight: bold;
   color: #ffd54f;
-  border-left-color: #ffd54f;
   text-align: center;
+  margin: 0 0 2px 0;
+}
+
+.stone-poem-subtitle {
+  font-size: 13px;
+  color: #80deea;
+  text-align: center;
+  font-style: italic;
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.stone-poem-line {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: #f0f4f8;
+  margin: 0;
+  text-align: left;
+}
+
+.stone-poem-warning {
+  font-size: 12.5px;
+  color: #ffab91;
+  text-align: center;
+  margin: 10px 0 0 0;
+  font-style: italic;
 }
 
 .stone-plaque-actions {
