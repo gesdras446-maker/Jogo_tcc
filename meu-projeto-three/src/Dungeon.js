@@ -25,6 +25,8 @@ import texColuna1 from './Estrutura_da_masmorra/Coluna.png';
 import texColuna2 from './Estrutura_da_masmorra/Coluna2.png';
 import texColuna3 from './Estrutura_da_masmorra/Coluna3.png';
 import texGrade from './Estrutura_da_masmorra/Grade.png';
+import texGradeBuraco from './Estrutura_da_masmorra/Grade_buraco.png';
+import texCoredor from './Estrutura_da_masmorra/Coredor.png';
 import texMonumento1 from './Estrutura_da_masmorra/Monumento.png';
 import texMonumento2 from './Estrutura_da_masmorra/Monumento2.png';
 import texMonumento3 from './Estrutura_da_masmorra/Monumento3.png';
@@ -68,7 +70,7 @@ function loadDungeonTex(imgSrc, repeatX = 1, repeatY = 1) {
   const tex = textureLoader.load(imgSrc);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.LinearFilter;
   tex.generateMipmaps = false;
   if (repeatX !== 1 || repeatY !== 1) {
     tex.wrapS = THREE.RepeatWrapping;
@@ -86,7 +88,7 @@ function loadCroppedTex(imgSrc, repeatX = 1, repeatY = 1) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.LinearFilter;
   texture.generateMipmaps = false;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
@@ -257,6 +259,8 @@ export function createDungeonEnvironment(scene) {
   const column3Texture = loadCroppedTex(texColuna3, 1, 1);
 
   const holeTexture = loadDungeonTex(texBuraco);
+  const holeCamoTexture = loadDungeonTex(texGradeBuraco);  // Textura de buraco disfarçado (grade sobre o buraco)
+  const corridorTexture = loadDungeonTex(texCoredor);       // Textura de corredor para variação visual
   const gateTexture = loadDungeonTex(texGrade);
   const monument1Tex = loadDungeonTex(texMonumento1);
   const monument2Tex = loadDungeonTex(texMonumento2);
@@ -326,6 +330,9 @@ export function createDungeonEnvironment(scene) {
     const mat = new THREE.MeshLambertMaterial({
       map: tex,
     });
+    mat.polygonOffset = true;
+    mat.polygonOffsetFactor = 2;
+    mat.polygonOffsetUnits = 2;
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set((minX + maxX) / 2, 0.0, (minZ + maxZ) / 2);
@@ -335,42 +342,32 @@ export function createDungeonEnvironment(scene) {
   // 1. Chamber 1: Cela de Sacrifício
   createFloor(-50.0, -30.0, -10.0, 10.0, floorTexLama);
 
-  // CORREDOR 1 EXPANDIDO (Conexão Longa Câmara 1 <-> Câmara 2 - X Vermelho Esquerdo)
-  createFloor(-30.0, -22.7, -1.3, 1.3, floorTex0);
-  createFloor(-25.3, -22.7, -6.3, 1.3, floorTex0);
-  createFloor(-25.3, -12.7, -6.3, -3.7, floorTex0);
-  createFloor(-15.3, -12.7, -6.3, 1.3, floorTex0);
-  createFloor(-15.3, -8.0, -1.3, 1.3, floorTex0);
+  // CORREDOR 1 (FORMATO U — LARGO COM NICHOS): Câmara 1 <-> Câmara 2
+  // Trecho central largo (6u) com dois nichos laterais no meio
+  createFloor(-30.0, -8.0, -2.0, 2.0, floorTex0);     // Faixa central (4u de largura)
+  createFloor(-24.0, -18.0, -5.0, -2.0, floorTex0);   // Nicho norte (alargamento à esquerda)
+  createFloor(-24.0, -18.0, 2.0, 5.0, floorTex0);     // Nicho sul (alargamento à direita)
 
   // 2. Chamber 2: Corredor das Alavancas Binárias
   createFloor(-8.0, 8.0, -6.5, 6.5, floorTex0);
 
-  // CORREDOR 2 EXPANDIDO (Conexão Longa Câmara 2 <-> Câmara 3 - X Vermelho Inferior)
-  createFloor(-1.3, 1.3, 6.5, 13.3, floorTex2);
-  createFloor(-1.3, 7.3, 10.7, 13.3, floorTex2);
-  createFloor(4.7, 7.3, 10.7, 24.3, floorTex2);
-  createFloor(-1.3, 7.3, 21.7, 24.3, floorTex2);
-  createFloor(-1.3, 1.3, 21.7, 28.5, floorTex2);
+  // CORREDOR 2 (RETO LARGO): Câmara 2 <-> Câmara 3 (5u de largura para diferenciar)
+  createFloor(-2.5, 2.5, 6.5, 28.5, floorTex2);
 
   // 3. Chamber 3: Catacumbas dos Cristais
   createFloor(-12.0, 12.0, 28.5, 48.5, floorTex2);
 
-  // CORREDOR 3 EXPANDIDO (Conexão Longa Câmara 2 <-> Câmara 4 - X Vermelho Direito)
-  createFloor(8.0, 15.3, -1.3, 1.3, floorTex4);
-  createFloor(12.7, 15.3, -1.3, 6.3, floorTex4);
-  createFloor(12.7, 25.3, 3.7, 6.3, floorTex4);
-  createFloor(22.7, 25.3, -1.3, 6.3, floorTex4);
-  createFloor(22.7, 30.0, -1.3, 1.3, floorTex4);
+  // CORREDOR 3 (FORMATO T — ALARGAMENTO CENTRAL): Câmara 2 <-> Câmara 4
+  // Faixa central reta (4u de largura)
+  createFloor(8.0, 30.0, -2.0, 2.0, floorTex4);       // Faixa central
+  createFloor(16.0, 24.0, 2.0, 7.0, floorTex4);       // Câmara de descanso norte
+  createFloor(16.0, 24.0, -7.0, -2.0, floorTex4);     // Câmara de descanso sul
 
   // 4. Chamber 4: Salão dos Espinhos
   createFloor(30.0, 46.0, -6.5, 6.5, floorTex4);
 
-  // CORREDOR 4 EXPANDIDO (Conexão Longa Câmara 4 <-> Câmara 5 - X Vermelho na Entrada do Altar)
-  createFloor(46.0, 53.3, -1.3, 1.3, floorTex3);
-  createFloor(50.7, 53.3, -6.3, 1.3, floorTex3);
-  createFloor(50.7, 63.3, -6.3, -3.7, floorTex3);
-  createFloor(60.7, 63.3, -6.3, 1.3, floorTex3);
-  createFloor(60.7, 68.0, -1.3, 1.3, floorTex3);
+  // CORREDOR 4 (RETO): Câmara 4 <-> Câmara 5
+  createFloor(46.0, 68.0, -2.0, 2.0, floorTex3);
 
   // 5. Chamber 5: Grande Altar de Cthulhu
   createFloor(68.0, 86.0, -12.0, 12.0, floorTex3);
@@ -389,6 +386,9 @@ export function createDungeonEnvironment(scene) {
   const stoneSideMat = new THREE.MeshLambertMaterial({
     map: loadCroppedTex(texParedeInteira, 1, 1),
   });
+  stoneSideMat.polygonOffset = true;
+  stoneSideMat.polygonOffsetFactor = 2;
+  stoneSideMat.polygonOffsetUnits = 2;
 
   function createWall(x, z, width, depth, height = 3.8, frontTexture = wallFullTexture, isSolid = true) {
     const geo = new THREE.BoxGeometry(width, height, depth);
@@ -401,16 +401,19 @@ export function createDungeonEnvironment(scene) {
       const frontTex = frontTexture.clone();
       frontTex.repeat.set(repeatU, 1);
       const frontMat = new THREE.MeshLambertMaterial({ map: frontTex });
+      frontMat.polygonOffset = true; frontMat.polygonOffsetFactor = 1; frontMat.polygonOffsetUnits = 1;
 
       // Top cap face (+Y)
       const topTex = wallCapTexture.clone();
       topTex.repeat.set(repeatU, 1);
       const topMat = new THREE.MeshLambertMaterial({ map: topTex });
+      topMat.polygonOffset = true; topMat.polygonOffsetFactor = 1; topMat.polygonOffsetUnits = 1;
 
       // End caps (+X, -X) get textured stone
       const endTex = wallFullTexture.clone();
       endTex.repeat.set(Math.max(1, Math.round(depth / 3.2)), 1);
       const endMat = new THREE.MeshLambertMaterial({ map: endTex });
+      endMat.polygonOffset = true; endMat.polygonOffsetFactor = 1; endMat.polygonOffsetUnits = 1;
 
       // [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
       materials = [endMat, endMat, topMat, stoneSideMat, frontMat, frontMat];
@@ -421,16 +424,19 @@ export function createDungeonEnvironment(scene) {
       const mainTex = frontTexture.clone();
       mainTex.repeat.set(repeatU, 1);
       const mainMat = new THREE.MeshLambertMaterial({ map: mainTex });
+      mainMat.polygonOffset = true; mainMat.polygonOffsetFactor = 1; mainMat.polygonOffsetUnits = 1;
 
       // Top cap face (+Y)
       const topTex = wallCapTexture.clone();
       topTex.repeat.set(1, repeatU);
       const topMat = new THREE.MeshLambertMaterial({ map: topTex });
+      topMat.polygonOffset = true; topMat.polygonOffsetFactor = 1; topMat.polygonOffsetUnits = 1;
 
       // End caps (+Z, -Z) get textured stone
       const endTex = wallFullTexture.clone();
       endTex.repeat.set(Math.max(1, Math.round(width / 3.2)), 1);
       const endMat = new THREE.MeshLambertMaterial({ map: endTex });
+      endMat.polygonOffset = true; endMat.polygonOffsetFactor = 1; endMat.polygonOffsetUnits = 1;
 
       // [right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)]
       materials = [mainMat, mainMat, topMat, stoneSideMat, endMat, endMat];
@@ -460,99 +466,81 @@ export function createDungeonEnvironment(scene) {
   // ========================================================
 
   // 1. Chamber 1 (Cela de Sacrifício): X: -50 to -30, Z: -10 to 10
-  createWall(-50.6, 0.0, W_THICK, 20.0, 3.8, wall1Texture);      // West Wall
+  createWall(-50.6, 0.0, W_THICK, 22.4, 3.8, wall1Texture);      // West Wall
   createWall(-40.0, 10.6, 20.0, W_THICK, 3.8, wall2Texture);     // North Wall (sólida)
   createWall(-40.0, -10.6, 20.0, W_THICK, 3.8, wall3Texture);    // South Wall (sólida)
-  createWall(-29.4, 5.65, W_THICK, 8.7, 3.8, wall1Texture);      // East Wall (North wing: Z: 1.3 a 10.0)
-  createWall(-29.4, -5.65, W_THICK, 8.7, 3.8, wall1Texture);     // East Wall (South wing: Z: -10.0 a -1.3)
+  createWall(-29.4, 6.0, W_THICK, 8.0, 3.8, wall1Texture);       // East Wall (North wing: Z: 2.0 a 10.0)
+  createWall(-29.4, -6.0, W_THICK, 8.0, 3.8, wall1Texture);      // East Wall (South wing: Z: -10.0 a -2.0)
 
-  // CORREDOR 1 EXPANDIDO: Conexão Longa em Zig-Zag Câmara 1 <-> Câmara 2 (X: -30 a -8)
-  // Lado Norte
-  createWall(-26.05, 1.9, 7.9, W_THICK, 3.8, wall3Texture);      // W_N1
-  createWall(-22.1, -0.6, W_THICK, 5.0, 3.8, wall3Texture);      // W_E1
-  createWall(-19.0, -3.1, 6.2, W_THICK, 3.8, wall3Texture);      // W_N2
-  createWall(-15.9, -0.6, W_THICK, 5.0, 3.8, wall3Texture);      // W_W1
-  createWall(-11.95, 1.9, 7.9, W_THICK, 3.8, wall3Texture);      // W_N3
-  // Lado Sul
-  createWall(-27.95, -1.9, 4.1, W_THICK, 3.8, wall3Texture);     // W_S1
-  createWall(-25.9, -4.4, W_THICK, 5.0, 3.8, wall3Texture);      // W_W2
-  createWall(-19.0, -6.9, 13.8, W_THICK, 3.8, wall3Texture);     // W_S2
-  createWall(-12.1, -4.4, W_THICK, 5.0, 3.8, wall3Texture);      // W_E2
-  createWall(-10.05, -1.9, 4.1, W_THICK, 3.8, wall3Texture);     // W_S3
+  // CORREDOR 1 (FORMATO U — LARGO COM NICHOS): X: -30 a -8, Z: -2 a 2 + nichos em X: -24 a -18
+  // Trecho antes dos nichos (X: -30 a -24, largura 6.0)
+  createWall(-27.0, 2.6, 6.0, W_THICK, 3.8, wall3Texture);       // Parede norte oeste
+  createWall(-27.0, -2.6, 6.0, W_THICK, 3.8, wall3Texture);      // Parede sul oeste
+  // Trecho depois dos nichos (X: -18 a -8, largura 10.0)
+  createWall(-13.0, 2.6, 10.0, W_THICK, 3.8, wall3Texture);      // Parede norte leste
+  createWall(-13.0, -2.6, 10.0, W_THICK, 3.8, wall3Texture);      // Parede sul leste
+  // Nicho norte (X: -24 a -18, Z: -5 a -2)
+  createWall(-21.0, -5.6, 6.0, W_THICK, 3.8, wall3Texture);      // Fundo norte do nicho (Z=-5.6)
+  createWall(-24.6, -3.5, W_THICK, 3.0, 3.8, wall3Texture);      // Parede lateral oeste do nicho norte
+  createWall(-17.4, -3.5, W_THICK, 3.0, 3.8, wall3Texture);      // Parede lateral leste do nicho norte
+  // Nicho sul (X: -24 a -18, Z: 2 a 5)
+  createWall(-21.0, 5.6, 6.0, W_THICK, 3.8, wall3Texture);       // Fundo sul do nicho (Z=+5.6)
+  createWall(-24.6, 3.5, W_THICK, 3.0, 3.8, wall3Texture);       // Parede lateral oeste do nicho sul
+  createWall(-17.4, 3.5, W_THICK, 3.0, 3.8, wall3Texture);       // Parede lateral leste do nicho sul
 
   // 2. Chamber 2 (Corredor das Alavancas): X: -8 to 8, Z: -6.5 to 6.5
   createWall(0.0, -7.1, 16.0, W_THICK, 3.8, wallCorpsesTexture); // North Wall (sólida)
-  createWall(-8.6, 3.9, W_THICK, 5.2, 3.8, wall1Texture);        // West Wall (North wing: Z: 1.3 a 6.5)
-  createWall(-8.6, -3.9, W_THICK, 5.2, 3.8, wall1Texture);       // West Wall (South wing: Z: -6.5 a -1.3)
-  createWall(-4.65, 7.1, 6.7, W_THICK, 3.8, wallCorpsesTexture); // South Wall (West wing: X: -8 a -1.3)
-  createWall(4.65, 7.1, 6.7, W_THICK, 3.8, wallCorpsesTexture);  // South Wall (East wing: X: 1.3 a 8)
-  createWall(8.6, 3.9, W_THICK, 5.2, 3.8, wall1Texture);         // East Wall (North wing: Z: 1.3 a 6.5)
-  createWall(8.6, -3.9, W_THICK, 5.2, 3.8, wall1Texture);        // East Wall (South wing: Z: -6.5 a -1.3)
+  createWall(-8.6, 4.25, W_THICK, 4.5, 3.8, wall1Texture);       // West Wall (North wing: Z: 2.0 a 6.5)
+  createWall(-8.6, -4.25, W_THICK, 4.5, 3.8, wall1Texture);      // West Wall (South wing: Z: -6.5 a -2.0)
+  createWall(-5.0, 7.1, 6.0, W_THICK, 3.8, wallCorpsesTexture);  // South Wall (West wing: X: -8 a -2.0)
+  createWall(5.0, 7.1, 6.0, W_THICK, 3.8, wallCorpsesTexture);   // South Wall (East wing: X: 2.0 a 8)
+  createWall(8.6, 4.25, W_THICK, 4.5, 3.8, wall1Texture);        // East Wall (North wing: Z: 2.0 a 6.5)
+  createWall(8.6, -4.25, W_THICK, 4.5, 3.8, wall1Texture);       // East Wall (South wing: Z: -6.5 a -2.0)
 
-  // CORREDOR 2 EXPANDIDO: Conexão Longa em Zig-Zag Câmara 2 <-> Câmara 3 (Z: 6.5 a 28.5)
-  // Lado Oeste
-  createWall(-1.9, 8.3, W_THICK, 3.6, 3.8, wallCorpsesTexture);   // W_W1
-  createWall(1.1, 10.1, 6.0, W_THICK, 3.8, wall3Texture);        // W_S1
-  createWall(4.1, 17.5, W_THICK, 14.8, 3.8, wallCorpsesTexture);  // W_W2
-  createWall(1.1, 24.9, 6.0, W_THICK, 3.8, wall3Texture);        // W_N1
-  createWall(-1.9, 26.7, W_THICK, 3.6, 3.8, wallCorpsesTexture);  // W_W3
-  // Lado Leste
-  createWall(1.9, 10.2, W_THICK, 7.4, 3.8, wallCorpsesTexture);   // W_E1
-  createWall(4.9, 13.9, 6.0, W_THICK, 3.8, wall3Texture);        // W_N2
-  createWall(7.9, 17.5, W_THICK, 7.2, 3.8, wallCorpsesTexture);   // W_E2
-  createWall(4.9, 21.1, 6.0, W_THICK, 3.8, wall3Texture);        // W_S2
-  createWall(1.9, 24.8, W_THICK, 7.4, 3.8, wallCorpsesTexture);   // W_E3
+  // CORREDOR 2 (RETO LARGO 5u): Z: 6.5 a 28.5, X: -2.5 a 2.5
+  createWall(-3.1, 17.5, W_THICK, 22.0, 3.8, wallCorpsesTexture); // West Wall
+  createWall(3.1, 17.5, W_THICK, 22.0, 3.8, wallCorpsesTexture);  // East Wall
 
   // 3. Chamber 3 (Catacumbas dos Cristais): X: -12 to 12, Z: 28.5 to 48.5
-  createWall(-6.65, 27.9, 10.7, W_THICK, 3.8, wall5Texture);     // North Wall (West wing: X: -12 a -1.3)
-  createWall(6.65, 27.9, 10.7, W_THICK, 3.8, wall5Texture);      // North Wall (East wing: X: 1.3 a 12)
+  createWall(-7.0, 27.9, 10.0, W_THICK, 3.8, wall5Texture);      // North Wall (West wing: X: -12 a -2.5)
+  createWall(7.0, 27.9, 10.0, W_THICK, 3.8, wall5Texture);       // North Wall (East wing: X: 2.5 a 12)
   createWall(-12.6, 38.5, W_THICK, 20.0, 3.8, wallCorpsesTexture);// West Wall (sólida)
   createWall(12.6, 38.5, W_THICK, 20.0, 3.8, wallCorpsesTexture); // East Wall (sólida)
   createWall(0.0, 49.1, 24.0, W_THICK, 3.8, wall5Texture);       // South Wall (sólida)
 
-  // CORREDOR 3 EXPANDIDO: Conexão Longa em Zig-Zag Câmara 2 <-> Câmara 4 (X: 8 to 30)
-  // Lado Sul
-  createWall(11.95, -1.9, 7.9, W_THICK, 3.8, wall2Texture);      // W_S1
-  createWall(15.9, 0.6, W_THICK, 5.0, 3.8, wall2Texture);        // W_E1
-  createWall(19.0, 3.1, 6.2, W_THICK, 3.8, wall2Texture);        // W_S2
-  createWall(22.1, 0.6, W_THICK, 5.0, 3.8, wall2Texture);        // W_W1
-  createWall(26.05, -1.9, 7.9, W_THICK, 3.8, wall2Texture);      // W_S3
-  // Lado Norte
-  createWall(10.05, 1.9, 4.1, W_THICK, 3.8, wall2Texture);       // W_N1
-  createWall(12.1, 4.4, W_THICK, 5.0, 3.8, wall2Texture);        // W_W2
-  createWall(19.0, 6.9, 13.8, W_THICK, 3.8, wall2Texture);       // W_N2
-  createWall(25.9, 4.4, W_THICK, 5.0, 3.8, wall2Texture);        // W_E2
-  createWall(27.95, 1.9, 4.1, W_THICK, 3.8, wall2Texture);       // W_N3
+  // CORREDOR 3 (FORMATO T — ALARGAMENTO CENTRAL): X: 8 a 30, Z: -2 a 2 + câmaras em X: 16-24
+  // Faixa central (paredes antes e depois do alargamento)
+  createWall(12.0, 2.6, 8.0, W_THICK, 3.8, wall2Texture);        // Parede norte oeste (X: 8-16)
+  createWall(12.0, -2.6, 8.0, W_THICK, 3.8, wall2Texture);       // Parede sul oeste (X: 8-16)
+  createWall(27.0, 2.6, 6.0, W_THICK, 3.8, wall2Texture);        // Parede norte leste (X: 24-30)
+  createWall(27.0, -2.6, 6.0, W_THICK, 3.8, wall2Texture);       // Parede sul leste (X: 24-30)
+  // Câmaras de descanso T (norte e sul)
+  createWall(20.0, 7.6, 8.0, W_THICK, 3.8, wall2Texture);        // Parede norte câmara T (Z=+7)
+  createWall(20.0, -7.6, 8.0, W_THICK, 3.8, wall2Texture);       // Parede sul câmara T (Z=-7)
+  createWall(15.4, 4.5, W_THICK, 5.0, 3.8, wall2Texture);        // Parede oeste câmara T norte
+  createWall(15.4, -4.5, W_THICK, 5.0, 3.8, wall2Texture);       // Parede oeste câmara T sul
+  createWall(24.6, 4.5, W_THICK, 5.0, 3.8, wall2Texture);        // Parede leste câmara T norte
+  createWall(24.6, -4.5, W_THICK, 5.0, 3.8, wall2Texture);       // Parede leste câmara T sul
 
   // 4. Chamber 4 (Salão dos Espinhos): X: 30 to 46, Z: -6.5 to 6.5
-  createWall(29.4, 3.9, W_THICK, 5.2, 3.8, wall2Texture);        // West Wall (North wing: Z: 1.3 a 6.5)
-  createWall(29.4, -3.9, W_THICK, 5.2, 3.8, wall2Texture);       // West Wall (South wing: Z: -6.5 a -1.3)
   createWall(38.0, -7.1, 16.0, W_THICK, 3.8, wall2Texture);      // North Wall (sólida)
   createWall(38.0, 7.1, 16.0, W_THICK, 3.8, wall2Texture);       // South Wall (sólida)
-  createWall(46.6, 3.9, W_THICK, 5.2, 3.8, wall2Texture);        // East Wall (North wing: Z: 1.3 a 6.5)
-  createWall(46.6, -3.9, W_THICK, 5.2, 3.8, wall2Texture);       // East Wall (South wing: Z: -6.5 a -1.3)
+  createWall(29.4, 4.25, W_THICK, 4.5, 3.8, wall2Texture);       // West Wall (North wing: Z: 2.0 a 6.5)
+  createWall(29.4, -4.25, W_THICK, 4.5, 3.8, wall2Texture);      // West Wall (South wing: Z: -6.5 a -2.0)
+  createWall(46.6, 4.25, W_THICK, 4.5, 3.8, wall2Texture);       // East Wall (North wing: Z: 2.0 a 6.5)
+  createWall(46.6, -4.25, W_THICK, 4.5, 3.8, wall2Texture);      // East Wall (South wing: Z: -6.5 a -2.0)
 
-  // CORREDOR 4 EXPANDIDO: Conexão Longa em Zig-Zag Câmara 4 <-> Câmara 5 (X: 46 to 68)
-  // Lado Norte
-  createWall(49.95, 1.9, 7.9, W_THICK, 3.8, wallCorpsesTexture); // W_N1
-  createWall(53.9, -0.6, W_THICK, 5.0, 3.8, wallCorpsesTexture); // W_E1
-  createWall(57.0, -3.1, 6.2, W_THICK, 3.8, wallCorpsesTexture); // W_N2
-  createWall(60.1, -0.6, W_THICK, 5.0, 3.8, wallCorpsesTexture); // W_W1
-  createWall(64.05, 1.9, 7.9, W_THICK, 3.8, wallCorpsesTexture); // W_N3
-  // Lado Sul
-  createWall(48.05, -1.9, 4.1, W_THICK, 3.8, wallCorpsesTexture);// W_S1
-  createWall(50.1, -4.4, W_THICK, 5.0, 3.8, wallCorpsesTexture); // W_W2
-  createWall(57.0, -6.9, 13.8, W_THICK, 3.8, wallCorpsesTexture);// W_S2
-  createWall(63.9, -4.4, W_THICK, 5.0, 3.8, wallCorpsesTexture); // W_E2
-  createWall(65.95, -1.9, 4.1, W_THICK, 3.8, wallCorpsesTexture);// W_S3
+  // CORREDOR 4 (RETO): X: 46 a 68, Z: -2 a 2
+  createWall(57.0, 2.6, 22.0, W_THICK, 3.8, wallCorpsesTexture); // North Wall
+  createWall(57.0, -2.6, 22.0, W_THICK, 3.8, wallCorpsesTexture);// South Wall
 
   // 5. Chamber 5 (Grand Altar de Cthulhu): X: 68 to 86, Z: -12 to 12
-  createWall(67.4, 6.65, W_THICK, 10.7, 3.8, wall1Texture);      // West Wall (North wing: Z: 1.3 a 12.0)
-  createWall(67.4, -6.65, W_THICK, 10.7, 3.8, wall1Texture);     // West Wall (South wing: Z: -12.0 a -1.3)
+  createWall(67.4, 7.0, W_THICK, 10.0, 3.8, wall1Texture);       // West Wall (North wing: Z: 2.0 a 12.0)
+  createWall(67.4, -7.0, W_THICK, 10.0, 3.8, wall1Texture);      // West Wall (South wing: Z: -12.0 a -2.0)
   createWall(77.0, -12.6, 18.0, W_THICK, 4.2, wallCorpsesTexture);// North Wall (sólida)
   createWall(77.0, 12.6, 18.0, W_THICK, 4.2, wallCorpsesTexture);// South Wall (sólida)
-  createWall(86.6, 6.8, W_THICK, 10.4, 3.8, wall5Texture);       // East Wall (North partition: Z: 1.6 a 12.0)
-  createWall(86.6, -6.8, W_THICK, 10.4, 3.8, wall5Texture);      // East Wall (South partition: Z: -12.0 a -1.6)
+  createWall(86.6, 7.0, W_THICK, 10.0, 3.8, wall5Texture);       // East Wall (North partition: Z: 2.0 a 12.0)
+  createWall(86.6, -7.0, W_THICK, 10.0, 3.8, wall5Texture);      // East Wall (South partition: Z: -12.0 a -2.0)
 
   // 6. Chamber 6 (Sala do Baú & Escadaria de Fuga): X: 86 to 98, Z: -6.5 to 6.5
   createWall(92.0, -7.1, 12.0, W_THICK, 3.8, wall3Texture);      // North Wall
@@ -621,32 +609,68 @@ export function createDungeonEnvironment(scene) {
   });
 
   // ========================================================
-  // 4. PITFALL / HOLE TRAPS (DISTANTES EM CANTOS - FORA DO CAMINHO)
+  // 4. PITFALL / HOLE TRAPS — BURACOS DISFARÇADOS EM BLOCOS DE CHÃO (TILES DA GRADE)
+  //    (Cada buraco ocupa EXATAMENTE um bloco de chão completo, com textura de chão quebrado/rachado)
   // ========================================================
-  const holeCoords = [
-    { x: -46.0, z: -6.0 }, // Câmara 1 (canto)
-    { x: -8.0, z: 35.0 },  // Câmara 3 (canto)
+  const brokenFloorTex = loadCroppedTex(texChao8, 1, 1); // Chão8 = pedra com rachaduras, disfarça o buraco na grade!
+
+  // Coordenadas calculadas exatamente para os blocos da grade das câmaras:
+  const holeTiles = [
+    // Câmara 1 (Cela — Grade 6x6 tiles, cada bloco tem 3.333u x 3.333u):
+    // Bloco Col 2, Row 1 (um dos "X" marcados pelo jogador):
+    { x: -50.0 + 2.5 * (20.0 / 6), z: -10.0 + 1.5 * (20.0 / 6), w: 20.0 / 6, h: 20.0 / 6 },
+    // Bloco Col 3, Row 4 (outro "X" marcado pelo jogador):
+    { x: -50.0 + 3.5 * (20.0 / 6), z: -10.0 + 4.5 * (20.0 / 6), w: 20.0 / 6, h: 20.0 / 6 },
+
+    // Câmara 3 (Catacumbas — Grade 8x6 tiles, cada bloco tem 3.0u x 3.333u):
+    // Bloco Col 1, Row 2 (canto das catacumbas):
+    { x: -12.0 + 1.5 * 3.0, z: 28.5 + 2.5 * (20.0 / 6), w: 3.0, h: 20.0 / 6 },
+    // Bloco Col 6, Row 3:
+    { x: -12.0 + 6.5 * 3.0, z: 28.5 + 3.5 * (20.0 / 6), w: 3.0, h: 20.0 / 6 },
+
+    // Câmara 5 (Altar — Grade 6x8 tiles, cada bloco tem 3.0u x 3.0u):
+    // Bloco Col 2, Row 2 (lateral longe do caminho central):
+    { x: 68.0 + 2.5 * 3.0, z: -12.0 + 2.5 * 3.0, w: 3.0, h: 3.0 },
+    // Bloco Col 3, Row 5:
+    { x: 68.0 + 3.5 * 3.0, z: -12.0 + 5.5 * 3.0, w: 3.0, h: 3.0 },
   ];
 
-  holeCoords.forEach((hc) => {
-    const hMat = new THREE.MeshLambertMaterial({
-      map: holeTexture,
+  holeTiles.forEach((ht) => {
+    // 1. Fundo do abismo (buraco negro sob o piso)
+    const holeMat = new THREE.MeshBasicMaterial({
+      map: loadDungeonTex(texBuraco),
       transparent: true,
       side: THREE.DoubleSide,
+    });
+    const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(ht.w, ht.h), holeMat);
+    holeMesh.rotation.x = -Math.PI / 2;
+    holeMesh.position.set(ht.x, 0.012, ht.z);
+    dungeonGroup.add(holeMesh);
+
+    // 2. Laje de chão quebrado/rachado (cobre EXATAMENTE 1 bloco inteiro de chão, perfeitamente alinhada)
+    const brokenMat = new THREE.MeshLambertMaterial({
+      map: brokenFloorTex,
+      transparent: false,
       polygonOffset: true,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
     });
-    const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), hMat);
-    hMesh.rotation.x = -Math.PI / 2;
-    hMesh.position.set(hc.x, 0.03, hc.z);
-    dungeonGroup.add(hMesh);
+    const brokenMesh = new THREE.Mesh(new THREE.PlaneGeometry(ht.w, ht.h), brokenMat);
+    brokenMesh.rotation.x = -Math.PI / 2;
+    brokenMesh.position.set(ht.x, 0.02, ht.z);
+    dungeonGroup.add(brokenMesh);
 
     traps.push({
       type: 'hole',
-      x: hc.x,
-      z: hc.z,
-      radius: 1.05,
+      x: ht.x,
+      z: ht.z,
+      w: ht.w,
+      h: ht.h,
+      halfW: ht.w / 2,
+      halfH: ht.h / 2,
+      radius: Math.min(ht.w, ht.h) * 0.45,
+      brokenMesh,
+      holeMesh,
       isFatal: true,
     });
   });
@@ -657,13 +681,13 @@ export function createDungeonEnvironment(scene) {
 
   const centerLights = [
     { x: -40, y: 4.5, z: 0, color: 0xffd180, intensity: 3.2, dist: 28 }, // Câmara 1
-    { x: -19, y: 3.2, z: -5.0, color: 0x80d8ff, intensity: 2.2, dist: 18 }, // Corredor 1
+    { x: -19, y: 3.2, z: 0, color: 0x80d8ff, intensity: 2.2, dist: 20 }, // Corredor 1
     { x: 0, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.0, dist: 26 },   // Câmara 2
-    { x: 6, y: 3.2, z: 17.5, color: 0x80d8ff, intensity: 2.2, dist: 18 },  // Corredor 2
+    { x: 0, y: 3.2, z: 17.5, color: 0x80d8ff, intensity: 2.2, dist: 20 },  // Corredor 2
     { x: 0, y: 4.5, z: 38.5, color: 0x80d8ff, intensity: 3.2, dist: 28 }, // Câmara 3
-    { x: 19, y: 3.2, z: 5.0, color: 0xffb74d, intensity: 2.2, dist: 18 },  // Corredor 3
+    { x: 19, y: 3.2, z: 0, color: 0xffb74d, intensity: 2.2, dist: 20 },  // Corredor 3
     { x: 38, y: 4.5, z: 0, color: 0xffb74d, intensity: 3.0, dist: 26 },   // Câmara 4
-    { x: 57, y: 3.2, z: -5.0, color: 0x80d8ff, intensity: 2.2, dist: 18 }, // Corredor 4
+    { x: 57, y: 3.2, z: 0, color: 0x80d8ff, intensity: 2.2, dist: 20 }, // Corredor 4
     { x: 77, y: 5.0, z: 0, color: 0xd1c4e9, intensity: 3.8, dist: 32 },   // Câmara 5
     { x: 92, y: 4.5, z: 0, color: 0xffecb3, intensity: 3.4, dist: 26 },   // Câmara 6
   ];
@@ -726,15 +750,29 @@ export function createDungeonEnvironment(scene) {
   createTorch(12.0, 2.3, 35.0, -Math.PI / 2);
   createTorch(98.0, 2.3, 0, -Math.PI / 2);
 
-  // Tochas nos cantos dos novos 4 corredores longos em zig-zag
-  createTorch(-19.0, 2.3, -3.1, Math.PI);           // Corredor 1
-  createTorch(4.3, 2.3, 17.5, Math.PI / 2);         // Corredor 2
-  createTorch(19.0, 2.3, 3.1, 0);                  // Corredor 3
-  createTorch(57.0, 2.3, -3.1, Math.PI);           // Corredor 4
+  // Tochas nos corredores com formatos variados
+  createTorch(-27.0, 2.3, 2.3, Math.PI);         // Corredor 1 U: parede norte oeste
+  createTorch(-27.0, 2.3, -2.3, 0);              // Corredor 1 U: parede sul oeste
+  createTorch(-21.0, 2.3, -3.2, Math.PI);        // Corredor 1 U: parede norte nicho norte
+  createTorch(-21.0, 2.3, 5.4, 0);               // Corredor 1 U: parede sul nicho sul
+  createTorch(-13.0, 2.3, 2.3, Math.PI);         // Corredor 1 U: parede norte leste
+  createTorch(-13.0, 2.3, -2.3, 0);              // Corredor 1 U: parede sul leste
+  createTorch(-2.8, 2.3, 17.5, Math.PI / 2);    // Corredor 2 (parede oeste)
+  createTorch(2.8, 2.3, 17.5, -Math.PI / 2);    // Corredor 2 (parede leste)
+  createTorch(12.0, 2.3, 2.3, Math.PI);          // Corredor 3 T: parede norte oeste
+  createTorch(12.0, 2.3, -2.3, 0);               // Corredor 3 T: parede sul oeste
+  createTorch(20.0, 2.3, 7.4, 0);                // Corredor 3 T: parede norte câmara T
+  createTorch(20.0, 2.3, -7.4, Math.PI);         // Corredor 3 T: parede sul câmara T
+  createTorch(27.0, 2.3, 2.3, Math.PI);          // Corredor 3 T: parede norte leste
+  createTorch(27.0, 2.3, -2.3, 0);               // Corredor 3 T: parede sul leste
+  createTorch(51.5, 2.3, 2.0, Math.PI);          // Corredor 4: trecho 1 norte
+  createTorch(51.5, 2.3, -2.0, 0);               // Corredor 4: trecho 1 sul
+  createTorch(63.0, 2.3, 2.0, Math.PI);          // Corredor 4: trecho 2 norte
+  createTorch(63.0, 2.3, -2.0, 0);               // Corredor 4: trecho 2 sul
 
   // Tochas de chão posicionadas bem nos cantos das salas
   createGroundTorch(-48.0, -8.0);
-  createGroundTorch(-6.0, -4.5);
+  createGroundTorch(-7.2, -5.5); // Ao lado do Monumento II (fora da frente dele)
   createGroundTorch(-10.0, 31.0);
   createGroundTorch(10.0, 31.0);
   createGroundTorch(70.0, -10.0);
@@ -794,7 +832,7 @@ export function createDungeonEnvironment(scene) {
   const pedZ = -5.8;
 
   const pedBase = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 1.2, 0.8),
+    new THREE.BoxGeometry(1.6, 1.2, 0.8),
     new THREE.MeshLambertMaterial({ map: column3Texture })
   );
   pedBase.position.set(pedX, 0.6, pedZ);
@@ -802,7 +840,7 @@ export function createDungeonEnvironment(scene) {
 
   // Tablet / console top slab
   const pedTop = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 0.12, 0.9),
+    new THREE.BoxGeometry(1.7, 0.12, 0.9),
     new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.6, metalness: 0.4 })
   );
   pedTop.position.set(pedX, 1.25, pedZ);
@@ -810,19 +848,19 @@ export function createDungeonEnvironment(scene) {
 
   // Single solid collision obstacle for the pedestal
   obstacles.push({
-    minX: pedX - 0.8,
-    maxX: pedX + 0.8,
+    minX: pedX - 0.9,
+    maxX: pedX + 0.9,
     minZ: pedZ - 0.5,
     maxZ: pedZ + 0.5,
   });
 
-  // 4 bit indicator orbs aligned neatly on top of the single pedestal
+  // 7 indicator orbs aligned neatly on top of the single pedestal (7 casas / dedos das mãos)
   const binaryLevers = [];
-  const bulbOffsets = [-0.45, -0.15, 0.15, 0.45];
+  const bulbOffsets = [-0.60, -0.40, -0.20, 0.0, 0.20, 0.40, 0.60];
 
   bulbOffsets.forEach((offsetX, i) => {
     const bulbMat = new THREE.MeshBasicMaterial({ color: 0xff1744 });
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), bulbMat);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), bulbMat);
     bulb.position.set(pedX + offsetX, 1.38, pedZ);
     dungeonGroup.add(bulb);
 
@@ -840,25 +878,14 @@ export function createDungeonEnvironment(scene) {
     binaryLevers.push(blData);
   });
 
-  // Single interactive trigger for the binary puzzle
+  // Single interactive trigger for the 4-digit terminal puzzle
   interactiveObjects.push({
     id: 'binary_pedestal',
     type: 'binary_lever',
     x: pedX,
     z: pedZ,
     radius: 2.2,
-    prompt: '[E] Pedestal do Código Binário',
-  });
-
-  interactiveObjects.push({
-    id: 'binary_clue_plaque',
-    type: 'lore_clue',
-    x: 0.0,
-    z: -6.4,
-    radius: 2.2,
-    prompt: '[E] Ler Inscrição Arcana na Parede',
-    clueSpeaker: 'INSCRIÇÃO DOS ANTIGOS',
-    clueText: '📜 "Para invocar a Chave de Bronze, configure as 4 chaves no número sagrado 11 em Código Binário: [ 1 - 0 - 1 - 1 ] (8 + 2 + 1)"',
+    prompt: '[E] Acessar Terminal de Decodificação',
   });
 
   // ========================================================
@@ -936,7 +963,7 @@ export function createDungeonEnvironment(scene) {
   const sarcophagusData = [
     { x: -10.5, z: 38.5, id: 1, hasPotion: true }, // Câmara 3 (parede oeste)
     { x: 10.5, z: 38.5, id: 2, hasPotion: true },  // Câmara 3 (parede leste)
-    { x: -46.0, z: -7.0, id: 3, hasPotion: true }, // Câmara 1 (canto sudoeste)
+    { x: -47.0, z: -8.5, id: 3, hasPotion: true }, // Câmara 1 (parede sul, rente à parede) — fora do buraco
   ];
 
   sarcophagusData.forEach((sd) => {
@@ -986,7 +1013,6 @@ export function createDungeonEnvironment(scene) {
     { x: -10.0, z: 47.0, tex: potTextures[0] },
     { x: 10.0, z: 47.0, tex: potTextures[4] },
     { x: 32.0, z: 5.0, tex: potTextures[1] },
-    { x: 44.0, z: -5.0, tex: potTextures[2] },
     { x: 70.0, z: 10.0, tex: potTextures[1] },
     { x: 84.0, z: 10.0, tex: potTextures[3] },
   ];
@@ -1094,7 +1120,7 @@ export function createDungeonEnvironment(scene) {
     },
     {
       x: 71.0,
-      z: -10.0,
+      z: -4.5,
       clue: '🏛️ Monumento III: "Sou o último dos dígitos antes do vazio das dezenas, o quadrado perfeito da sagrada trindade..."',
       tex: monument3Tex,
     },
@@ -1383,9 +1409,9 @@ export function createDungeonEnvironment(scene) {
     });
   });
 
-  // MONÓLITO ANCESTRAL DAS LÂMINAS VELADAS (X = 16.0, Z = -4.5 na parede norte da Câmara 4)
+  // MONÓLITO ANCESTRAL DAS LÂMINAS VELADAS (Câmara 4, canto noroeste — antes dos espinhos)
   const poemMonumentGroup = new THREE.Group();
-  poemMonumentGroup.position.set(16.0, 0, -4.5);
+  poemMonumentGroup.position.set(31.5, 0, -5.5);
 
   // Plinto inferior de pedra
   const pmStep1 = new THREE.Mesh(
@@ -1435,16 +1461,16 @@ export function createDungeonEnvironment(scene) {
   poemMonumentGroup.add(pmLight);
 
   dungeonGroup.add(poemMonumentGroup);
-  obstacles.push({ minX: 15.2, maxX: 16.8, minZ: -5.3, maxZ: -3.7 });
+  obstacles.push({ minX: 30.7, maxX: 32.3, minZ: -6.3, maxZ: -4.7 });
 
   const poemObject = {
     id: 'poem_clue_monument',
     type: 'stone_monolith_clue',
     clueSpeaker: 'MONÓLITO DAS LÂMINAS VELADAS',
     clueText: getPoemText(),
-    x: 16.0,
-    z: -4.5,
-    radius: 3.2,
+    x: 31.5,
+    z: -5.5,
+    radius: 2.8,
     prompt: '[E] Inspecionar Monólito Ancestral (Placa de Pedra)',
   };
   interactiveObjects.push(poemObject);
@@ -1483,29 +1509,29 @@ export function createDungeonEnvironment(scene) {
     rerollSafePath,
   };
 
-  // Escape Gate (Impede 100% o acesso à escadaria de fuga sem resolver os enigmas)
+  // Escape Gate (Impede o acesso à escadaria de fuga na Câmara 6 sem resolver os enigmas)
   const gateMat = new THREE.MeshBasicMaterial({
     map: gateTexture,
     transparent: true,
     side: THREE.DoubleSide,
   });
   const gateMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.8), gateMat);
-  gateMesh.position.set(56.0, 1.9, 0);
+  gateMesh.position.set(86.0, 1.9, 0);
   gateMesh.rotation.y = Math.PI / 2;
   dungeonGroup.add(gateMesh);
 
   const gateObstacle = {
-    minX: 55.4,
-    maxX: 56.6,
-    minZ: -1.6,
-    maxZ: 1.6,
+    minX: 85.4,
+    maxX: 86.6,
+    minZ: -2.0,
+    maxZ: 2.0,
   };
   obstacles.push(gateObstacle);
 
   interactiveObjects.push({
     id: 'escape_gate',
     type: 'gate',
-    x: 56.0,
+    x: 86.0,
     z: 0,
     radius: 2.6,
     prompt: '[E] Abrir Grande Portão de Ferro',
@@ -1524,28 +1550,29 @@ export function createDungeonEnvironment(scene) {
     })
   );
   stairsMesh.rotation.x = -Math.PI / 2;
-  stairsMesh.position.set(65.0, 0.05, 0);
+  stairsMesh.position.set(94.0, 0.05, 0);
   dungeonGroup.add(stairsMesh);
 
-  // Spawn Straw Bed in Cell (Câmara 1)
+  // Spawn Straw Bed in Cell (Câmara 1) — movida para o extremo oeste da cela (encostada na parede oeste)
   const spawnStairsMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(2.8, 2.8),
     new THREE.MeshLambertMaterial({ map: stairsDownTex, transparent: true })
   );
   spawnStairsMesh.rotation.x = -Math.PI / 2;
-  spawnStairsMesh.position.set(-32.0, 0.02, 0);
+  spawnStairsMesh.position.set(-49.0, 0.02, 0);
   dungeonGroup.add(spawnStairsMesh);
 
   dungeonGroup.visible = false;
   scene.add(dungeonGroup);
 
   const enemySpawnPoints = [
-    { x: 2.0, z: -2.0, name: 'Blood Monster Alfa', patrolRadius: 3.0 },
-    { x: -5.0, z: 24.5, name: 'Blood Monster das Catacumbas', patrolRadius: 3.5 },
-    { x: 3.0, z: 24.5, name: 'Blood Monster Carniceiro', patrolRadius: 3.5 },
-    { x: 43.0, z: -5.0, name: 'Blood Monster do Labirinto', patrolRadius: 3.0 },
-    { x: 51.0, z: 5.0, name: 'Blood Monster Devorador', patrolRadius: 3.5 },
-    { x: 47.0, z: 7.0, name: 'Blood Monster Guardião', patrolRadius: 3.5 },
+    { x: 0.0, z: -2.0, name: 'Blood Monster Alfa', patrolRadius: 3.0 },
+    { x: -5.0, z: 38.5, name: 'Blood Monster das Catacumbas', patrolRadius: 4.0 },
+    { x: 3.0, z: 38.5, name: 'Blood Monster Carniceiro', patrolRadius: 4.0 },
+    { x: 44.0, z: 3.5, name: 'Blood Monster do Labirinto', patrolRadius: 2.0 },
+    { x: 57.0, z: 0.0, name: 'Blood Monster das Sombras', patrolRadius: 3.0 },
+    { x: 74.0, z: -5.0, name: 'Blood Monster Devorador', patrolRadius: 3.5 },
+    { x: 80.0, z: 5.0, name: 'Blood Monster Guardião', patrolRadius: 3.5 },
   ];
 
   return {
@@ -1559,14 +1586,15 @@ export function createDungeonEnvironment(scene) {
     colorCrystals,
     pedestals,
     pathPuzzle,
-    spawnPos: { x: -32.0, z: 0.0 },
-    altarPos: { x: -24.0, z: 0.0 },
-    exitPos: { x: 65.0, z: 0.0 },
+    updateTerminalBoard: () => { },
+    spawnPos: { x: -47.5, z: 0.0 },
+    altarPos: { x: -44.0, z: 0.0 },
+    exitPos: { x: 94.0, z: 0.0 },
     bounds: {
-      minX: -39.0,
-      maxX: 69.0,
-      minZ: -13.0,
-      maxZ: 35.0,
+      minX: -51.5,
+      maxX: 99.5,
+      minZ: -13.5,
+      maxZ: 50.0,
     },
   };
 }

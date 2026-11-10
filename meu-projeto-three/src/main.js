@@ -67,36 +67,111 @@ app.innerHTML = `
     <div class="wake-blur-layer" id="wakeBlurLayer"></div>
   </div>
 
-  <!-- PUZZLE 1: Terminal de Alavancas em Código Binário -->
+  <!-- PUZZLE 1: Terminal de Decodificação Binária com Dedos das Mãos -->
   <div class="puzzle-modal-overlay hidden" id="binaryModal">
-    <div class="puzzle-card">
-      <div class="puzzle-title">⚙️ TERMINAL DE ALAVANCAS BINÁRIAS</div>
+    <div class="puzzle-card terminal-puzzle-card">
+      <div class="puzzle-title">🖐️ TERMINAL DAS MÃOS (CÓDIGO BINÁRIO)</div>
       <p class="puzzle-desc">
-        Configure as 4 alavancas no código binário equivalente ao número sagrado dos Antigos.<br>
-        <em>Dica: Pressione nas alavancas para alternar entre 0 e 1.</em>
+        Decifre a <strong>Frequência Alvo</strong> através do Enigma Rúnico e posicione os 7 dedos das mãos (0 = Abaixado, 1 = Levantado) somando os pesos binários correspondentes.<br>
+        <em>Dica: Pressione as setas ▲ e ▼ (ou clique diretamente no visor) para alternar cada dedo entre 0 e 1.</em>
       </p>
 
-      <div class="binary-switches-grid">
-        <div class="binary-switch-col">
-          <button class="binary-switch-btn" id="btnBin0">0</button>
-          <span class="binary-switch-label">(8) Chave A</span>
-        </div>
-        <div class="binary-switch-col">
-          <button class="binary-switch-btn" id="btnBin1">0</button>
-          <span class="binary-switch-label">(4) Chave B</span>
-        </div>
-        <div class="binary-switch-col">
-          <button class="binary-switch-btn" id="btnBin2">0</button>
-          <span class="binary-switch-label">(2) Chave C</span>
-        </div>
-        <div class="binary-switch-col">
-          <button class="binary-switch-btn" id="btnBin3">0</button>
-          <span class="binary-switch-label">(1) Chave D</span>
-        </div>
-      </div>
+      <div class="terminal-puzzle-layout">
+        <!-- COLUNA 1: DEDOS DAS MÃOS (7 CASAS BINÁRIAS) -->
+        <div class="terminal-display-panel">
+          <div class="terminal-panel-header">✋ DEDOS DAS MÃOS (7 CASAS BINÁRIAS)</div>
 
-      <div style="color: #ffa726; font-size: 15px; font-weight: bold;" id="binaryValueDisplay">
-        Valor Decimal Atual: 0
+          <div class="hands-slots-wrapper">
+            <!-- MÃO ESQUERDA (5 DEDOS) -->
+            <div class="hand-group left-hand">
+              <div class="hand-group-title">🖐️ MÃO ESQUERDA (5 DEDOS)</div>
+              <div class="terminal-digits-row">
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Mínimo</span>
+                  <span class="terminal-bit-weight">64</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp0">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal0">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown0">▼</button>
+                </div>
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Anelar</span>
+                  <span class="terminal-bit-weight">32</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp1">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal1">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown1">▼</button>
+                </div>
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Médio</span>
+                  <span class="terminal-bit-weight">16</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp2">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal2">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown2">▼</button>
+                </div>
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Indicador</span>
+                  <span class="terminal-bit-weight">8</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp3">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal3">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown3">▼</button>
+                </div>
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Polegar</span>
+                  <span class="terminal-bit-weight">4</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp4">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal4">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown4">▼</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- MÃO DIREITA (2 DEDOS) -->
+            <div class="hand-group right-hand">
+              <div class="hand-group-title">✌️ MÃO DIREITA (2 DEDOS)</div>
+              <div class="terminal-digits-row">
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Polegar</span>
+                  <span class="terminal-bit-weight">2</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp5">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal5">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown5">▼</button>
+                </div>
+                <div class="terminal-digit-slot">
+                  <span class="terminal-digit-tag">Indicador</span>
+                  <span class="terminal-bit-weight">1</span>
+                  <button class="terminal-digit-btn" id="btnDigitUp6">▲</button>
+                  <div class="terminal-digit-screen bit-off" id="digitVal6">0</div>
+                  <button class="terminal-digit-btn" id="btnDigitDown6">▼</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="terminal-status-box" id="binaryValueDisplay">
+            Dedos: [ 0 - 0 - 0 - 0 - 0 - 0 - 0 ] &nbsp;|&nbsp; Aguardando Ativação
+          </div>
+        </div>
+
+        <!-- COLUNA 2: ENIGMA DOS SÍMBOLOS ANCESTRAIS (AO LADO DO DISPLAY) -->
+        <div class="terminal-table-panel">
+          <div class="terminal-table-header">📜 ENIGMA DOS SÍMBOLOS ANCESTRAIS</div>
+
+          <div class="terminal-table-intro">
+            Deduz o valor de cada runa através das 3 inscrições sagradas:
+          </div>
+
+          <div class="enigma-equations-container" id="enigmaEquationsContainer">
+            <!-- Inscrições preenchidas dinamicamente via JS -->
+          </div>
+
+          <div class="enigma-formula-wrapper">
+            <span class="enigma-formula-label">⚡ FÓRMULA DA FREQUÊNCIA ALVO</span>
+            <span class="enigma-formula-text" id="enigmaFormulaBox">( ᚱ × ᛉ ) + ᛏ</span>
+          </div>
+
+          <div class="terminal-hint-note">
+            💡 <em>Descubra o valor de ᚱ, ᛉ e ᛏ pelas inscrições, resolva a Frequência Alvo e levante os dedos somando os pesos (+64, +32, +16, +8, +4, +2, +1)!</em>
+          </div>
+        </div>
       </div>
 
       <div class="puzzle-actions">
@@ -1770,10 +1845,11 @@ try {
     antialias: false,
     powerPreference: 'high-performance',
     failIfMajorPerformanceCaveat: false,
+    logarithmicDepthBuffer: true,
   });
 } catch (e) {
   console.warn('Falha ao criar WebGLRenderer, usando fallback:', e);
-  renderer = new THREE.WebGLRenderer({ antialias: false });
+  renderer = new THREE.WebGLRenderer({ antialias: false, logarithmicDepthBuffer: true });
 }
 
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -1808,8 +1884,8 @@ scene.add(hemiLight);
 const camera = new THREE.PerspectiveCamera(
   44,
   window.innerWidth / window.innerHeight,
-  0.1,
-  140
+  0.5,
+  160
 );
 camera.position.set(0, 15.0, 9.0);
 camera.lookAt(0, 0, 0.2);
@@ -1874,12 +1950,113 @@ const questState = {
   hasCultistEmblem: false,
   gateOpen: false,
   activePedestals: 0,
-  binaryBits: [0, 0, 0, 0],
+  terminalBits: [0, 0, 0, 0, 0, 0, 0],
+  targetDecimal: 75,
+  binaryEnigma: null,
   colorSequence: [],
   safeDials: [0, 0, 0],
   relicPuzzleSolved: false,
   targetPuzzleSolved: false,
 };
+
+function rollBinaryEnigma() {
+  const symA = 'ᚱ'; // Runa Solar
+  const symB = 'ᛉ'; // Runa Lunar
+  const symC = 'ᛏ'; // Runa Sombria
+
+  let attempts = 0;
+  let chosen = null;
+
+  while (attempts++ < 1000) {
+    const a = Math.floor(Math.random() * 6) + 4; // 4 a 9
+    const b = Math.floor(Math.random() * 8) + 5; // 5 a 12
+    const c = Math.floor(Math.random() * 6) + 3; // 3 a 8
+
+    // Pista 1 (descobre o valor de A)
+    const eq1Types = [
+      { text: `${symA} + ${symA}`, res: a + a },
+      { text: `${symA} + ${symA} + ${symA}`, res: a * 3 },
+      { text: `${symA} × ${symA}`, res: a * a },
+    ];
+    const eq1 = eq1Types[Math.floor(Math.random() * eq1Types.length)];
+
+    // Pista 2 (usa A para descobrir B)
+    const eq2Types = [
+      { text: `${symA} + ${symB}`, res: a + b },
+      { text: `${symA} × ${symB}`, res: a * b },
+    ];
+    if (b > a) {
+      eq2Types.push({ text: `${symB} − ${symA}`, res: b - a });
+    }
+    const eq2 = eq2Types[Math.floor(Math.random() * eq2Types.length)];
+
+    // Pista 3 (usa B ou A para descobrir C)
+    const eq3Types = [
+      { text: `${symB} + ${symC}`, res: b + c },
+      { text: `${symA} + ${symC}`, res: a + c },
+      { text: `${symA} × ${symC}`, res: a * c },
+    ];
+    if (b > c) {
+      eq3Types.push({ text: `${symB} − ${symC}`, res: b - c });
+    }
+    const eq3 = eq3Types[Math.floor(Math.random() * eq3Types.length)];
+
+    // Fórmulas para calcular a Frequência Alvo (7 bits: pesos 64, 32, 16, 8, 4, 2, 1)
+    const formulaOptions = [
+      { formula: `( ${symA} × ${symB} ) + ${symC}`, val: (a * b) + c },
+      { formula: `( ${symA} × ${symB} ) − ${symC}`, val: (a * b) - c },
+      { formula: `( ${symA} + ${symB} ) × ${symC}`, val: (a + b) * c },
+      { formula: `( ${symB} × ${symC} ) + ( ${symA} × 2 )`, val: (b * c) + (a * 2) },
+      { formula: `( ${symA} × ${symC} ) + ${symB}`, val: (a * c) + b },
+      { formula: `( ${symA} × ${symB} ) + ( ${symC} × ${symC} )`, val: (a * b) + (c * c) },
+    ];
+    if (b > c) {
+      formulaOptions.push({ formula: `( ${symB} − ${symC} ) × ( ${symA} + 2 )`, val: (b - c) * (a + 2) });
+    }
+
+    const form = formulaOptions[Math.floor(Math.random() * formulaOptions.length)];
+    const target = form.val;
+
+    // Alvo entre 20 e 118 com 2 a 5 bits ativos
+    if (target >= 20 && target <= 118) {
+      const bitCount = target.toString(2).split('1').length - 1;
+      if (bitCount >= 2 && bitCount <= 5) {
+        chosen = {
+          targetDecimal: target,
+          a, b, c,
+          equations: [
+            { expr: eq1.text, val: eq1.res, label: 'Inscrição I' },
+            { expr: eq2.text, val: eq2.res, label: 'Inscrição II' },
+            { expr: eq3.text, val: eq3.res, label: 'Inscrição III' },
+          ],
+          formulaText: form.formula,
+        };
+        break;
+      }
+    }
+  }
+
+  if (!chosen) {
+    chosen = {
+      targetDecimal: 75,
+      a: 6, b: 9, c: 5,
+      equations: [
+        { expr: `${symA} + ${symA}`, val: 12, label: 'Inscrição I' },
+        { expr: `${symA} + ${symB}`, val: 15, label: 'Inscrição II' },
+        { expr: `${symB} − ${symC}`, val: 4, label: 'Inscrição III' },
+      ],
+      formulaText: `( ${symA} + ${symB} ) × ${symC}`,
+    };
+  }
+
+  questState.targetDecimal = chosen.targetDecimal;
+  questState.binaryEnigma = chosen;
+
+  if (dungeonEnv && dungeonEnv.updateTerminalBoard) {
+    dungeonEnv.updateTerminalBoard(questState.binaryEnigma);
+  }
+}
+rollBinaryEnigma();
 
 function updateHUD() {
   if (currentAct === 2 || currentAct === 3) {
@@ -2369,14 +2546,12 @@ function loadProgress() {
     if (data.questState) {
       Object.assign(questState, data.questState);
     }
-    // Sync 3D binary levers with loaded or restored state
-    if (dungeonEnv && dungeonEnv.binaryLevers && questState.binaryBits) {
-      dungeonEnv.binaryLevers.forEach((bl, i) => {
-        bl.state = questState.binaryBits[i] || 0;
-        const color = bl.state === 1 ? 0x00e676 : 0xff1744;
-        if (bl.bulbMat) bl.bulbMat.color.setHex(color);
-        if (bl.light && bl.light.color) bl.light.color.setHex(color);
-      });
+    if (dungeonEnv && dungeonEnv.updateTerminalBoard) {
+      if (!questState.binaryEnigma || typeof questState.targetDecimal !== 'number') {
+        rollBinaryEnigma();
+      } else {
+        dungeonEnv.updateTerminalBoard(questState.binaryEnigma);
+      }
     }
     updateBinaryModalUI();
     updateColorSequenceUI();
@@ -2700,34 +2875,85 @@ window.addEventListener('pointerdown', (event) => {
   }
 });
 
-// PUZZLE 1: BINARY LEVERS
+// PUZZLE 1: TERMINAL DAS MÃOS (CÓDIGO BINÁRIO COM 7 DEDOS)
 function updateBinaryModalUI() {
-  const bits = questState.binaryBits;
-  [0, 1, 2, 3].forEach((i) => {
-    const btn = document.querySelector(`#btnBin${i}`);
-    if (!btn) return;
-    btn.textContent = bits[i];
-    if (bits[i] === 1) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
+  if (!questState.terminalBits || questState.terminalBits.length !== 7) {
+    questState.terminalBits = [0, 0, 0, 0, 0, 0, 0];
+  }
+  if (!questState.binaryEnigma || typeof questState.targetDecimal !== 'number') {
+    rollBinaryEnigma();
+  }
+
+  const bits = questState.terminalBits;
+  const weights = [64, 32, 16, 8, 4, 2, 1];
+  let currentSum = 0;
+  for (let i = 0; i < 7; i++) {
+    if (bits[i] === 1) currentSum += weights[i];
+  }
+
+  // Preenche as 3 equações no modal
+  const eqContainerEl = document.querySelector('#enigmaEquationsContainer');
+  const formulaBoxEl = document.querySelector('#enigmaFormulaBox');
+
+  if (eqContainerEl && questState.binaryEnigma && questState.binaryEnigma.equations) {
+    eqContainerEl.innerHTML = questState.binaryEnigma.equations
+      .map(
+        (eq, idx) => `
+        <div class="enigma-equation-row">
+          <span class="enigma-eq-left">
+            <span style="font-size: 11px; color: #78909c; margin-right: 6px;">[#${idx + 1}]</span>
+            ${eq.expr.replace(/([ᚱᛉᛏ])/g, '<span class="rune-glyph">$1</span>')}
+          </span>
+          <span class="enigma-eq-val">= ${eq.val}</span>
+        </div>
+      `
+      )
+      .join('');
+  }
+
+  if (formulaBoxEl && questState.binaryEnigma) {
+    formulaBoxEl.textContent = questState.binaryEnigma.formulaText;
+  }
+
+  [0, 1, 2, 3, 4, 5, 6].forEach((i) => {
+    const valEl = document.querySelector(`#digitVal${i}`);
+    if (valEl) {
+      valEl.textContent = bits[i];
+      if (bits[i] === 1 || questState.hasBronzeKey) {
+        valEl.classList.add('bit-on');
+        valEl.classList.remove('bit-off');
+      } else {
+        valEl.classList.add('bit-off');
+        valEl.classList.remove('bit-on');
+      }
+    }
+
+    // Sincroniza os 7 orbs no pedestal 3D
+    if (dungeonEnv && dungeonEnv.binaryLevers && dungeonEnv.binaryLevers[i]) {
+      const lever3D = dungeonEnv.binaryLevers[i];
+      lever3D.state = bits[i];
+      let orbColor = 0xff1744; // Vermelho (desligado)
+      if (questState.hasBronzeKey || bits[i] === 1) {
+        orbColor = 0x00e676; // Verde (ligado ou resolvido)
+      }
+      if (lever3D.bulbMat) lever3D.bulbMat.color.setHex(orbColor);
+      if (lever3D.light && lever3D.light.color) lever3D.light.color.setHex(orbColor);
     }
   });
 
-  const decimalVal = bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3] * 1;
   if (binaryValueDisplayEl) {
-    binaryValueDisplayEl.textContent = `Código: [ ${bits.join(' ')} ] = Valor Decimal: ${decimalVal}`;
+    if (questState.hasBronzeKey) {
+      binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] ➔ Decimal: [ <span style="color:#00e676;">${currentSum}</span> ] <span style="color:#69f0ae;">✓ RESOLVIDO (CHAVE DE BRONZE)</span>`;
+    } else {
+      binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] &nbsp;|&nbsp; <span style="color:#90a4ae;">Aguardando Ativação</span>`;
+    }
   }
 }
 
 function resetBinaryPuzzle() {
-  questState.binaryBits = [0, 0, 0, 0];
-  if (dungeonEnv && dungeonEnv.binaryLevers) {
-    dungeonEnv.binaryLevers.forEach((bl) => {
-      bl.state = 0;
-      if (bl.bulbMat) bl.bulbMat.color.setHex(0xff1744);
-      if (bl.light && bl.light.color) bl.light.color.setHex(0xff1744);
-    });
+  if (!questState.hasBronzeKey) {
+    questState.terminalBits = [0, 0, 0, 0, 0, 0, 0];
+    rollBinaryEnigma();
   }
   updateBinaryModalUI();
 }
@@ -2779,40 +3005,58 @@ function resetPuzzles(resetAll = true) {
   if (dungeonEnv && dungeonEnv.pathPuzzle) {
     dungeonEnv.pathPuzzle.rerollSafePath();
   }
+
+  if (dungeonEnv && dungeonEnv.traps) {
+    dungeonEnv.traps.forEach((t) => {
+      if (t.type === 'hole') {
+        if (t.brokenMesh) t.brokenMesh.visible = true;
+      }
+    });
+  }
 }
 
-[0, 1, 2, 3].forEach((i) => {
-  document.querySelector(`#btnBin${i}`).addEventListener('click', () => {
-    questState.binaryBits[i] = questState.binaryBits[i] === 0 ? 1 : 0;
+// Eventos de clique para alternar os 7 dedos das mãos (0 ou 1)
+[0, 1, 2, 3, 4, 5, 6].forEach((i) => {
+  const toggleBit = () => {
+    if (questState.hasBronzeKey) return;
+    questState.terminalBits[i] = questState.terminalBits[i] === 1 ? 0 : 1;
     playSound('switch');
     updateBinaryModalUI();
+  };
 
-    const lever3D = dungeonEnv.binaryLevers[i];
-    if (lever3D) {
-      lever3D.state = questState.binaryBits[i];
-      const color = lever3D.state === 1 ? 0x00e676 : 0xff1744;
-      lever3D.bulbMat.color.setHex(color);
-      lever3D.light.color.setHex(color);
-    }
-  });
+  const upBtn = document.querySelector(`#btnDigitUp${i}`);
+  if (upBtn) upBtn.addEventListener('click', toggleBit);
+
+  const downBtn = document.querySelector(`#btnDigitDown${i}`);
+  if (downBtn) downBtn.addEventListener('click', toggleBit);
+
+  const screenEl = document.querySelector(`#digitVal${i}`);
+  if (screenEl) screenEl.addEventListener('click', toggleBit);
 });
 
 btnSubmitBinaryEl.addEventListener('click', () => {
-  const b = questState.binaryBits;
-  if (b[0] === 1 && b[1] === 0 && b[2] === 1 && b[3] === 1) {
+  const bits = questState.terminalBits || [0, 0, 0, 0, 0, 0, 0];
+  const weights = [64, 32, 16, 8, 4, 2, 1];
+  let sum = 0;
+  for (let i = 0; i < 7; i++) {
+    if (bits[i] === 1) sum += weights[i];
+  }
+
+  if (sum === questState.targetDecimal) {
     questState.hasBronzeKey = true;
     playSound('victory');
     binaryModalEl.classList.add('hidden');
     typeWriterDialogue(
-      'ENIGMA BINÁRIO RESOLVIDO!',
-      '✨ O terminal emite um estrondo mecânico e revela a [CHAVE DE BRONZE]!'
+      'TERMINAL DAS MÃOS DESBLOQUEADO!',
+      `✨ Ressonância Perfeita! A posição dos 7 dedos [${bits.join(' ')}] sintetizou a Frequência Alvo ${questState.targetDecimal}! O pedestal ancestral abriu e revelou a [CHAVE DE BRONZE]!`
     );
     updateHUD();
+    updateBinaryModalUI();
   } else {
     playSound('hit');
     typeWriterDialogue(
-      'CÓDIGO INCORRETO',
-      '❌ O mecanismo permaneceu travado. Leia a inscrição na parede para descobrir o número correto!'
+      'CIRCUITO TRAVADO (RESPOSTA INCORRETA)',
+      `❌ A posição atual dos dedos gerou a frequência decimal ${sum}, mas o terminal requer a Frequência Alvo das runas sagradas. Deduza o valor de cada runa pelas 3 inscrições, resolva a fórmula e tente novamente!`
     );
   }
 });
@@ -3400,11 +3644,18 @@ function animate(currentTime) {
             }
           }
         } else if (trap.type === 'hole') {
-          const distToHole = Math.hypot(
-            player.group.position.x - trap.x,
-            player.group.position.z - trap.z
-          );
-          if (distToHole < trap.radius && !player.isFalling && !isKnockedOut) {
+          const px = player.group.position.x;
+          const pz = player.group.position.z;
+          const inHole =
+            trap.halfW && trap.halfH
+              ? Math.abs(px - trap.x) <= trap.halfW * 0.75 &&
+              Math.abs(pz - trap.z) <= trap.halfH * 0.75
+              : Math.hypot(px - trap.x, pz - trap.z) < trap.radius;
+
+          if (inHole && !player.isFalling && !isKnockedOut) {
+            if (trap.brokenMesh) trap.brokenMesh.visible = false;
+            if (trap.holeMesh) trap.holeMesh.visible = true;
+            player.fallReason = 'O piso rachado cedeu sob seus passos e você despencou no abismo!';
             player.triggerHoleFall();
             playSound('fall');
           }
@@ -3417,8 +3668,8 @@ function animate(currentTime) {
         dungeonEnv.pathPuzzle &&
         !player.isFalling &&
         !isKnockedOut &&
-        player.group.position.x >= 4.4 &&
-        player.group.position.x <= 14.5 &&
+        player.group.position.x >= 33.0 &&
+        player.group.position.x <= 44.0 &&
         player.group.position.z >= -6.5 &&
         player.group.position.z <= 6.5
       ) {
@@ -3452,10 +3703,10 @@ function animate(currentTime) {
               if (tile.spikeGroup) tile.spikeGroup.visible = false;
               if (tile.baseMesh) tile.baseMesh.visible = false;
               if (tile.holeMesh) tile.holeMesh.visible = true;
-              player.fallReason = 'Você pisou no ladrilho errado e despencou no abismo sob os espinhos!';
-              player.triggerHoleFall();
-              playSound('fall');
             }
+            player.fallReason = 'Você pisou no ladrilho errado e despencou no abismo sob os espinhos!';
+            player.triggerHoleFall();
+            playSound('fall');
           }
         }
       }
@@ -3490,8 +3741,9 @@ function animate(currentTime) {
       });
 
       // Check Act 2 Completion (Transition to Act 3: O Abismo de Lava)
+      // O portão de ferro fica em X=86.0 e as escadas de fuga em X=94.0 na Câmara 6!
       if (
-        player.group.position.x >= 44.0 &&
+        player.group.position.x >= 92.0 &&
         Math.abs(player.group.position.z) < 3.0 &&
         !isVictory &&
         !player.isFalling &&
@@ -3516,7 +3768,7 @@ function animate(currentTime) {
             }
           );
         } else {
-          player.group.position.x = 35.0;
+          player.group.position.x = 84.0;
           typeWriterDialogue(
             'SAÍDA BLOQUEADA',
             '🔒 Uma barreira intransponível bloqueia a saída! Você precisa resolver todos os 3 enigmas e abrir o portão de ferro para descer ao próximo nível!'
