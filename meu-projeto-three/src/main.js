@@ -6,12 +6,24 @@ import { Npc } from './Npc.js';
 import { Player } from './Player.js';
 import { createStreetEnvironment } from './Street.js';
 import { createAct3Environment } from './Act3.js';
+import {
+  apiGetPlayers,
+  apiRegisterPlayer,
+  apiGetPlayerEndings,
+  apiUnlockEnding,
+  apiSaveLeaderboardRun,
+  apiGetLeaderboard,
+  formatTime,
+} from './api.js';
 import './style.css';
 
 const app = document.querySelector('#app');
 app.innerHTML = `
   <!-- Top Right Actions Bar -->
   <div class="top-actions-bar">
+    <div class="top-speedrun-timer hidden" id="topSpeedrunTimer">⏱️ <span id="topSpeedrunDisplay">00:00.0</span></div>
+    <button class="btn-top-player" id="topPlayerBtn" title="Trocar Jogador">👤 <span id="topPlayerName">Aventureiro</span></button>
+    <button class="btn-top-leaderboard" id="topLeaderboardBtn">⏱️ LÍDERES</button>
     <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/2</span>)</button>
     <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
   </div>
@@ -420,8 +432,19 @@ app.innerHTML = `
       <div class="victory-text" id="victoryText">
         PARABÉNS! Você quebrou os selos arcanos e escapou com vida das profundezas cósmicas!
       </div>
+      <div class="run-stats-card" id="victoryRunStats">
+        <div class="run-stat-item">
+          <span class="run-stat-label">⏱️ TEMPO DA CORRIDA</span>
+          <span class="run-stat-value" id="victoryRunTime">00:00.00</span>
+        </div>
+        <div class="run-stat-item">
+          <span class="run-stat-label">🏆 RANKING NO BANCO</span>
+          <span class="run-stat-value rank-badge" id="victoryRunRank">#1</span>
+        </div>
+      </div>
       <div class="victory-buttons">
         <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
+        <button class="victory-btn" id="btnVictoryLeaderboard">⏱️ Tabela de Líderes</button>
         <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
       </div>
@@ -449,8 +472,20 @@ app.innerHTML = `
         Seus instintos salvaram a sua vida! Ao invés de avançar para a armadilha do cultista nas sombras do galpão, você deu meia-volta na rua e retornou em segurança para a grande avenida iluminada. Você nunca saberá que rituais sombrios eram preparados para você... mas esta noite, você sobreviveu ileso.
       </p>
 
+      <div class="run-stats-card" id="secretRunStats">
+        <div class="run-stat-item">
+          <span class="run-stat-label">⏱️ TEMPO DA CORRIDA</span>
+          <span class="run-stat-value" id="secretRunTime">00:00.00</span>
+        </div>
+        <div class="run-stat-item">
+          <span class="run-stat-label">🏆 RANKING NO BANCO</span>
+          <span class="run-stat-value rank-badge" id="secretRunRank">#1</span>
+        </div>
+      </div>
+
       <div class="secret-ending-actions">
         <button class="secret-ending-btn primary" id="btnSecretPlayAgain">🔄 Jogar Novamente</button>
+        <button class="secret-ending-btn secondary" id="btnSecretLeaderboard">⏱️ Tabela de Líderes</button>
         <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="secret-ending-btn secondary" id="btnSecretMainMenu">🏠 Menu Principal</button>
       </div>
@@ -486,15 +521,101 @@ app.innerHTML = `
     </div>
   </div>
 
+  <!-- TABELA DE LÍDERES / SPEEDRUN LEADERBOARD MODAL -->
+  <div class="leaderboard-modal-overlay hidden" id="leaderboardModal">
+    <div class="leaderboard-modal-card">
+      <div class="leaderboard-modal-header">
+        <div class="leaderboard-modal-title">🏆 TABELA DE LÍDERES (SPEEDRUN)</div>
+        <div class="leaderboard-modal-subtitle">
+          Recordes dos aventureiros mais rápidos a escapar do calabouço e concluir a jornada
+        </div>
+        <div class="leaderboard-tabs">
+          <button class="lb-tab-btn active" data-ending="all" id="lbTabAll">⚡ Todos os Finais</button>
+          <button class="lb-tab-btn" data-ending="4" id="lbTab4">🐙 Final #4: Cthulhu</button>
+          <button class="lb-tab-btn" data-ending="3" id="lbTab3">🏃 Final #3: Sobrevivente</button>
+        </div>
+      </div>
+
+      <div class="leaderboard-table-container">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Jogador</th>
+              <th>Tempo</th>
+              <th>Final Alcançado</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTableBody">
+            <!-- Dynamically rendered -->
+          </tbody>
+        </table>
+        <div class="leaderboard-empty hidden" id="leaderboardEmpty">
+          ⏳ Nenhum recorde registrado ainda. Seja o primeiro a completar o jogo!
+        </div>
+      </div>
+
+      <div class="leaderboard-modal-footer">
+        <div class="leaderboard-player-summary" id="leaderboardPlayerSummary">
+          Jogador Atual: <strong id="lbActivePlayerDisplay">Aventureiro</strong> &nbsp;|&nbsp; Melhor Tempo: <strong id="lbPlayerBestDisplay">--:--.--</strong>
+        </div>
+        <div class="leaderboard-footer-btns">
+          <button class="puzzle-btn secondary" id="btnRefreshLeaderboard">🔄 Atualizar</button>
+          <button class="puzzle-btn primary" id="btnCloseLeaderboard">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE IDENTIFICAÇÃO DO JOGADOR -->
+  <div class="player-modal-overlay hidden" id="playerModal">
+    <div class="player-modal-card">
+      <div class="player-modal-header">
+        <div class="player-modal-icon">⚔️</div>
+        <div class="player-modal-title">IDENTIFICAÇÃO DO JOGADOR</div>
+        <div class="player-modal-desc">
+          Digite seu nome de aventureiro para vincular seus finais descobertos e disputar os melhores tempos na <strong>Tabela de Líderes</strong> do Calabouço!
+        </div>
+      </div>
+      <div class="player-modal-form">
+        <label for="playerNameInput" class="player-input-label">SEU NOME / APELIDO:</label>
+        <div class="player-input-wrapper">
+          <input type="text" id="playerNameInput" maxlength="20" placeholder="Ex: Lucas, Gabriel..." autocomplete="off" />
+          <button class="player-submit-btn" id="btnConfirmPlayer">Salvar & Jogar ⚔️</button>
+        </div>
+      </div>
+      <div class="recent-players-section" id="recentPlayersSection">
+        <div class="recent-players-title">👥 Jogadores Registrados no Banco de Dados:</div>
+        <div class="recent-players-list" id="recentPlayersList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="player-modal-footer">
+        <button class="puzzle-btn secondary" id="btnClosePlayerModal">Voltar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Menu / Pause Menu / Settings Overlay -->
   <div class="menu-overlay" id="menuOverlay">
     <div class="menu-card" id="mainMenuCard">
       <div class="menu-title" id="menuTitle">CALABOUÇO</div>
       <div class="menu-subtitle" id="menuSubtitle">MENU PRINCIPAL</div>
+
+      <!-- Player Profile Info in Menu -->
+      <div class="menu-player-badge">
+        <div class="menu-player-info">
+          <span class="menu-player-label">AVENTUREIRO ATUAL</span>
+          <span class="menu-player-name" id="menuPlayerName">Aventureiro</span>
+        </div>
+        <button class="menu-player-switch-btn" id="btnChangePlayerMenu">Trocar</button>
+      </div>
       
       <div class="menu-buttons">
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
+        <button class="menu-btn" id="btnOpenLeaderboardMenu">⏱️ Tabela de Líderes</button>
         <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/2</span>)</button>
         <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
@@ -732,16 +853,51 @@ const victoryOverlayEl = document.querySelector('#victoryOverlay');
 const btnPlayAgainEl = document.querySelector('#btnPlayAgain');
 const btnVictoryMenuEl = document.querySelector('#btnVictoryMenu');
 const btnVictoryViewEndingsEl = document.querySelector('#btnVictoryViewEndings');
+const btnVictoryLeaderboardEl = document.querySelector('#btnVictoryLeaderboard');
 
 // Endings & Secret Ending DOM
 const topEndingsBtnEl = document.querySelector('#topEndingsBtn');
 const secretEndingOverlayEl = document.querySelector('#secretEndingOverlay');
 const btnSecretPlayAgainEl = document.querySelector('#btnSecretPlayAgain');
+const btnSecretLeaderboardEl = document.querySelector('#btnSecretLeaderboard');
 const btnSecretViewEndingsEl = document.querySelector('#btnSecretViewEndings');
 const btnSecretMainMenuEl = document.querySelector('#btnSecretMainMenu');
 const btnOpenEndingsMenuEl = document.querySelector('#btnOpenEndingsMenu');
 const endingsModalEl = document.querySelector('#endingsModal');
 const btnCloseEndingsModalEl = document.querySelector('#btnCloseEndingsModal');
+
+// Player & Identification DOM
+const topPlayerBtnEl = document.querySelector('#topPlayerBtn');
+const topPlayerNameEl = document.querySelector('#topPlayerName');
+const menuPlayerNameEl = document.querySelector('#menuPlayerName');
+const btnChangePlayerMenuEl = document.querySelector('#btnChangePlayerMenu');
+const playerModalEl = document.querySelector('#playerModal');
+const playerNameInputEl = document.querySelector('#playerNameInput');
+const btnConfirmPlayerEl = document.querySelector('#btnConfirmPlayer');
+const btnClosePlayerModalEl = document.querySelector('#btnClosePlayerModal');
+const recentPlayersListEl = document.querySelector('#recentPlayersList');
+
+// Speedrun Timer DOM
+const topSpeedrunTimerEl = document.querySelector('#topSpeedrunTimer');
+const topSpeedrunDisplayEl = document.querySelector('#topSpeedrunDisplay');
+const victoryRunTimeEl = document.querySelector('#victoryRunTime');
+const victoryRunRankEl = document.querySelector('#victoryRunRank');
+const secretRunTimeEl = document.querySelector('#secretRunTime');
+const secretRunRankEl = document.querySelector('#secretRunRank');
+
+// Leaderboard Modal DOM
+const topLeaderboardBtnEl = document.querySelector('#topLeaderboardBtn');
+const btnOpenLeaderboardMenuEl = document.querySelector('#btnOpenLeaderboardMenu');
+const leaderboardModalEl = document.querySelector('#leaderboardModal');
+const leaderboardTableBodyEl = document.querySelector('#leaderboardTableBody');
+const leaderboardEmptyEl = document.querySelector('#leaderboardEmpty');
+const lbActivePlayerDisplayEl = document.querySelector('#lbActivePlayerDisplay');
+const lbPlayerBestDisplayEl = document.querySelector('#lbPlayerBestDisplay');
+const btnRefreshLeaderboardEl = document.querySelector('#btnRefreshLeaderboard');
+const btnCloseLeaderboardEl = document.querySelector('#btnCloseLeaderboard');
+const lbTabAllEl = document.querySelector('#lbTabAll');
+const lbTab4El = document.querySelector('#lbTab4');
+const lbTab3El = document.querySelector('#lbTab3');
 
 // ========================================================
 // 4 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (2 DISPONÍVEIS NA DEMO)
@@ -789,32 +945,116 @@ const ENDINGS_DATA = [
   },
 ];
 
-function getUnlockedEndings() {
+// Active Player Profile & Database State
+let currentPlayerName = localStorage.getItem('dungeon_current_player') || 'Aventureiro';
+let cachedPlayerEndings = [];
+let currentLeaderboardFilter = 'all';
+
+// Speedrun Timer State
+let speedrunStartTime = null;
+let speedrunElapsedTime = 0;
+let isSpeedrunning = false;
+
+function startSpeedrunTimer() {
+  speedrunStartTime = performance.now();
+  speedrunElapsedTime = 0;
+  isSpeedrunning = true;
+  if (topSpeedrunTimerEl) topSpeedrunTimerEl.classList.remove('hidden');
+  if (topSpeedrunDisplayEl) topSpeedrunDisplayEl.textContent = '00:00.00';
+}
+
+function stopSpeedrunTimer() {
+  if (isSpeedrunning && speedrunStartTime !== null) {
+    speedrunElapsedTime = (performance.now() - speedrunStartTime) / 1000;
+  }
+  isSpeedrunning = false;
+  return speedrunElapsedTime;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[m]));
+}
+
+function formatRecordDate(isoString) {
   try {
-    const raw = localStorage.getItem('dungeon_unlocked_endings');
-    if (!raw) return [];
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
-    // Apenas os 2 finais permitidos na Demo podem ser considerados desbloqueados nesta demo!
-    const valid = list.filter((id) => DEMO_AVAILABLE_IDS.includes(id));
-    if (valid.length !== list.length) {
-      localStorage.setItem('dungeon_unlocked_endings', JSON.stringify(valid));
-    }
-    return valid;
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString).slice(5, 16);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month} ${hours}:${mins}`;
   } catch (e) {
-    return [];
+    return '--/--';
   }
 }
 
-function unlockEnding(id) {
+async function setCurrentPlayer(name) {
+  const clean = (name || 'Aventureiro').trim().slice(0, 20) || 'Aventureiro';
+  currentPlayerName = clean;
+  localStorage.setItem('dungeon_current_player', clean);
+
+  if (topPlayerNameEl) topPlayerNameEl.textContent = clean;
+  if (menuPlayerNameEl) menuPlayerNameEl.textContent = clean;
+  if (lbActivePlayerDisplayEl) lbActivePlayerDisplayEl.textContent = clean;
+
+  // Registrar jogador no SQLite e obter os finais desbloqueados por ele
+  try {
+    const playerRecord = await apiRegisterPlayer(clean);
+    cachedPlayerEndings = (playerRecord && Array.isArray(playerRecord.endings)) ? playerRecord.endings : [];
+  } catch (err) {
+    try {
+      cachedPlayerEndings = await apiGetPlayerEndings(clean);
+    } catch (e) {
+      cachedPlayerEndings = [];
+    }
+  }
+
+  updateEndingsUI();
+  updatePlayerBestDisplay();
+}
+
+async function updatePlayerBestDisplay() {
+  if (!lbPlayerBestDisplayEl) return;
+  try {
+    const res = await fetch(`/api/leaderboard/player/${encodeURIComponent(currentPlayerName)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.best && data.best.formatted_time) {
+        lbPlayerBestDisplayEl.textContent = data.best.formatted_time;
+        return;
+      }
+    }
+  } catch (e) { }
+  lbPlayerBestDisplayEl.textContent = '--:--.--';
+}
+
+function getUnlockedEndings() {
+  return cachedPlayerEndings.filter((id) => DEMO_AVAILABLE_IDS.includes(id));
+}
+
+async function unlockEnding(id) {
   if (!DEMO_AVAILABLE_IDS.includes(id)) {
     return;
   }
-  const current = getUnlockedEndings();
-  if (!current.includes(id)) {
-    current.push(id);
-    localStorage.setItem('dungeon_unlocked_endings', JSON.stringify(current));
+  if (!cachedPlayerEndings.includes(id)) {
+    cachedPlayerEndings.push(id);
     playSound('victory');
+    try {
+      const updated = await apiUnlockEnding(currentPlayerName, id);
+      if (Array.isArray(updated)) {
+        cachedPlayerEndings = updated;
+      }
+    } catch (e) {
+      console.warn('Não foi possível persistir final no banco de dados:', e);
+    }
   }
   updateEndingsUI();
 }
@@ -832,7 +1072,7 @@ function updateEndingsUI() {
   const endingsProgressTextEl = document.querySelector('#endingsProgressText');
   const endingsProgressFillEl = document.querySelector('#endingsProgressFill');
   if (endingsProgressTextEl) {
-    endingsProgressTextEl.textContent = `${count} de ${DEMO_TOTAL_ENDINGS} Descobertos (${progressPct}%)`;
+    endingsProgressTextEl.textContent = `${count} de ${DEMO_TOTAL_ENDINGS} Descobertos por ${currentPlayerName} (${progressPct}%)`;
   }
   if (endingsProgressFillEl) {
     endingsProgressFillEl.style.width = `${progressPct}%`;
@@ -886,7 +1126,147 @@ function closeEndingsModal() {
   endingsModalEl.classList.add('hidden');
 }
 
-updateEndingsUI();
+// ----------------------------------------------------
+// TABELA DE LÍDERES (LEADERBOARD) MODAL LOGIC
+// ----------------------------------------------------
+async function openLeaderboardModal() {
+  if (!leaderboardModalEl) return;
+  leaderboardModalEl.classList.remove('hidden');
+  await renderLeaderboardTable(currentLeaderboardFilter);
+  await updatePlayerBestDisplay();
+}
+
+function closeLeaderboardModal() {
+  if (leaderboardModalEl) leaderboardModalEl.classList.add('hidden');
+}
+
+async function renderLeaderboardTable(filter = 'all') {
+  if (!leaderboardTableBodyEl) return;
+  leaderboardTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:#90a4ae;">⏳ Carregando recordes do banco de dados...</td></tr>`;
+
+  try {
+    const filterId = (filter === 'all' || !filter) ? null : Number(filter);
+    const records = await apiGetLeaderboard(filterId);
+
+    if (!records || records.length === 0) {
+      leaderboardTableBodyEl.innerHTML = '';
+      if (leaderboardEmptyEl) leaderboardEmptyEl.classList.remove('hidden');
+      return;
+    }
+
+    if (leaderboardEmptyEl) leaderboardEmptyEl.classList.add('hidden');
+
+    leaderboardTableBodyEl.innerHTML = records.map((entry, index) => {
+      const rank = index + 1;
+      let rankBadge = `#${rank}`;
+      let rankClass = '';
+      if (rank === 1) { rankBadge = '🥇 #1'; rankClass = 'rank-1'; }
+      else if (rank === 2) { rankBadge = '🥈 #2'; rankClass = 'rank-2'; }
+      else if (rank === 3) { rankBadge = '🥉 #3'; rankClass = 'rank-3'; }
+
+      const isCurrent = entry.playerName && entry.playerName.toLowerCase() === currentPlayerName.toLowerCase();
+      const dateStr = entry.createdAt ? formatRecordDate(entry.createdAt) : '--/--';
+      const cleanEnding = entry.endingName || (entry.endingId === 3 ? 'Final #3: Sobrevivente' : 'Final #4: Cthulhu');
+
+      return `
+        <tr class="${isCurrent ? 'current-player-row' : ''}">
+          <td class="rank-cell ${rankClass}">${rankBadge}</td>
+          <td class="player-col">${escapeHtml(entry.playerName || 'Aventureiro')} ${isCurrent ? '⭐' : ''}</td>
+          <td class="time-col">⏱️ ${entry.formattedTime || formatTime(entry.timeSeconds)}</td>
+          <td class="ending-col">${escapeHtml(cleanEnding)}</td>
+          <td class="date-col">${dateStr}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    leaderboardTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:#ff5252;">❌ Erro ao consultar banco de dados: ${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function setLeaderboardFilter(filterId, clickedBtn) {
+  currentLeaderboardFilter = filterId;
+  document.querySelectorAll('.lb-tab-btn').forEach((b) => b.classList.remove('active'));
+  if (clickedBtn) clickedBtn.classList.add('active');
+  renderLeaderboardTable(filterId);
+}
+
+// ----------------------------------------------------
+// IDENTIFICAÇÃO DO JOGADOR (PLAYER MODAL) LOGIC
+// ----------------------------------------------------
+async function openPlayerModal() {
+  if (!playerModalEl) return;
+  playerModalEl.classList.remove('hidden');
+  if (playerNameInputEl) {
+    playerNameInputEl.value = currentPlayerName !== 'Aventureiro' ? currentPlayerName : '';
+    setTimeout(() => playerNameInputEl.focus(), 100);
+  }
+  await populateRecentPlayers();
+}
+
+function closePlayerModal() {
+  if (playerModalEl) playerModalEl.classList.add('hidden');
+}
+
+async function populateRecentPlayers() {
+  if (!recentPlayersListEl) return;
+  recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Consultando banco de dados...</span>';
+  try {
+    const players = await apiGetPlayers();
+    if (!players || players.length === 0) {
+      recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Nenhum jogador registrado no banco ainda. Digite seu nome acima!</span>';
+      return;
+    }
+    recentPlayersListEl.innerHTML = players.map((p) => {
+      const isActive = p.name.toLowerCase() === currentPlayerName.toLowerCase();
+      return `
+        <button type="button" class="player-tag-btn ${isActive ? 'active' : ''}" data-player="${escapeHtml(p.name)}">
+          👤 ${escapeHtml(p.name)} <span style="font-size:11px; opacity:0.75;">(${p.endings_count || 0}/2 finais)</span>
+        </button>
+      `;
+    }).join('');
+
+    recentPlayersListEl.querySelectorAll('.player-tag-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const name = btn.getAttribute('data-player');
+        if (name) {
+          await setCurrentPlayer(name);
+          closePlayerModal();
+        }
+      });
+    });
+  } catch (err) {
+    recentPlayersListEl.innerHTML = '<span style="color:#ff5252; font-size:12px;">Não foi possível buscar jogadores do banco.</span>';
+  }
+}
+
+async function handleConfirmPlayer() {
+  const val = (playerNameInputEl && playerNameInputEl.value) ? playerNameInputEl.value.trim() : '';
+  const chosenName = val.length > 0 ? val : 'Aventureiro';
+  await setCurrentPlayer(chosenName);
+  closePlayerModal();
+}
+
+// Event Listeners for Player & Leaderboard Modals
+if (topPlayerBtnEl) topPlayerBtnEl.addEventListener('click', openPlayerModal);
+if (btnChangePlayerMenuEl) btnChangePlayerMenuEl.addEventListener('click', openPlayerModal);
+if (btnClosePlayerModalEl) btnClosePlayerModalEl.addEventListener('click', closePlayerModal);
+if (btnConfirmPlayerEl) btnConfirmPlayerEl.addEventListener('click', handleConfirmPlayer);
+if (playerNameInputEl) {
+  playerNameInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleConfirmPlayer();
+  });
+}
+
+if (topLeaderboardBtnEl) topLeaderboardBtnEl.addEventListener('click', openLeaderboardModal);
+if (btnOpenLeaderboardMenuEl) btnOpenLeaderboardMenuEl.addEventListener('click', openLeaderboardModal);
+if (btnVictoryLeaderboardEl) btnVictoryLeaderboardEl.addEventListener('click', openLeaderboardModal);
+if (btnSecretLeaderboardEl) btnSecretLeaderboardEl.addEventListener('click', openLeaderboardModal);
+if (btnCloseLeaderboardEl) btnCloseLeaderboardEl.addEventListener('click', closeLeaderboardModal);
+if (btnRefreshLeaderboardEl) btnRefreshLeaderboardEl.addEventListener('click', () => renderLeaderboardTable(currentLeaderboardFilter));
+
+if (lbTabAllEl) lbTabAllEl.addEventListener('click', (e) => setLeaderboardFilter('all', e.currentTarget));
+if (lbTab4El) lbTab4El.addEventListener('click', (e) => setLeaderboardFilter('4', e.currentTarget));
+if (lbTab3El) lbTab3El.addEventListener('click', (e) => setLeaderboardFilter('3', e.currentTarget));
 
 const dialogueContainerEl = document.querySelector('#dialogueContainer');
 const dialogueSpeakerEl = document.querySelector('#dialogueSpeaker');
@@ -2405,8 +2785,30 @@ function triggerEnding(endingId) {
   if (!DEMO_AVAILABLE_IDS.includes(endingId)) return;
   if (isVictory) return;
   isVictory = true;
+
+  const timeSeconds = stopSpeedrunTimer();
+  const formattedTimeStr = formatTime(timeSeconds);
+
+  if (victoryRunTimeEl) victoryRunTimeEl.textContent = formattedTimeStr;
+  if (victoryRunRankEl) victoryRunRankEl.textContent = '⏳';
+
   unlockEnding(endingId);
   playSound('victory');
+
+  // Registrar tempo no SQLite Leaderboard
+  apiSaveLeaderboardRun({
+    playerName: currentPlayerName,
+    timeSeconds,
+    endingId,
+    endingName: 'Final #4: O Receptáculo de Cthulhu',
+  }).then((res) => {
+    if (res && res.rank && victoryRunRankEl) {
+      victoryRunRankEl.textContent = `#${res.rank}`;
+    }
+  }).catch((err) => {
+    console.warn('Erro ao salvar speedrun run no leaderboard:', err);
+    if (victoryRunRankEl) victoryRunRankEl.textContent = '#--';
+  });
 
   const ending = ENDINGS_DATA.find((e) => e.id === endingId) || ENDINGS_DATA[3];
 
@@ -2449,6 +2851,8 @@ function triggerVictory() {
 }
 
 btnPlayAgainEl.addEventListener('click', () => {
+  victoryOverlayEl.classList.add('hidden');
+  isVictory = false;
   questState.hasBronzeKey = false;
   questState.hasCthulhuRune = false;
   questState.hasCultistEmblem = false;
@@ -2457,11 +2861,14 @@ btnPlayAgainEl.addEventListener('click', () => {
   act3ChoiceDialogShown = false;
   resetPuzzles(true);
   setAct(1);
+  isGameStarted = true;
+  startSpeedrunTimer();
   closeMenu();
 });
 
 btnVictoryMenuEl.addEventListener('click', () => {
   victoryOverlayEl.classList.add('hidden');
+  isVictory = false;
   isGameStarted = false;
   act3ChoiceDialogShown = false;
   resetPuzzles(true);
@@ -2473,7 +2880,29 @@ btnVictoryMenuEl.addEventListener('click', () => {
 function triggerSecretEnding3() {
   if (isSecretEnding || isGameOver || isKidnapped || isKnockedOut) return;
   isSecretEnding = true;
+
+  const timeSeconds = stopSpeedrunTimer();
+  const formattedTimeStr = formatTime(timeSeconds);
+
+  if (secretRunTimeEl) secretRunTimeEl.textContent = formattedTimeStr;
+  if (secretRunRankEl) secretRunRankEl.textContent = '⏳';
+
   unlockEnding(3);
+
+  // Registrar tempo no SQLite Leaderboard
+  apiSaveLeaderboardRun({
+    playerName: currentPlayerName,
+    timeSeconds,
+    endingId: 3,
+    endingName: 'Final #3: Sobrevivente (Meia-Volta)',
+  }).then((res) => {
+    if (res && res.rank && secretRunRankEl) {
+      secretRunRankEl.textContent = `#${res.rank}`;
+    }
+  }).catch((err) => {
+    console.warn('Erro ao salvar secret ending no leaderboard:', err);
+    if (secretRunRankEl) secretRunRankEl.textContent = '#--';
+  });
 
   player.moving = false;
 
@@ -2501,6 +2930,7 @@ btnSecretPlayAgainEl.addEventListener('click', () => {
   resetPuzzles(true);
   setAct(1);
   isGameStarted = true;
+  startSpeedrunTimer();
   closeMenu();
 });
 
@@ -2623,6 +3053,7 @@ function startGameFromControls() {
   setAct(1);
   isGameOver = false;
   isGameStarted = true;
+  startSpeedrunTimer();
   saveProgress();
 }
 
@@ -3456,6 +3887,14 @@ function animate(currentTime) {
   lastTime = currentTime;
   const elapsed = currentTime / 1000;
 
+  // Atualizar cronômetro de speedrun em tempo real no topo
+  if (isSpeedrunning && speedrunStartTime !== null) {
+    const runSeconds = (performance.now() - speedrunStartTime) / 1000;
+    if (topSpeedrunDisplayEl) {
+      topSpeedrunDisplayEl.textContent = formatTime(runSeconds);
+    }
+  }
+
   if (interactTimer > 0) {
     interactTimer -= dt;
     if (interactTimer <= 0) {
@@ -3988,5 +4427,8 @@ function animate(currentTime) {
 
   renderer.render(scene, camera);
 }
+
+// Inicializar perfil do jogador e sincronizar com o banco de dados SQLite
+setCurrentPlayer(currentPlayerName || 'Aventureiro');
 
 requestAnimationFrame(animate);
