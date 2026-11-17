@@ -3,9 +3,9 @@ import {
   registerOrGetPlayer,
   getPlayerEndings,
   unlockPlayerEnding,
-  addLeaderboardEntry,
-  getLeaderboard,
-  getPlayerBest,
+  savePlayerProgress,
+  getPlayerProgress,
+  deletePlayerProgress,
 } from './db.js';
 
 function readJsonBody(req) {
@@ -34,7 +34,7 @@ function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.end(JSON.stringify(payload));
 }
@@ -43,7 +43,7 @@ export async function handleApiRequest(req, res) {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.end();
     return true;
@@ -103,47 +103,33 @@ export async function handleApiRequest(req, res) {
       }
     }
 
-    // Match /api/leaderboard/player/:name
-    const playerBestMatch = pathname.match(/^\/api\/leaderboard\/player\/([^/]+)\/?$/);
-    if (playerBestMatch && req.method === 'GET') {
-      const playerName = decodeURIComponent(playerBestMatch[1]);
-      const best = getPlayerBest(playerName);
-      sendJson(res, 200, { success: true, playerName, best });
-      return true;
-    }
+    // Match /api/players/:name/save
+    const saveMatch = pathname.match(/^\/api\/players\/([^/]+)\/save\/?$/);
+    if (saveMatch) {
+      const playerName = decodeURIComponent(saveMatch[1]);
 
-    // GET /api/leaderboard
-    if (pathname === '/api/leaderboard' && req.method === 'GET') {
-      const endingId = urlObj.searchParams.get('endingId');
-      const limit = urlObj.searchParams.get('limit') || 50;
-      const leaderboard = getLeaderboard(endingId, limit);
-      sendJson(res, 200, { success: true, leaderboard });
-      return true;
-    }
-
-    // POST /api/leaderboard
-    if (pathname === '/api/leaderboard' && req.method === 'POST') {
-      const body = await readJsonBody(req);
-      if (!body.playerName || body.timeSeconds === undefined) {
-        sendJson(res, 400, { success: false, error: 'playerName and timeSeconds are required' });
+      if (req.method === 'GET') {
+        const progress = getPlayerProgress(playerName);
+        sendJson(res, 200, { success: true, playerName, save: progress });
         return true;
       }
 
-      const result = addLeaderboardEntry({
-        playerName: body.playerName,
-        timeSeconds: body.timeSeconds,
-        formattedTime: body.formattedTime,
-        endingId: body.endingId,
-        endingName: body.endingName,
-      });
-
-      // Also unlock the ending for that player if not unlocked
-      if (body.endingId) {
-        unlockPlayerEnding(body.playerName, body.endingId);
+      if (req.method === 'POST') {
+        const body = await readJsonBody(req);
+        if (!body.saveData) {
+          sendJson(res, 400, { success: false, error: 'saveData is required' });
+          return true;
+        }
+        savePlayerProgress(playerName, body.saveData);
+        sendJson(res, 200, { success: true, playerName });
+        return true;
       }
 
-      sendJson(res, 201, { success: true, entry: result });
-      return true;
+      if (req.method === 'DELETE') {
+        deletePlayerProgress(playerName);
+        sendJson(res, 200, { success: true, playerName });
+        return true;
+      }
     }
 
     // Unknown api endpoint
@@ -155,4 +141,3 @@ export async function handleApiRequest(req, res) {
     return true;
   }
 }
-

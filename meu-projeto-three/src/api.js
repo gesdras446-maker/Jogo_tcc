@@ -1,16 +1,4 @@
-// Client API Service for Database & Leaderboard Integration
-
-export function formatTime(seconds) {
-  if (isNaN(seconds) || seconds < 0) return '00:00.00';
-  const totalMs = Math.floor(seconds * 1000);
-  const mins = Math.floor(totalMs / 60000);
-  const secs = Math.floor((totalMs % 60000) / 1000);
-  const hundredths = Math.floor((totalMs % 1000) / 10);
-  const mm = String(mins).padStart(2, '0');
-  const ss = String(secs).padStart(2, '0');
-  const hh = String(hundredths).padStart(2, '0');
-  return `${mm}:${ss}.${hh}`;
-}
+// Client API Service for Database Integration (Players, Endings & Save Game)
 
 export async function apiGetPlayers() {
   try {
@@ -70,7 +58,7 @@ export async function apiUnlockEnding(name, endingId) {
     });
     if (!res.ok) throw new Error('Failed to unlock ending on database');
     const data = await res.json();
-    // Cache locally as backup
+    // Cache locally
     localStorage.setItem(`dungeon_player_${cleanName.toLowerCase()}_endings`, JSON.stringify(data.endings));
     return data.endings;
   } catch (err) {
@@ -86,63 +74,51 @@ export async function apiUnlockEnding(name, endingId) {
   }
 }
 
-export async function apiSaveLeaderboardRun({ playerName, timeSeconds, endingId, endingName }) {
-  const cleanName = (playerName || 'Aventureiro').trim();
-  const formattedTime = formatTime(timeSeconds);
-
+export async function apiSavePlayerProgress(name, saveData) {
+  const cleanName = (name || 'Aventureiro').trim();
   try {
-    const res = await fetch('/api/leaderboard', {
+    const res = await fetch(`/api/players/${encodeURIComponent(cleanName)}/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        playerName: cleanName,
-        timeSeconds,
-        formattedTime,
-        endingId,
-        endingName,
-      }),
+      body: JSON.stringify({ saveData }),
     });
-    if (!res.ok) throw new Error('Failed to save leaderboard run');
-    const data = await res.json();
-    return data.entry;
+    if (!res.ok) throw new Error('Failed to save progress on database');
+    // Cache locally under player-specific key
+    localStorage.setItem(`dungeon_save_${cleanName.toLowerCase()}`, JSON.stringify(saveData));
+    return true;
   } catch (err) {
-    console.warn('[API] Fallback local leaderboard run:', err.message);
-    // Local fallback
-    const key = 'dungeon_local_leaderboard';
-    const stored = localStorage.getItem(key);
-    const runs = stored ? JSON.parse(stored) : [];
-    const newRun = {
-      playerName: cleanName,
-      timeSeconds,
-      formattedTime,
-      endingId,
-      endingName,
-      createdAt: new Date().toISOString(),
-    };
-    runs.push(newRun);
-    runs.sort((a, b) => a.timeSeconds - b.timeSeconds);
-    localStorage.setItem(key, JSON.stringify(runs));
-    const rank = runs.findIndex((r) => r === newRun) + 1;
-    return { ...newRun, rank, isPersonalBest: true };
+    console.warn('[API] Fallback local save:', err.message);
+    localStorage.setItem(`dungeon_save_${cleanName.toLowerCase()}`, JSON.stringify(saveData));
+    return false;
   }
 }
 
-export async function apiGetLeaderboard(endingId = null) {
+export async function apiGetPlayerProgress(name) {
+  const cleanName = (name || 'Aventureiro').trim();
   try {
-    const url = endingId ? `/api/leaderboard?endingId=${endingId}` : '/api/leaderboard';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch leaderboard');
+    const res = await fetch(`/api/players/${encodeURIComponent(cleanName)}/save`);
+    if (!res.ok) throw new Error('Failed to load progress from database');
     const data = await res.json();
-    return data.leaderboard || [];
-  } catch (err) {
-    console.warn('[API] Fallback local leaderboard fetch:', err.message);
-    const key = 'dungeon_local_leaderboard';
-    const stored = localStorage.getItem(key);
-    let runs = stored ? JSON.parse(stored) : [];
-    if (endingId) {
-      runs = runs.filter((r) => r.endingId === Number(endingId));
+    if (data.save && data.save.data) {
+      localStorage.setItem(`dungeon_save_${cleanName.toLowerCase()}`, JSON.stringify(data.save.data));
+      return data.save.data;
     }
-    return runs.map((r, i) => ({ ...r, rank: i + 1 }));
+    return null;
+  } catch (err) {
+    console.warn('[API] Fallback local get progress:', err.message);
+    const stored = localStorage.getItem(`dungeon_save_${cleanName.toLowerCase()}`);
+    return stored ? JSON.parse(stored) : null;
   }
 }
 
+export async function apiDeletePlayerProgress(name) {
+  const cleanName = (name || 'Aventureiro').trim();
+  try {
+    await fetch(`/api/players/${encodeURIComponent(cleanName)}/save`, {
+      method: 'DELETE',
+    });
+  } catch (err) {
+    console.warn('[API] Fallback local delete progress:', err.message);
+  }
+  localStorage.removeItem(`dungeon_save_${cleanName.toLowerCase()}`);
+}

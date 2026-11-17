@@ -36,17 +36,12 @@ export function initDatabase(customPath = null) {
       UNIQUE(player_name, ending_id)
     );
 
-    CREATE TABLE IF NOT EXISTS leaderboard (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      player_name TEXT NOT NULL COLLATE NOCASE,
-      time_seconds REAL NOT NULL,
-      formatted_time TEXT NOT NULL,
-      ending_id INTEGER NOT NULL,
-      ending_name TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    CREATE TABLE IF NOT EXISTS player_saves (
+      player_name TEXT PRIMARY KEY NOT NULL COLLATE NOCASE,
+      save_data TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
-    CREATE INDEX IF NOT EXISTS idx_leaderboard_time ON leaderboard(time_seconds ASC);
     CREATE INDEX IF NOT EXISTS idx_player_endings ON player_endings(player_name);
   `);
 
@@ -64,9 +59,12 @@ export function getPlayers() {
   const db = initDatabase();
   const stmt = db.prepare(`
     SELECT p.name, p.created_at,
-           COUNT(pe.ending_id) AS endings_count
+           COUNT(pe.ending_id) AS endings_count,
+           CASE WHEN ps.player_name IS NOT NULL THEN 1 ELSE 0 END AS has_save,
+           ps.updated_at AS last_save_time
     FROM players p
     LEFT JOIN player_endings pe ON p.name = pe.player_name
+    LEFT JOIN player_saves ps ON p.name = ps.player_name
     GROUP BY p.name
     ORDER BY p.name ASC
   `);
@@ -84,7 +82,8 @@ export function registerOrGetPlayer(name) {
   const player = playerStmt.get(cleanName);
 
   const endings = getPlayerEndings(cleanName);
-  return { ...player, endings };
+  const save = getPlayerProgress(cleanName);
+  return { ...player, endings, save };
 }
 
 export function getPlayerEndings(name) {
@@ -106,105 +105,43 @@ export function unlockPlayerEnding(name, endingId) {
   return getPlayerEndings(cleanName);
 }
 
-export function addLeaderboardEntry({ playerName, timeSeconds, formattedTime, endingId, endingName }) {
-  const db = initDatabase();
-  const cleanName = sanitizePlayerName(playerName);
-  registerOrGetPlayer(cleanName);
-
-  const sec = parseFloat(timeSeconds);
-  const fmt = formattedTime || formatDuration(sec);
-  const endId = parseInt(endingId, 10) || 4;
-  const endName = endingName || (endId === 3 ? 'Final #3: Meia-Volta' : 'Final #4: Cthulhu');
-
-  // Insert entry
-  const insert = db.prepare(`
-    INSERT INTO leaderboard (player_name, time_seconds, formatted_time, ending_id, ending_name)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  insert.run(cleanName, sec, fmt, endId, endName);
-
-  // Calculate rank
-  const rankStmt = db.prepare(`
-    SELECT COUNT(*) as rank_ahead
-    FROM leaderboard
-    WHERE time_seconds < ?
-  `);
-  const rankRes = rankStmt.get(sec);
-  const rank = (rankRes ? rankRes.rank_ahead : 0) + 1;
-
-  // Check if this is the player's best run
-  const bestStmt = db.prepare(`
-    SELECT MIN(time_seconds) as min_time
-    FROM leaderboard
-    WHERE player_name = ? COLLATE NOCASE
-  `);
-  const bestRes = bestStmt.get(cleanName);
-  const isPersonalBest = bestRes && bestRes.min_time >= sec;
-
-  return {
-    playerName: cleanName,
-    timeSeconds: sec,
-    formattedTime: fmt,
-    endingId: endId,
-    endingName: endName,
-    rank,
-    isPersonalBest,
-  };
-}
-
-export function getLeaderboard(endingId = null, limit = 50) {
-  const db = initDatabase();
-  let query = `
-    SELECT id, player_name, time_seconds, formatted_time, ending_id, ending_name, created_at
-    FROM leaderboard
-  `;
-  const params = [];
-
-  if (endingId !== null && endingId !== undefined && endingId !== '' && endingId !== 'all') {
-    query += ` WHERE ending_id = ? `;
-    params.push(Number(endingId));
-  }
-
-  query += ` ORDER BY time_seconds ASC LIMIT ? `;
-  params.push(parseInt(limit, 10) || 50);
-
-  const stmt = db.prepare(query);
-  const rows = stmt.all(...params);
-
-  return rows.map((row, index) => ({
-    rank: index + 1,
-    id: row.id,
-    playerName: row.player_name,
-    timeSeconds: row.time_seconds,
-    formattedTime: row.formatted_time,
-    endingId: row.ending_id,
-    endingName: row.ending_name,
-    createdAt: row.created_at,
-  }));
-}
-
-export function getPlayerBest(name) {
+export function savePlayerProgress(name, saveData) {
   const db = initDatabase();
   const cleanName = sanitizePlayerName(name);
+  registerOrGetPlayer(cleanName);
+
+  const jsonStr = typeof saveData === 'string' ? saveData : JSON.stringify(saveData);
+
   const stmt = db.prepare(`
-    SELECT id, time_seconds, formatted_time, ending_id, ending_name, created_at
-    FROM leaderboard
-    WHERE player_name = ? COLLATE NOCASE
-    ORDER BY time_seconds ASC
-    LIMIT 1
+    INSERT INTO player_saves (player_name, save_data, updated_at)
+    VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(player_name) DO UPDATE SET
+      save_data = excluded.save_data,
+      updated_at = CURRENT_TIMESTAMP
   `);
-  return stmt.get(cleanName) || null;
+  stmt.run(cleanName, jsonStr);
+
+  return { success: true, playerName: cleanName };
 }
 
-export function formatDuration(seconds) {
-  if (isNaN(seconds) || seconds < 0) return '00:00.00';
-  const totalMs = Math.floor(seconds * 1000);
-  const mins = Math.floor(totalMs / 60000);
-  const secs = Math.floor((totalMs % 60000) / 1000);
-  const hundredths = Math.floor((totalMs % 1000) / 10);
-  const mm = String(mins).padStart(2, '0');
-  const ss = String(secs).padStart(2, '0');
-  const hh = String(hundredths).padStart(2, '0');
-  return `${mm}:${ss}.${hh}`;
+export function getPlayerProgress(name) {
+  const db = initDatabase();
+  const cleanName = sanitizePlayerName(name);
+  const stmt = db.prepare('SELECT save_data, updated_at FROM player_saves WHERE player_name = ? COLLATE NOCASE');
+  const row = stmt.get(cleanName);
+  if (!row) return null;
+  try {
+    const data = JSON.parse(row.save_data);
+    return { data, updatedAt: row.updated_at };
+  } catch (e) {
+    return null;
+  }
 }
 
+export function deletePlayerProgress(name) {
+  const db = initDatabase();
+  const cleanName = sanitizePlayerName(name);
+  const stmt = db.prepare('DELETE FROM player_saves WHERE player_name = ? COLLATE NOCASE');
+  stmt.run(cleanName);
+  return { success: true };
+}

@@ -11,9 +11,9 @@ import {
   apiRegisterPlayer,
   apiGetPlayerEndings,
   apiUnlockEnding,
-  apiSaveLeaderboardRun,
-  apiGetLeaderboard,
-  formatTime,
+  apiSavePlayerProgress,
+  apiGetPlayerProgress,
+  apiDeletePlayerProgress,
 } from './api.js';
 import './style.css';
 
@@ -21,9 +21,7 @@ const app = document.querySelector('#app');
 app.innerHTML = `
   <!-- Top Right Actions Bar -->
   <div class="top-actions-bar">
-    <div class="top-speedrun-timer hidden" id="topSpeedrunTimer">⏱️ <span id="topSpeedrunDisplay">00:00.0</span></div>
-    <button class="btn-top-player" id="topPlayerBtn" title="Trocar Jogador">👤 <span id="topPlayerName">Aventureiro</span></button>
-    <button class="btn-top-leaderboard" id="topLeaderboardBtn">⏱️ LÍDERES</button>
+    <button class="btn-top-player" id="topPlayerBtn" title="Trocar Jogador / Perfil">👤 <span id="topPlayerName">Aventureiro</span></button>
     <button class="btn-top-endings" id="topEndingsBtn">🏆 FINAIS (<span class="endings-counter-val">0/2</span>)</button>
     <button class="btn-top-menu" id="openMenuBtn">⚙️ MENU (ESC)</button>
   </div>
@@ -432,19 +430,8 @@ app.innerHTML = `
       <div class="victory-text" id="victoryText">
         PARABÉNS! Você quebrou os selos arcanos e escapou com vida das profundezas cósmicas!
       </div>
-      <div class="run-stats-card" id="victoryRunStats">
-        <div class="run-stat-item">
-          <span class="run-stat-label">⏱️ TEMPO DA CORRIDA</span>
-          <span class="run-stat-value" id="victoryRunTime">00:00.00</span>
-        </div>
-        <div class="run-stat-item">
-          <span class="run-stat-label">🏆 RANKING NO BANCO</span>
-          <span class="run-stat-value rank-badge" id="victoryRunRank">#1</span>
-        </div>
-      </div>
       <div class="victory-buttons">
         <button class="victory-btn primary" id="btnPlayAgain">🔄 Jogar Novamente</button>
-        <button class="victory-btn" id="btnVictoryLeaderboard">⏱️ Tabela de Líderes</button>
         <button class="victory-btn" id="btnVictoryViewEndings">🏆 Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="victory-btn" id="btnVictoryMenu">🏠 Menu Principal</button>
       </div>
@@ -472,20 +459,8 @@ app.innerHTML = `
         Seus instintos salvaram a sua vida! Ao invés de avançar para a armadilha do cultista nas sombras do galpão, você deu meia-volta na rua e retornou em segurança para a grande avenida iluminada. Você nunca saberá que rituais sombrios eram preparados para você... mas esta noite, você sobreviveu ileso.
       </p>
 
-      <div class="run-stats-card" id="secretRunStats">
-        <div class="run-stat-item">
-          <span class="run-stat-label">⏱️ TEMPO DA CORRIDA</span>
-          <span class="run-stat-value" id="secretRunTime">00:00.00</span>
-        </div>
-        <div class="run-stat-item">
-          <span class="run-stat-label">🏆 RANKING NO BANCO</span>
-          <span class="run-stat-value rank-badge" id="secretRunRank">#1</span>
-        </div>
-      </div>
-
       <div class="secret-ending-actions">
         <button class="secret-ending-btn primary" id="btnSecretPlayAgain">🔄 Jogar Novamente</button>
-        <button class="secret-ending-btn secondary" id="btnSecretLeaderboard">⏱️ Tabela de Líderes</button>
         <button class="secret-ending-btn secondary" id="btnSecretViewEndings">🏆 Ver Coleção de Finais (<span class="endings-counter-val">0/2</span>)</button>
         <button class="secret-ending-btn secondary" id="btnSecretMainMenu">🏠 Menu Principal</button>
       </div>
@@ -521,53 +496,6 @@ app.innerHTML = `
     </div>
   </div>
 
-  <!-- TABELA DE LÍDERES / SPEEDRUN LEADERBOARD MODAL -->
-  <div class="leaderboard-modal-overlay hidden" id="leaderboardModal">
-    <div class="leaderboard-modal-card">
-      <div class="leaderboard-modal-header">
-        <div class="leaderboard-modal-title">🏆 TABELA DE LÍDERES (SPEEDRUN)</div>
-        <div class="leaderboard-modal-subtitle">
-          Recordes dos aventureiros mais rápidos a escapar do calabouço e concluir a jornada
-        </div>
-        <div class="leaderboard-tabs">
-          <button class="lb-tab-btn active" data-ending="all" id="lbTabAll">⚡ Todos os Finais</button>
-          <button class="lb-tab-btn" data-ending="4" id="lbTab4">🐙 Final #4: Cthulhu</button>
-          <button class="lb-tab-btn" data-ending="3" id="lbTab3">🏃 Final #3: Sobrevivente</button>
-        </div>
-      </div>
-
-      <div class="leaderboard-table-container">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th style="width: 50px;">#</th>
-              <th>Jogador</th>
-              <th>Tempo</th>
-              <th>Final Alcançado</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboardTableBody">
-            <!-- Dynamically rendered -->
-          </tbody>
-        </table>
-        <div class="leaderboard-empty hidden" id="leaderboardEmpty">
-          ⏳ Nenhum recorde registrado ainda. Seja o primeiro a completar o jogo!
-        </div>
-      </div>
-
-      <div class="leaderboard-modal-footer">
-        <div class="leaderboard-player-summary" id="leaderboardPlayerSummary">
-          Jogador Atual: <strong id="lbActivePlayerDisplay">Aventureiro</strong> &nbsp;|&nbsp; Melhor Tempo: <strong id="lbPlayerBestDisplay">--:--.--</strong>
-        </div>
-        <div class="leaderboard-footer-btns">
-          <button class="puzzle-btn secondary" id="btnRefreshLeaderboard">🔄 Atualizar</button>
-          <button class="puzzle-btn primary" id="btnCloseLeaderboard">Fechar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL DE IDENTIFICAÇÃO DO JOGADOR -->
   <div class="player-modal-overlay hidden" id="playerModal">
     <div class="player-modal-card">
@@ -575,7 +503,7 @@ app.innerHTML = `
         <div class="player-modal-icon">⚔️</div>
         <div class="player-modal-title">IDENTIFICAÇÃO DO JOGADOR</div>
         <div class="player-modal-desc">
-          Digite seu nome de aventureiro para vincular seus finais descobertos e disputar os melhores tempos na <strong>Tabela de Líderes</strong> do Calabouço!
+          Digite seu nome de aventureiro para vincular seus finais descobertos e salvar todo seu progresso no calabouço diretamente em sua conta!
         </div>
       </div>
       <div class="player-modal-form">
@@ -586,7 +514,7 @@ app.innerHTML = `
         </div>
       </div>
       <div class="recent-players-section" id="recentPlayersSection">
-        <div class="recent-players-title">👥 Jogadores Registrados no Banco de Dados:</div>
+        <div class="recent-players-title">👥 Contas / Jogadores no Banco de Dados:</div>
         <div class="recent-players-list" id="recentPlayersList">
           <!-- Dynamically populated -->
         </div>
@@ -615,7 +543,6 @@ app.innerHTML = `
       <div class="menu-buttons">
         <button class="menu-btn primary" id="btnNewGame">⚔️ Novo Jogo</button>
         <button class="menu-btn" id="btnContinue">💾 Continuar</button>
-        <button class="menu-btn" id="btnOpenLeaderboardMenu">⏱️ Tabela de Líderes</button>
         <button class="menu-btn" id="btnOpenEndingsMenu">🏆 Finais & Conquistas (<span class="endings-counter-val">0/2</span>)</button>
         <button class="menu-btn primary" id="btnResumeGame" style="display: none;">▶️ Voltar ao Jogo</button>
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
