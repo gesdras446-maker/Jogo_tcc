@@ -59,13 +59,14 @@ app.innerHTML = `
   </div>
 
   <!-- CUSTOM DIALOGUE BOX (MATCHING ATTACHED IMAGE) -->
-  <div class="dialogue-box-container" id="dialogueContainer">
+  <div class="dialogue-box-container hidden" id="dialogueContainer">
     <div class="dialogue-speaker-tab" id="dialogueSpeaker">NARRADOR</div>
-    <div class="dialogue-content-box">
+    <div class="dialogue-content-box" title="Clique para fechar [ESPAÇO]">
       <div class="dialogue-inner-frame"></div>
       <div class="dialogue-text" id="dialogueText">
         Uma noite sob o viaduto... Algo parece estar te observando nas sombras dos prédios e árvores.
       </div>
+
       <div class="dialogue-spiral-icon">🌀</div>
     </div>
   </div>
@@ -280,7 +281,7 @@ app.innerHTML = `
     <div class="qte-hud-container">
       <!-- TOP FLOATING HUD -->
       <div class="qte-floating-top">
-        <div class="qte-title-badge">⚡ BALISTA RÚNICA: DISPARO RÁPIDO (QTE)</div>
+        <div class="qte-title-badge">BALISTA RÚNICA: DISPARO RÁPIDO (QTE)</div>
         <div class="target-progress-bar-row">
           <span>Alvos Destruídos:</span>
           <div class="target-dots" id="targetDots">
@@ -292,19 +293,19 @@ app.innerHTML = `
           <span id="targetProgressText">(0 / 4)</span>
         </div>
         <div class="qte-current-target-title" id="qteTargetName">PRONTO PARA MIRAR?</div>
-        <div class="qte-hint-pill">🎯 Aperte a tecla exatamente quando o anel externo encolher até encostar no círculo central!</div>
+        <div class="qte-hint-pill">Aperte a tecla exatamente quando o anel externo encolher até encostar no círculo central!</div>
       </div>
 
       <!-- CENTER QTE RING ARENA -->
       <div class="qte-center-arena">
-        <div class="qte-circle-wrapper">
+        <div class="qte-circle-wrapper" id="qteCircleWrapper">
           <!-- Outer Shrinking Approach Ring -->
           <div class="qte-approach-ring" id="qtePulseRing"></div>
           <!-- Inner Target Reference Ring -->
           <div class="qte-inner-sweet-spot-ring"></div>
           <!-- Center Button with Key Display -->
           <button class="qte-big-key-btn" id="qteKeyBtn" type="button">
-            <span class="qte-target-symbol" id="qteTargetIcon">🎯</span>
+            <span class="qte-target-symbol" id="qteTargetIcon"></span>
             <span class="qte-key-letter" id="qteKeyLetter">Q</span>
             <span class="qte-key-subtext">TECLE OU CLIQUE!</span>
           </button>
@@ -317,7 +318,7 @@ app.innerHTML = `
           Mire a balista e inicie o teste de reflexos rápidos para os disparos!
         </div>
         <div class="target-actions-clean">
-          <button class="puzzle-btn primary" id="btnStartQte">🏹 Iniciar Disparos (QTE)</button>
+          <button class="puzzle-btn primary" id="btnStartQte">Iniciar Disparos (QTE)</button>
           <button class="puzzle-btn secondary" id="btnResetTargets" style="display: none;">🔄 Tentar Novamente</button>
           <button class="puzzle-btn secondary" id="btnCloseTargetModal">Fechar</button>
           <button class="puzzle-btn skip-demo" id="btnSkipQte" title="Modo apresentação — pula o puzzle instantaneamente">⏭️ Pular (Demo)</button>
@@ -780,13 +781,11 @@ const victoryOverlayEl = document.querySelector('#victoryOverlay');
 const btnPlayAgainEl = document.querySelector('#btnPlayAgain');
 const btnVictoryMenuEl = document.querySelector('#btnVictoryMenu');
 const btnVictoryViewEndingsEl = document.querySelector('#btnVictoryViewEndings');
-const btnVictoryLeaderboardEl = document.querySelector('#btnVictoryLeaderboard');
 
 // Endings & Secret Ending DOM
 const topEndingsBtnEl = document.querySelector('#topEndingsBtn');
 const secretEndingOverlayEl = document.querySelector('#secretEndingOverlay');
 const btnSecretPlayAgainEl = document.querySelector('#btnSecretPlayAgain');
-const btnSecretLeaderboardEl = document.querySelector('#btnSecretLeaderboard');
 const btnSecretViewEndingsEl = document.querySelector('#btnSecretViewEndings');
 const btnSecretMainMenuEl = document.querySelector('#btnSecretMainMenu');
 const btnOpenEndingsMenuEl = document.querySelector('#btnOpenEndingsMenu');
@@ -803,28 +802,6 @@ const playerNameInputEl = document.querySelector('#playerNameInput');
 const btnConfirmPlayerEl = document.querySelector('#btnConfirmPlayer');
 const btnClosePlayerModalEl = document.querySelector('#btnClosePlayerModal');
 const recentPlayersListEl = document.querySelector('#recentPlayersList');
-
-// Speedrun Timer DOM
-const topSpeedrunTimerEl = document.querySelector('#topSpeedrunTimer');
-const topSpeedrunDisplayEl = document.querySelector('#topSpeedrunDisplay');
-const victoryRunTimeEl = document.querySelector('#victoryRunTime');
-const victoryRunRankEl = document.querySelector('#victoryRunRank');
-const secretRunTimeEl = document.querySelector('#secretRunTime');
-const secretRunRankEl = document.querySelector('#secretRunRank');
-
-// Leaderboard Modal DOM
-const topLeaderboardBtnEl = document.querySelector('#topLeaderboardBtn');
-const btnOpenLeaderboardMenuEl = document.querySelector('#btnOpenLeaderboardMenu');
-const leaderboardModalEl = document.querySelector('#leaderboardModal');
-const leaderboardTableBodyEl = document.querySelector('#leaderboardTableBody');
-const leaderboardEmptyEl = document.querySelector('#leaderboardEmpty');
-const lbActivePlayerDisplayEl = document.querySelector('#lbActivePlayerDisplay');
-const lbPlayerBestDisplayEl = document.querySelector('#lbPlayerBestDisplay');
-const btnRefreshLeaderboardEl = document.querySelector('#btnRefreshLeaderboard');
-const btnCloseLeaderboardEl = document.querySelector('#btnCloseLeaderboard');
-const lbTabAllEl = document.querySelector('#lbTabAll');
-const lbTab4El = document.querySelector('#lbTab4');
-const lbTab3El = document.querySelector('#lbTab3');
 
 // ========================================================
 // 4 ENDINGS ACHIEVEMENT & TRACKING SYSTEM (2 DISPONÍVEIS NA DEMO)
@@ -875,28 +852,6 @@ const ENDINGS_DATA = [
 // Active Player Profile & Database State
 let currentPlayerName = localStorage.getItem('dungeon_current_player') || 'Aventureiro';
 let cachedPlayerEndings = [];
-let currentLeaderboardFilter = 'all';
-
-// Speedrun Timer State
-let speedrunStartTime = null;
-let speedrunElapsedTime = 0;
-let isSpeedrunning = false;
-
-function startSpeedrunTimer() {
-  speedrunStartTime = performance.now();
-  speedrunElapsedTime = 0;
-  isSpeedrunning = true;
-  if (topSpeedrunTimerEl) topSpeedrunTimerEl.classList.remove('hidden');
-  if (topSpeedrunDisplayEl) topSpeedrunDisplayEl.textContent = '00:00.00';
-}
-
-function stopSpeedrunTimer() {
-  if (isSpeedrunning && speedrunStartTime !== null) {
-    speedrunElapsedTime = (performance.now() - speedrunStartTime) / 1000;
-  }
-  isSpeedrunning = false;
-  return speedrunElapsedTime;
-}
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -917,7 +872,7 @@ function formatRecordDate(isoString) {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const hours = String(d.getHours()).padStart(2, '0');
     const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${day}/${month} ${hours}:${mins}`;
+    return `${day}/${month} às ${hours}:${mins}`;
   } catch (e) {
     return '--/--';
   }
@@ -930,12 +885,15 @@ async function setCurrentPlayer(name) {
 
   if (topPlayerNameEl) topPlayerNameEl.textContent = clean;
   if (menuPlayerNameEl) menuPlayerNameEl.textContent = clean;
-  if (lbActivePlayerDisplayEl) lbActivePlayerDisplayEl.textContent = clean;
 
-  // Registrar jogador no SQLite e obter os finais desbloqueados por ele
+  // Registrar jogador no SQLite e obter os finais desbloqueados e save vinculado à conta
   try {
     const playerRecord = await apiRegisterPlayer(clean);
     cachedPlayerEndings = (playerRecord && Array.isArray(playerRecord.endings)) ? playerRecord.endings : [];
+    if (playerRecord && playerRecord.save && playerRecord.save.data) {
+      const playerKey = `dungeon_save_${clean.toLowerCase()}`;
+      localStorage.setItem(playerKey, JSON.stringify(playerRecord.save.data));
+    }
   } catch (err) {
     try {
       cachedPlayerEndings = await apiGetPlayerEndings(clean);
@@ -945,22 +903,7 @@ async function setCurrentPlayer(name) {
   }
 
   updateEndingsUI();
-  updatePlayerBestDisplay();
-}
-
-async function updatePlayerBestDisplay() {
-  if (!lbPlayerBestDisplayEl) return;
-  try {
-    const res = await fetch(`/api/leaderboard/player/${encodeURIComponent(currentPlayerName)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.best && data.best.formatted_time) {
-        lbPlayerBestDisplayEl.textContent = data.best.formatted_time;
-        return;
-      }
-    }
-  } catch (e) { }
-  lbPlayerBestDisplayEl.textContent = '--:--.--';
+  await checkSaveData();
 }
 
 function getUnlockedEndings() {
@@ -1054,70 +997,6 @@ function closeEndingsModal() {
 }
 
 // ----------------------------------------------------
-// TABELA DE LÍDERES (LEADERBOARD) MODAL LOGIC
-// ----------------------------------------------------
-async function openLeaderboardModal() {
-  if (!leaderboardModalEl) return;
-  leaderboardModalEl.classList.remove('hidden');
-  await renderLeaderboardTable(currentLeaderboardFilter);
-  await updatePlayerBestDisplay();
-}
-
-function closeLeaderboardModal() {
-  if (leaderboardModalEl) leaderboardModalEl.classList.add('hidden');
-}
-
-async function renderLeaderboardTable(filter = 'all') {
-  if (!leaderboardTableBodyEl) return;
-  leaderboardTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:#90a4ae;">⏳ Carregando recordes do banco de dados...</td></tr>`;
-
-  try {
-    const filterId = (filter === 'all' || !filter) ? null : Number(filter);
-    const records = await apiGetLeaderboard(filterId);
-
-    if (!records || records.length === 0) {
-      leaderboardTableBodyEl.innerHTML = '';
-      if (leaderboardEmptyEl) leaderboardEmptyEl.classList.remove('hidden');
-      return;
-    }
-
-    if (leaderboardEmptyEl) leaderboardEmptyEl.classList.add('hidden');
-
-    leaderboardTableBodyEl.innerHTML = records.map((entry, index) => {
-      const rank = index + 1;
-      let rankBadge = `#${rank}`;
-      let rankClass = '';
-      if (rank === 1) { rankBadge = '🥇 #1'; rankClass = 'rank-1'; }
-      else if (rank === 2) { rankBadge = '🥈 #2'; rankClass = 'rank-2'; }
-      else if (rank === 3) { rankBadge = '🥉 #3'; rankClass = 'rank-3'; }
-
-      const isCurrent = entry.playerName && entry.playerName.toLowerCase() === currentPlayerName.toLowerCase();
-      const dateStr = entry.createdAt ? formatRecordDate(entry.createdAt) : '--/--';
-      const cleanEnding = entry.endingName || (entry.endingId === 3 ? 'Final #3: Sobrevivente' : 'Final #4: Cthulhu');
-
-      return `
-        <tr class="${isCurrent ? 'current-player-row' : ''}">
-          <td class="rank-cell ${rankClass}">${rankBadge}</td>
-          <td class="player-col">${escapeHtml(entry.playerName || 'Aventureiro')} ${isCurrent ? '⭐' : ''}</td>
-          <td class="time-col">⏱️ ${entry.formattedTime || formatTime(entry.timeSeconds)}</td>
-          <td class="ending-col">${escapeHtml(cleanEnding)}</td>
-          <td class="date-col">${dateStr}</td>
-        </tr>
-      `;
-    }).join('');
-  } catch (err) {
-    leaderboardTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:#ff5252;">❌ Erro ao consultar banco de dados: ${escapeHtml(err.message)}</td></tr>`;
-  }
-}
-
-function setLeaderboardFilter(filterId, clickedBtn) {
-  currentLeaderboardFilter = filterId;
-  document.querySelectorAll('.lb-tab-btn').forEach((b) => b.classList.remove('active'));
-  if (clickedBtn) clickedBtn.classList.add('active');
-  renderLeaderboardTable(filterId);
-}
-
-// ----------------------------------------------------
 // IDENTIFICAÇÃO DO JOGADOR (PLAYER MODAL) LOGIC
 // ----------------------------------------------------
 async function openPlayerModal() {
@@ -1136,18 +1015,20 @@ function closePlayerModal() {
 
 async function populateRecentPlayers() {
   if (!recentPlayersListEl) return;
-  recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Consultando banco de dados...</span>';
+  recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Consultando contas salvas no banco de dados...</span>';
   try {
     const players = await apiGetPlayers();
     if (!players || players.length === 0) {
-      recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Nenhum jogador registrado no banco ainda. Digite seu nome acima!</span>';
+      recentPlayersListEl.innerHTML = '<span style="color:#78909c; font-size:12px;">Nenhuma conta registrada no banco ainda. Digite seu nome acima!</span>';
       return;
     }
     recentPlayersListEl.innerHTML = players.map((p) => {
       const isActive = p.name.toLowerCase() === currentPlayerName.toLowerCase();
+      const saveText = p.has_save ? (p.act ? `💾 Salvo (Ato ${p.act})` : '💾 Progresso Salvo') : '⚪ Sem save';
       return `
         <button type="button" class="player-tag-btn ${isActive ? 'active' : ''}" data-player="${escapeHtml(p.name)}">
-          👤 ${escapeHtml(p.name)} <span style="font-size:11px; opacity:0.75;">(${p.endings_count || 0}/2 finais)</span>
+          <span class="player-tag-name">👤 ${escapeHtml(p.name)} ${isActive ? '★ (Ativa)' : ''}</span>
+          <span class="player-tag-meta">🏆 ${p.endings_count || 0}/2 finais • ${saveText}</span>
         </button>
       `;
     }).join('');
@@ -1162,7 +1043,7 @@ async function populateRecentPlayers() {
       });
     });
   } catch (err) {
-    recentPlayersListEl.innerHTML = '<span style="color:#ff5252; font-size:12px;">Não foi possível buscar jogadores do banco.</span>';
+    recentPlayersListEl.innerHTML = '<span style="color:#ff5252; font-size:12px;">Não foi possível buscar contas do banco.</span>';
   }
 }
 
@@ -1173,7 +1054,7 @@ async function handleConfirmPlayer() {
   closePlayerModal();
 }
 
-// Event Listeners for Player & Leaderboard Modals
+// Event Listeners for Player & Endings Modals
 if (topPlayerBtnEl) topPlayerBtnEl.addEventListener('click', openPlayerModal);
 if (btnChangePlayerMenuEl) btnChangePlayerMenuEl.addEventListener('click', openPlayerModal);
 if (btnClosePlayerModalEl) btnClosePlayerModalEl.addEventListener('click', closePlayerModal);
@@ -1184,16 +1065,11 @@ if (playerNameInputEl) {
   });
 }
 
-if (topLeaderboardBtnEl) topLeaderboardBtnEl.addEventListener('click', openLeaderboardModal);
-if (btnOpenLeaderboardMenuEl) btnOpenLeaderboardMenuEl.addEventListener('click', openLeaderboardModal);
-if (btnVictoryLeaderboardEl) btnVictoryLeaderboardEl.addEventListener('click', openLeaderboardModal);
-if (btnSecretLeaderboardEl) btnSecretLeaderboardEl.addEventListener('click', openLeaderboardModal);
-if (btnCloseLeaderboardEl) btnCloseLeaderboardEl.addEventListener('click', closeLeaderboardModal);
-if (btnRefreshLeaderboardEl) btnRefreshLeaderboardEl.addEventListener('click', () => renderLeaderboardTable(currentLeaderboardFilter));
-
-if (lbTabAllEl) lbTabAllEl.addEventListener('click', (e) => setLeaderboardFilter('all', e.currentTarget));
-if (lbTab4El) lbTab4El.addEventListener('click', (e) => setLeaderboardFilter('4', e.currentTarget));
-if (lbTab3El) lbTab3El.addEventListener('click', (e) => setLeaderboardFilter('3', e.currentTarget));
+if (topEndingsBtnEl) topEndingsBtnEl.addEventListener('click', openEndingsModal);
+if (btnOpenEndingsMenuEl) btnOpenEndingsMenuEl.addEventListener('click', openEndingsModal);
+if (btnVictoryViewEndingsEl) btnVictoryViewEndingsEl.addEventListener('click', openEndingsModal);
+if (btnSecretViewEndingsEl) btnSecretViewEndingsEl.addEventListener('click', openEndingsModal);
+if (btnCloseEndingsModalEl) btnCloseEndingsModalEl.addEventListener('click', closeEndingsModal);
 
 const dialogueContainerEl = document.querySelector('#dialogueContainer');
 const dialogueSpeakerEl = document.querySelector('#dialogueSpeaker');
@@ -1737,14 +1613,89 @@ const QTE_KEY_POOL = [
   { key: 'a', code: 'KeyA', display: 'A' },
   { key: 's', code: 'KeyS', display: 'S' },
   { key: 'd', code: 'KeyD', display: 'D' },
+  { key: 'x', code: 'KeyX', display: 'X' },
+  { key: 'z', code: 'KeyZ', display: 'Z' },
+  { key: 'g', code: 'KeyG', display: 'G' },
+  { key: 't', code: 'KeyT', display: 'T' },
 ];
 
-const QTE_TARGET_STEPS = [
-  { id: 1, name: '1º ALVO: PILAR DO FOGO', symbol: '🔥', color: '#ff5722', duration: 2300 },
-  { id: 2, name: '2º ALVO: PULSO DE SANGUE', symbol: '🩸', color: '#ff1744', duration: 2150 },
-  { id: 3, name: '3º ALVO: CONDUTOR DE RAIO', symbol: '⚡', color: '#00e5ff', duration: 2000 },
-  { id: 4, name: 'DISPARO FINAL: OLHO DO VAZIO!', symbol: '👁️', color: '#76ff03', duration: 1900 },
+// Pool de nomes para sortear a cada rodada (sem emojis)
+const QTE_NAME_POOL = [
+  'PILAR DO FOGO',
+  'PULSO DE SANGUE',
+  'CONDUTOR DE RAIO',
+  'OLHO DO VAZIO',
+  'CRÂNIO MALDITO',
+  'LÂMINA FANTASMA',
+  'METEORO ARCANO',
+  'VÓRTICE SOMBRIO',
+  'ALVO RÚNICO',
+  'EXPLOSÃO CAÓTICA',
+  'TENTÁCULO ABISSAL',
+  'MORCEGO VAMPÍRICO',
+  'ESPECTRO ERRANTE',
+  'ARANHA DAS TREVAS',
+  'SERPENTE VENENOSA',
 ];
+
+// Pool de cores para sortear
+const QTE_COLOR_POOL = [
+  '#ff5722', '#ff1744', '#00e5ff', '#76ff03', '#ff9100',
+  '#e040fb', '#ffd600', '#00bfa5', '#ff6e40', '#d500f9',
+];
+
+// Pool de posições aleatórias para o wrapper do QTE (offsets em px do centro)
+const QTE_POSITION_POOL = [
+  { x: 0, y: 0 },        // centro
+  { x: -120, y: -30 },   // esquerda-cima
+  { x: 120, y: -30 },    // direita-cima
+  { x: -100, y: 40 },    // esquerda-baixo
+  { x: 100, y: 40 },     // direita-baixo
+  { x: 0, y: -60 },      // acima
+  { x: 0, y: 50 },       // abaixo
+  { x: -150, y: 0 },     // esquerda
+  { x: 150, y: 0 },      // direita
+];
+
+const QTE_NUM_TARGETS = 4;
+let qteGeneratedSteps = [];
+
+// Gera os 4 passos do QTE totalmente aleatórios (sem emojis, mais rápido)
+function generateRandomQteSteps() {
+  qteGeneratedSteps = [];
+  const usedNames = [];
+  const usedPositions = [];
+  for (let i = 0; i < QTE_NUM_TARGETS; i++) {
+    // Sorteia nome sem repetir
+    let namePick;
+    do {
+      namePick = QTE_NAME_POOL[Math.floor(Math.random() * QTE_NAME_POOL.length)];
+    } while (usedNames.includes(namePick));
+    usedNames.push(namePick);
+
+    // Sorteia cor aleatória
+    const color = QTE_COLOR_POOL[Math.floor(Math.random() * QTE_COLOR_POOL.length)];
+
+    // Sorteia posição sem repetir
+    let posPick;
+    do {
+      posPick = QTE_POSITION_POOL[Math.floor(Math.random() * QTE_POSITION_POOL.length)];
+    } while (usedPositions.some(p => p.x === posPick.x && p.y === posPick.y));
+    usedPositions.push(posPick);
+
+    // Duração mais rápida: começa em 1600ms e diminui a cada alvo
+    const duration = 1600 - (i * 120) + Math.floor(Math.random() * 100 - 50);
+
+    const isLast = i === QTE_NUM_TARGETS - 1;
+    qteGeneratedSteps.push({
+      id: i + 1,
+      name: isLast ? `DISPARO FINAL: ${namePick}!` : `${i + 1}º ALVO: ${namePick}`,
+      color: color,
+      duration: Math.max(1000, duration),
+      position: posPick,
+    });
+  }
+}
 
 let qteCurrentIndex = 0;
 let qteActive = false;
@@ -1757,7 +1708,7 @@ let currentRingScale = 2.8;
 let lastKeyDisplay = '';
 
 function updateQteUI() {
-  for (let i = 0; i < QTE_TARGET_STEPS.length; i++) {
+  for (let i = 0; i < QTE_NUM_TARGETS; i++) {
     const dot = document.querySelector(`#tdot${i}`);
     if (dot) {
       if (i < qteCurrentIndex) dot.classList.add('active');
@@ -1766,7 +1717,7 @@ function updateQteUI() {
   }
 
   if (targetProgressTextEl) {
-    targetProgressTextEl.textContent = `(${qteCurrentIndex} / ${QTE_TARGET_STEPS.length})`;
+    targetProgressTextEl.textContent = `(${qteCurrentIndex} / ${QTE_NUM_TARGETS})`;
   }
 }
 
@@ -1776,11 +1727,13 @@ function openQteModal() {
   qteCanInput = false;
   qteCurrentIndex = 0;
   if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
+  // Gera novos passos aleatórios a cada abertura
+  generateRandomQteSteps();
   updateQteUI();
 
   if (btnStartQteEl) {
     btnStartQteEl.style.display = 'inline-block';
-    btnStartQteEl.textContent = '🏹 Iniciar Disparos (QTE)';
+    btnStartQteEl.textContent = 'Iniciar Disparos (QTE)';
   }
   if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
 
@@ -1794,12 +1747,13 @@ function openQteModal() {
   const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
   const qtePulseRingEl = document.querySelector('#qtePulseRing');
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
+  const qteCircleWrapperEl = document.querySelector('#qteCircleWrapper');
 
   if (qteTargetNameEl) {
     qteTargetNameEl.textContent = 'PRONTO PARA MIRAR?';
     qteTargetNameEl.style.color = '#ff9100';
   }
-  if (qteTargetIconEl) qteTargetIconEl.textContent = '🎯';
+  if (qteTargetIconEl) qteTargetIconEl.textContent = '';
   if (qteKeyLetterEl) {
     qteKeyLetterEl.textContent = '▶';
     qteKeyLetterEl.style.color = '#ff7043';
@@ -1814,10 +1768,16 @@ function openQteModal() {
     qteKeyBtnEl.classList.remove('sweet-spot', 'hit-success', 'miss-error');
     qteKeyBtnEl.style.borderColor = '#ff7043';
   }
+  // Reseta posição do wrapper para o centro
+  if (qteCircleWrapperEl) {
+    qteCircleWrapperEl.style.transform = 'translate(0px, 0px)';
+  }
 }
 
 function startQteSequence() {
   if (questState.targetPuzzleSolved) return;
+  // Regenera passos aleatórios a cada tentativa
+  generateRandomQteSteps();
   qteCurrentIndex = 0;
   qteActive = true;
   updateQteUI();
@@ -1827,15 +1787,14 @@ function startQteSequence() {
 }
 
 function promptNextQteTarget() {
-  if (qteCurrentIndex >= QTE_TARGET_STEPS.length) {
+  if (qteCurrentIndex >= QTE_NUM_TARGETS) {
     onQteCompleteSuccess();
     return;
   }
 
-  const step = QTE_TARGET_STEPS[qteCurrentIndex];
-  qteCanInput = true;
+  const step = qteGeneratedSteps[qteCurrentIndex];
+  qteCanInput = false; // bloqueia input até o círculo aparecer
   qteMaxDuration = step.duration;
-  qteStartTime = performance.now();
 
   // Sorteia tecla aleatória para cada disparo
   const availableKeys = QTE_KEY_POOL.filter((k) => k.display !== lastKeyDisplay);
@@ -1847,10 +1806,17 @@ function promptNextQteTarget() {
   const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
   const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
   const qtePulseRingEl = document.querySelector('#qtePulseRing');
+  const qteCircleWrapperEl = document.querySelector('#qteCircleWrapper');
 
-  if (qteTargetIconEl) qteTargetIconEl.textContent = step.symbol;
+  // Esconde o círculo antes de reposicionar
+  if (qteCircleWrapperEl) {
+    qteCircleWrapperEl.style.opacity = '0';
+    qteCircleWrapperEl.style.transition = 'opacity 0.15s ease';
+  }
+
+  if (qteTargetIconEl) qteTargetIconEl.textContent = '';
   if (qteTargetNameEl) {
-    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_TARGET_STEPS.length} - ${step.name}`;
+    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_NUM_TARGETS} - ${step.name}`;
     qteTargetNameEl.style.color = step.color;
   }
   if (qteKeyLetterEl) {
@@ -1867,12 +1833,29 @@ function promptNextQteTarget() {
     qtePulseRingEl.style.transform = 'scale(2.8)';
   }
 
+  // Após sumir, reposiciona e reaparece
+  setTimeout(() => {
+    if (qteCircleWrapperEl && step.position) {
+      qteCircleWrapperEl.style.transition = 'none';
+      qteCircleWrapperEl.style.transform = `translate(${step.position.x}px, ${step.position.y}px)`;
+    }
+    // Reaparece com fade-in
+    setTimeout(() => {
+      if (qteCircleWrapperEl) {
+        qteCircleWrapperEl.style.transition = 'opacity 0.15s ease';
+        qteCircleWrapperEl.style.opacity = '1';
+      }
+      // Libera input e começa o timer após aparecer
+      qteCanInput = true;
+      qteStartTime = performance.now();
+      runQteTimerLoop();
+    }, 80);
+  }, 200);
+
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `⚡ Pressione [${currentQteKey.display}] quando o anel externo encostar no círculo!`;
+    targetFeedbackTextEl.textContent = `Pressione [${currentQteKey.display}] quando o anel encostar no círculo!`;
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
-
-  runQteTimerLoop();
 }
 
 function runQteTimerLoop() {
@@ -1954,7 +1937,7 @@ function onQteHitSuccess() {
   if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
 
   playSound('pickup');
-  const step = QTE_TARGET_STEPS[qteCurrentIndex];
+  const step = qteGeneratedSteps[qteCurrentIndex];
 
   // Acerta o alvo 3D respectivo
   if (act3Env && act3Env.targets) {
@@ -1975,14 +1958,14 @@ function onQteHitSuccess() {
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `🎯 ACERTO PERFEITO! ${step.name} destruído!`;
+    targetFeedbackTextEl.textContent = `ACERTO PERFEITO! ${step.name} destruído!`;
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
   qteCurrentIndex++;
   updateQteUI();
 
-  if (qteCurrentIndex >= QTE_TARGET_STEPS.length) {
+  if (qteCurrentIndex >= QTE_NUM_TARGETS) {
     setTimeout(onQteCompleteSuccess, 500);
   } else {
     setTimeout(promptNextQteTarget, 550);
@@ -2014,13 +1997,13 @@ function onQteMissError(reason = 'wrong_key') {
 
   if (targetFeedbackTextEl) {
     if (reason === 'too_early') {
-      targetFeedbackTextEl.textContent = `⚠️ MUITO CEDO! Espere o anel externo encostar no círculo do botão!`;
+      targetFeedbackTextEl.textContent = `MUITO CEDO! Espere o anel encostar no círculo!`;
     } else if (reason === 'too_late') {
-      targetFeedbackTextEl.textContent = `⏱️ TARDE DEMAIS! O anel já havia encolhido demais!`;
+      targetFeedbackTextEl.textContent = `TARDE DEMAIS! O anel já encolheu demais!`;
     } else if (reason === 'timeout') {
-      targetFeedbackTextEl.textContent = `⏱️ TEMPO ESGOTADO! O anel fechou antes do disparo!`;
+      targetFeedbackTextEl.textContent = `TEMPO ESGOTADO! O anel fechou antes do disparo!`;
     } else {
-      targetFeedbackTextEl.textContent = `❌ TECLA INCORRETA! Era a tecla [${currentQteKey.display}]!`;
+      targetFeedbackTextEl.textContent = `TECLA INCORRETA! Era a tecla [${currentQteKey.display}]!`;
     }
     targetFeedbackTextEl.style.color = '#ff1744';
   }
@@ -2028,7 +2011,7 @@ function onQteMissError(reason = 'wrong_key') {
   if (btnStartQteEl) btnStartQteEl.style.display = 'none';
   if (btnResetTargetsEl) {
     btnResetTargetsEl.style.display = 'inline-block';
-    btnResetTargetsEl.textContent = '🔄 Tentar Novamente';
+    btnResetTargetsEl.textContent = 'Tentar Novamente';
   }
 }
 
@@ -2040,7 +2023,7 @@ function onQteCompleteSuccess() {
   playSound('victory');
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = '🌟 TODOS OS 4 ALVOS DESTRUÍDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
+    targetFeedbackTextEl.textContent = 'TODOS OS 4 ALVOS DESTRUÍDOS! A PONTE DE BASALTO EMERGIU DA LAVA!';
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
@@ -2072,7 +2055,7 @@ if (qteKeyBtnEl) {
       startQteSequence();
       return;
     }
-    if (qteCanInput && qteCurrentIndex < QTE_TARGET_STEPS.length) {
+    if (qteCanInput && qteCurrentIndex < QTE_NUM_TARGETS) {
       handleQteInput('', '', true);
     }
   });
@@ -2091,7 +2074,7 @@ if (btnSkipQteEl) {
     if (qteTimerRaf) cancelAnimationFrame(qteTimerRaf);
     qteActive = false;
     qteCanInput = false;
-    qteCurrentIndex = QTE_TARGET_STEPS.length;
+    qteCurrentIndex = QTE_NUM_TARGETS;
     if (act3Env && act3Env.targets) {
       act3Env.targets.forEach((t) => {
         t.hit = true;
@@ -2099,11 +2082,11 @@ if (btnSkipQteEl) {
         if (t.light) t.light.intensity = 4.0;
       });
     }
-    for (let i = 0; i < QTE_TARGET_STEPS.length; i++) {
+    for (let i = 0; i < QTE_NUM_TARGETS; i++) {
       const dot = document.querySelector(`#tdot${i}`);
       if (dot) dot.classList.add('active');
     }
-    if (targetProgressTextEl) targetProgressTextEl.textContent = `(${QTE_TARGET_STEPS.length} / ${QTE_TARGET_STEPS.length})`;
+    if (targetProgressTextEl) targetProgressTextEl.textContent = `(${QTE_NUM_TARGETS} / ${QTE_NUM_TARGETS})`;
     onQteCompleteSuccess();
   });
 }
@@ -2452,12 +2435,31 @@ let isActTransitioning = false;
 let lastNarrativeZone = -1;
 let currentPromptObject = null;
 let typewriterTimeout = null;
+let dialogueAutoHideTimer = null;
 
-// Typewriter Dialogue Effect
-function typeWriterDialogue(speaker, fullText, onComplete) {
+// Esconde a caixa de diálogo
+function hideDialogueBox() {
+  if (dialogueAutoHideTimer) {
+    clearTimeout(dialogueAutoHideTimer);
+    dialogueAutoHideTimer = null;
+  }
   if (typewriterTimeout) {
     clearTimeout(typewriterTimeout);
     typewriterTimeout = null;
+  }
+  dialogueContainerEl.classList.add('hidden');
+}
+
+// Typewriter Dialogue Effect
+function typeWriterDialogue(speaker, fullText, onComplete) {
+  // Limpa timers anteriores
+  if (typewriterTimeout) {
+    clearTimeout(typewriterTimeout);
+    typewriterTimeout = null;
+  }
+  if (dialogueAutoHideTimer) {
+    clearTimeout(dialogueAutoHideTimer);
+    dialogueAutoHideTimer = null;
   }
 
   const isCultist = speaker && (
@@ -2490,6 +2492,11 @@ function typeWriterDialogue(speaker, fullText, onComplete) {
     } else {
       typewriterTimeout = null;
       if (onComplete) onComplete();
+      // Auto-hide: 2 segundos após o texto terminar
+      dialogueAutoHideTimer = setTimeout(() => {
+        dialogueContainerEl.classList.add('hidden');
+        dialogueAutoHideTimer = null;
+      }, 2000);
     }
   }
   typeNextChar();
@@ -2646,7 +2653,7 @@ function triggerVillainWakeUpSpeech() {
           'O cultista desapareceu nas sombras em direção às profundezas do calabouço... Ache os 3 selos e escape!',
           () => {
             setTimeout(() => {
-              dialogueContainerEl.classList.add('hidden');
+              hideDialogueBox();
             }, 3500);
           }
         );
@@ -2713,29 +2720,8 @@ function triggerEnding(endingId) {
   if (isVictory) return;
   isVictory = true;
 
-  const timeSeconds = stopSpeedrunTimer();
-  const formattedTimeStr = formatTime(timeSeconds);
-
-  if (victoryRunTimeEl) victoryRunTimeEl.textContent = formattedTimeStr;
-  if (victoryRunRankEl) victoryRunRankEl.textContent = '⏳';
-
   unlockEnding(endingId);
   playSound('victory');
-
-  // Registrar tempo no SQLite Leaderboard
-  apiSaveLeaderboardRun({
-    playerName: currentPlayerName,
-    timeSeconds,
-    endingId,
-    endingName: 'Final #4: O Receptáculo de Cthulhu',
-  }).then((res) => {
-    if (res && res.rank && victoryRunRankEl) {
-      victoryRunRankEl.textContent = `#${res.rank}`;
-    }
-  }).catch((err) => {
-    console.warn('Erro ao salvar speedrun run no leaderboard:', err);
-    if (victoryRunRankEl) victoryRunRankEl.textContent = '#--';
-  });
 
   const ending = ENDINGS_DATA.find((e) => e.id === endingId) || ENDINGS_DATA[3];
 
@@ -2789,7 +2775,6 @@ btnPlayAgainEl.addEventListener('click', () => {
   resetPuzzles(true);
   setAct(1);
   isGameStarted = true;
-  startSpeedrunTimer();
   closeMenu();
 });
 
@@ -2808,28 +2793,7 @@ function triggerSecretEnding3() {
   if (isSecretEnding || isGameOver || isKidnapped || isKnockedOut) return;
   isSecretEnding = true;
 
-  const timeSeconds = stopSpeedrunTimer();
-  const formattedTimeStr = formatTime(timeSeconds);
-
-  if (secretRunTimeEl) secretRunTimeEl.textContent = formattedTimeStr;
-  if (secretRunRankEl) secretRunRankEl.textContent = '⏳';
-
   unlockEnding(3);
-
-  // Registrar tempo no SQLite Leaderboard
-  apiSaveLeaderboardRun({
-    playerName: currentPlayerName,
-    timeSeconds,
-    endingId: 3,
-    endingName: 'Final #3: Sobrevivente (Meia-Volta)',
-  }).then((res) => {
-    if (res && res.rank && secretRunRankEl) {
-      secretRunRankEl.textContent = `#${res.rank}`;
-    }
-  }).catch((err) => {
-    console.warn('Erro ao salvar secret ending no leaderboard:', err);
-    if (secretRunRankEl) secretRunRankEl.textContent = '#--';
-  });
 
   player.moving = false;
 
@@ -2839,7 +2803,7 @@ function triggerSecretEnding3() {
     () => {
       setTimeout(() => {
         playSound('victory');
-        dialogueContainerEl.classList.add('hidden');
+        hideDialogueBox();
         secretEndingOverlayEl.classList.remove('hidden');
       }, 1500);
     }
@@ -2857,15 +2821,8 @@ btnSecretPlayAgainEl.addEventListener('click', () => {
   resetPuzzles(true);
   setAct(1);
   isGameStarted = true;
-  startSpeedrunTimer();
   closeMenu();
 });
-
-btnSecretViewEndingsEl.addEventListener('click', openEndingsModal);
-btnVictoryViewEndingsEl.addEventListener('click', openEndingsModal);
-topEndingsBtnEl.addEventListener('click', openEndingsModal);
-btnOpenEndingsMenuEl.addEventListener('click', openEndingsModal);
-btnCloseEndingsModalEl.addEventListener('click', closeEndingsModal);
 
 btnSecretMainMenuEl.addEventListener('click', () => {
   secretEndingOverlayEl.classList.add('hidden');
@@ -2876,30 +2833,96 @@ btnSecretMainMenuEl.addEventListener('click', () => {
   openMenu();
 });
 
-// Menu System Logic
-function checkSaveData() {
-  const save = localStorage.getItem('dungeon_save');
-  btnContinueEl.disabled = !save;
-}
-checkSaveData();
+// ========================================================
+// SISTEMA DE SALVAMENTO E PROGRESSO POR CONTA DO JOGADOR
+// ========================================================
+let lastApiSaveTimestamp = 0;
 
-function saveProgress() {
-  if (player.isFalling || isKnockedOut || player.hp <= 0) return;
+async function checkSaveData() {
+  if (!btnContinueEl) return;
+  const playerKey = `dungeon_save_${currentPlayerName.toLowerCase()}`;
+  const localSave = localStorage.getItem(playerKey);
+  let hasSave = !!localSave;
+  btnContinueEl.disabled = !hasSave;
+
+  if (hasSave) {
+    try {
+      const parsed = JSON.parse(localSave);
+      btnContinueEl.title = `Continuar progresso de ${currentPlayerName} (Ato ${parsed.currentAct || 1})`;
+    } catch (e) {}
+  } else {
+    btnContinueEl.title = `Nenhum progresso salvo para a conta ${currentPlayerName}`;
+  }
+
+  // Sincronização assíncrona com o banco SQLite
+  try {
+    const serverSave = await apiGetPlayerProgress(currentPlayerName);
+    if (serverSave) {
+      btnContinueEl.disabled = false;
+      btnContinueEl.title = `Continuar progresso de ${currentPlayerName} (Ato ${serverSave.currentAct || 1})`;
+      localStorage.setItem(playerKey, JSON.stringify(serverSave));
+    } else if (!localSave) {
+      btnContinueEl.disabled = true;
+      btnContinueEl.title = `Nenhum progresso salvo para a conta ${currentPlayerName}`;
+    }
+  } catch (e) {}
+}
+
+async function saveProgress(forceServer = false) {
+  if (player.isFalling || isKnockedOut || player.hp <= 0) return false;
   const saveData = {
+    playerName: currentPlayerName,
     currentAct,
     playerPos: { x: player.group.position.x, z: player.group.position.z },
     playerHp: player.hp,
-    questState,
+    questState: JSON.parse(JSON.stringify(questState)),
+    savedAt: new Date().toISOString(),
   };
+
+  const playerKey = `dungeon_save_${currentPlayerName.toLowerCase()}`;
+  localStorage.setItem(playerKey, JSON.stringify(saveData));
   localStorage.setItem('dungeon_save', JSON.stringify(saveData));
-  checkSaveData();
+
+  if (btnContinueEl) btnContinueEl.disabled = false;
+
+  const now = Date.now();
+  if (forceServer || (now - lastApiSaveTimestamp > 10000)) {
+    lastApiSaveTimestamp = now;
+    try {
+      await apiSavePlayerProgress(currentPlayerName, saveData);
+    } catch (err) {
+      console.warn('Erro ao sincronizar save com banco SQLite da conta:', err);
+    }
+  }
+
+  return true;
 }
 
-function loadProgress() {
-  const saveStr = localStorage.getItem('dungeon_save');
-  if (!saveStr) return false;
+async function loadProgress() {
+  let data = null;
+  // Tentar carregar do banco SQLite da conta primeiro
   try {
-    const data = JSON.parse(saveStr);
+    data = await apiGetPlayerProgress(currentPlayerName);
+  } catch (e) {
+    console.warn('Erro ao carregar save da conta no servidor:', e);
+  }
+
+  // Fallback para cache local específico deste jogador
+  if (!data) {
+    const playerKey = `dungeon_save_${currentPlayerName.toLowerCase()}`;
+    const localStr = localStorage.getItem(playerKey) || localStorage.getItem('dungeon_save');
+    if (localStr) {
+      try {
+        data = JSON.parse(localStr);
+      } catch (err) {
+        data = null;
+      }
+    }
+  }
+
+  if (!data) return false;
+
+  try {
     if (data.questState) {
       Object.assign(questState, data.questState);
     }
@@ -2915,10 +2938,20 @@ function loadProgress() {
     updateSafeDialsUI();
 
     setAct(data.currentAct || 1);
-    player.group.position.set(data.playerPos.x, 0, data.playerPos.z);
-    player.hp = data.playerHp;
+    if (data.playerPos) {
+      player.group.position.set(data.playerPos.x, 0, data.playerPos.z);
+    }
+    if (typeof data.playerHp === 'number') {
+      player.hp = data.playerHp;
+      if (healthBarFillEl && healthValueEl) {
+        const pct = Math.max(0, Math.min(100, Math.round(player.hp)));
+        healthBarFillEl.style.width = `${pct}%`;
+        healthValueEl.textContent = `${pct} / 100`;
+      }
+    }
     return true;
   } catch (e) {
+    console.error('Falha ao restaurar dados do progresso:', e);
     return false;
   }
 }
@@ -2980,8 +3013,7 @@ function startGameFromControls() {
   setAct(1);
   isGameOver = false;
   isGameStarted = true;
-  startSpeedrunTimer();
-  saveProgress();
+  saveProgress(true);
 }
 
 if (btnCloseControlsEl) {
@@ -2998,12 +3030,18 @@ controlsOverlayEl.addEventListener('click', (e) => {
   startGameFromControls();
 });
 
-btnContinueEl.addEventListener('click', () => {
-  if (loadProgress()) {
+btnContinueEl.addEventListener('click', async () => {
+  btnContinueEl.textContent = '⏳ Carregando...';
+  const success = await loadProgress();
+  btnContinueEl.textContent = '💾 Continuar';
+  if (success) {
     isGameOver = false;
     isGameStarted = true;
     closeMenu();
     controlsOverlayEl.classList.add('hidden');
+    typeWriterDialogue('SISTEMA', `Progresso da conta "${currentPlayerName}" restaurado com sucesso!`);
+  } else {
+    typeWriterDialogue('SISTEMA', `Nenhum progresso salvo encontrado para "${currentPlayerName}".`);
   }
 });
 
@@ -3043,12 +3081,13 @@ btnRestartActEl.addEventListener('click', () => {
   typeWriterDialogue('SISTEMA', 'Ato reiniciado!');
 });
 
-btnSaveGameEl.addEventListener('click', () => {
-  saveProgress();
-  btnSaveGameEl.textContent = '✅ Jogo Salvo!';
+btnSaveGameEl.addEventListener('click', async () => {
+  btnSaveGameEl.textContent = '⏳ Salvando...';
+  await saveProgress(true);
+  btnSaveGameEl.textContent = '✅ Salvo na Conta!';
   setTimeout(() => {
     btnSaveGameEl.textContent = '💾 Salvar Jogo';
-  }, 1200);
+  }, 1500);
 });
 
 btnReturnToMainMenuEl.addEventListener('click', () => {
@@ -3091,6 +3130,15 @@ window.addEventListener('keydown', (e) => {
     } else if (qteCanInput) {
       e.preventDefault();
       handleQteInput(e.key, e.code);
+      return;
+    }
+  }
+
+  // Fechar caixa de diálogo com Espaço ou Escape
+  if (!dialogueContainerEl.classList.contains('hidden')) {
+    if (e.code === 'Space' || e.code === 'Escape') {
+      e.preventDefault();
+      hideDialogueBox();
       return;
     }
   }
@@ -3303,7 +3351,7 @@ function updateBinaryModalUI() {
     if (questState.hasBronzeKey) {
       binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] ➔ Decimal: [ <span style="color:#00e676;">${currentSum}</span> ] <span style="color:#69f0ae;">✓ RESOLVIDO (CHAVE DE BRONZE)</span>`;
     } else {
-      binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] &nbsp;|&nbsp; <span style="color:#90a4ae;">Aguardando Ativação</span>`;
+      binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] ➔ Frequência Atual: [ <strong style="color:#ffd54f; font-size:15px;">${currentSum}</strong> ] &nbsp;|&nbsp; <span style="color:#90a4ae;">Aguardando Ativação</span>`;
     }
   }
 }
@@ -3412,6 +3460,15 @@ btnSubmitBinaryEl.addEventListener('click', () => {
     updateBinaryModalUI();
   } else {
     playSound('hit');
+    if (binaryValueDisplayEl) {
+      binaryValueDisplayEl.innerHTML = `Dedos: [ <strong>${bits.join(' - ')}</strong> ] ➔ Frequência: [ <strong style="color:#ff5252; font-size:15px;">${sum}</strong> ] &nbsp;|&nbsp; <span style="color:#ff5252; font-weight:800;">❌ Frequência Incorreta! (Circuito Travado)</span>`;
+    }
+    const card = document.querySelector('.terminal-puzzle-card');
+    if (card) {
+      card.classList.remove('modal-shake');
+      void card.offsetWidth;
+      card.classList.add('modal-shake');
+    }
     typeWriterDialogue(
       'CIRCUITO TRAVADO (RESPOSTA INCORRETA)',
       `❌ A posição atual dos dedos gerou a frequência decimal ${sum}, mas o terminal requer a Frequência Alvo das runas sagradas. Deduza o valor de cada runa pelas 3 inscrições, resolva a fórmula e tente novamente!`
@@ -3621,7 +3678,7 @@ function handleInteraction() {
         'Esse caminho não está disponível nesse momento.',
         () => {
           setTimeout(() => {
-            dialogueContainerEl.classList.add('hidden');
+            hideDialogueBox();
             isVictory = true;
 
             const victoryBadgeEl = document.querySelector('#victoryBadge');
@@ -3813,14 +3870,6 @@ function animate(currentTime) {
   const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
   lastTime = currentTime;
   const elapsed = currentTime / 1000;
-
-  // Atualizar cronômetro de speedrun em tempo real no topo
-  if (isSpeedrunning && speedrunStartTime !== null) {
-    const runSeconds = (performance.now() - speedrunStartTime) / 1000;
-    if (topSpeedrunDisplayEl) {
-      topSpeedrunDisplayEl.textContent = formatTime(runSeconds);
-    }
-  }
 
   if (interactTimer > 0) {
     interactTimer -= dt;

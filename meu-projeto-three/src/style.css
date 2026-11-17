@@ -106,7 +106,7 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
   width: min(780px, 94vw);
-  z-index: 30;
+  z-index: 250;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -657,6 +657,17 @@ canvas {
   border-radius: 6px;
   width: 100%;
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+@keyframes modalShakeAnim {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.modal-shake {
+  animation: modalShakeAnim 0.35s ease-in-out;
 }
 
 /* Tabela de códigos ao lado */
@@ -2309,6 +2320,7 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.3s ease-out;
 }
 
 /* Anel Externo que se aproxima/encolhe (Approach Ring) */
@@ -2393,6 +2405,7 @@ canvas {
   font-size: 24px;
   filter: drop-shadow(0 0 8px rgba(255, 87, 34, 0.8));
   line-height: 1;
+  display: none;
 }
 
 .qte-key-letter {
@@ -2656,7 +2669,7 @@ canvas {
 }
 
 /* ========================================================
-   SPEEDRUN TIMER, PLAYER PROFILE & LEADERBOARD SYSTEM
+   PLAYER PROFILE & ENDINGS SYSTEM
    ======================================================== */
 
 /* Top bar extra items */
@@ -2707,31 +2720,7 @@ canvas {
   box-shadow: 0 6px 18px rgba(79, 195, 247, 0.35);
 }
 
-.btn-top-leaderboard {
-  background: rgba(22, 28, 42, 0.88);
-  border: 1.5px solid #ffd54f;
-  color: #ffe082;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
-.btn-top-leaderboard:hover {
-  background: rgba(36, 48, 72, 0.95);
-  border-color: #ffe082;
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(255, 213, 79, 0.35);
-}
 
 /* Menu Player Active Badge */
 .menu-player-badge {
@@ -2920,37 +2909,52 @@ canvas {
 
 .recent-players-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
-  max-height: 100px;
+  max-height: 160px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .player-tag-btn {
-  background: #1a2232;
-  border: 1px solid #455a64;
-  color: #b0bec5;
-  border-radius: 6px;
-  padding: 5px 12px;
+  background: #141c2b;
+  border: 1.5px solid #2e3d52;
+  color: #c5d1e0;
+  border-radius: 8px;
+  padding: 8px 14px;
   font-size: 13px;
-  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .player-tag-btn:hover {
-  background: #263248;
+  background: #1f2b42;
   border-color: #00e5ff;
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .player-tag-btn.active {
   border-color: #00e5ff;
-  background: rgba(0, 229, 255, 0.15);
+  background: rgba(0, 229, 255, 0.12);
   color: #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
+.player-tag-name {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.player-tag-meta {
+  font-size: 11.5px;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 .player-modal-footer {
@@ -2960,243 +2964,6 @@ canvas {
   padding-top: 14px;
 }
 
-/* ========================================================
-   LEADERBOARD / TABELA DE LÍDERES MODAL
-   ======================================================== */
-.leaderboard-modal-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 210;
-  background: rgba(5, 8, 14, 0.94);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: modalFadeIn 0.3s ease-out;
-}
-
-.leaderboard-modal-overlay.hidden {
-  display: none !important;
-}
-
-.leaderboard-modal-card {
-  width: min(840px, 94vw);
-  max-height: 90vh;
-  background: #141822;
-  border: 2px solid #ffd54f;
-  border-radius: 18px;
-  padding: 26px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 213, 79, 0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  color: #f0f4f8;
-}
-
-.leaderboard-modal-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 6px;
-}
-
-.leaderboard-modal-title {
-  font-size: 24px;
-  font-weight: 900;
-  color: #ffd54f;
-  letter-spacing: 1.5px;
-}
-
-.leaderboard-modal-subtitle {
-  font-size: 13.5px;
-  color: #90a4ae;
-}
-
-.leaderboard-tabs {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.lb-tab-btn {
-  background: #1a2232;
-  border: 1px solid #37474f;
-  color: #b0bec5;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.lb-tab-btn:hover {
-  background: #263248;
-  color: #ffffff;
-  border-color: #78909c;
-}
-
-.lb-tab-btn.active {
-  background: rgba(255, 213, 79, 0.15);
-  border-color: #ffd54f;
-  color: #ffd54f;
-  box-shadow: 0 0 10px rgba(255, 213, 79, 0.25);
-}
-
-.leaderboard-table-container {
-  width: 100%;
-  max-height: 48vh;
-  overflow-y: auto;
-  border: 1px solid #263248;
-  border-radius: 10px;
-  background: #0d111a;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
-}
-
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 13.5px;
-}
-
-.leaderboard-table th {
-  position: sticky;
-  top: 0;
-  background: #182030;
-  color: #90a4ae;
-  font-weight: 800;
-  padding: 10px 14px;
-  border-bottom: 2px solid #37474f;
-  letter-spacing: 0.5px;
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.leaderboard-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid #1a2232;
-  color: #cfd8dc;
-}
-
-.leaderboard-table tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.leaderboard-table tr.current-player-row td {
-  background: rgba(0, 229, 255, 0.08);
-  font-weight: 700;
-}
-
-.leaderboard-table tr.current-player-row td.player-col {
-  color: #00e5ff;
-}
-
-.rank-cell {
-  font-weight: 900;
-  font-size: 14px;
-  width: 50px;
-}
-
-.rank-1 { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); font-size: 16px; }
-.rank-2 { color: #c0c0c0; text-shadow: 0 0 8px rgba(192, 192, 192, 0.5); font-size: 15px; }
-.rank-3 { color: #cd7f32; text-shadow: 0 0 8px rgba(205, 127, 50, 0.5); font-size: 15px; }
-
-.time-col {
-  font-family: 'Consolas', 'Courier New', monospace;
-  font-weight: 800;
-  color: #ffd54f !important;
-  font-size: 14.5px;
-}
-
-.ending-col {
-  font-size: 12.5px;
-  color: #80deea;
-}
-
-.date-col {
-  font-size: 11.5px;
-  color: #78909c;
-}
-
-.leaderboard-empty {
-  padding: 36px 20px;
-  text-align: center;
-  color: #78909c;
-  font-size: 14px;
-  font-style: italic;
-}
-
-.leaderboard-empty.hidden {
-  display: none;
-}
-
-.leaderboard-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid #1e2634;
-  padding-top: 14px;
-}
-
-.leaderboard-player-summary {
-  font-size: 13px;
-  color: #b0bec5;
-}
-
-.leaderboard-player-summary strong {
-  color: #ffd54f;
-  font-family: 'Consolas', monospace;
-}
-
-.leaderboard-footer-btns {
-  display: flex;
-  gap: 10px;
-}
-
-/* Run Stats Card in Victory / Secret Ending Overlays */
-.run-stats-card {
-  width: 100%;
-  max-width: 540px;
-  background: rgba(13, 17, 26, 0.9);
-  border: 1.5px solid #ffd54f;
-  border-radius: 12px;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  margin: 6px 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 213, 79, 0.2);
-}
-
-.run-stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.run-stat-label {
-  font-size: 11px;
-  font-weight: 800;
-  color: #90a4ae;
-  letter-spacing: 1px;
-}
-
-.run-stat-value {
-  font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 20px;
-  font-weight: 900;
-  color: #ffd54f;
-  text-shadow: 0 0 8px rgba(255, 213, 79, 0.4);
-}
-
-.rank-badge {
-  color: #00e5ff !important;
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4) !important;
-}
 
 
 

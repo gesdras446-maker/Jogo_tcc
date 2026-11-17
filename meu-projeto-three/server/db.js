@@ -59,16 +59,34 @@ export function getPlayers() {
   const db = initDatabase();
   const stmt = db.prepare(`
     SELECT p.name, p.created_at,
-           COUNT(pe.ending_id) AS endings_count,
+           COUNT(DISTINCT pe.ending_id) AS endings_count,
            CASE WHEN ps.player_name IS NOT NULL THEN 1 ELSE 0 END AS has_save,
-           ps.updated_at AS last_save_time
+           ps.updated_at AS last_save_time,
+           ps.save_data
     FROM players p
     LEFT JOIN player_endings pe ON p.name = pe.player_name
     LEFT JOIN player_saves ps ON p.name = ps.player_name
     GROUP BY p.name
     ORDER BY p.name ASC
   `);
-  return stmt.all();
+  const rows = stmt.all();
+  return rows.map((r) => {
+    let act = null;
+    if (r.save_data) {
+      try {
+        const parsed = JSON.parse(r.save_data);
+        act = parsed.currentAct || 1;
+      } catch (e) {}
+    }
+    return {
+      name: r.name,
+      created_at: r.created_at,
+      endings_count: r.endings_count,
+      has_save: Boolean(r.has_save),
+      act,
+      last_save_time: r.last_save_time,
+    };
+  });
 }
 
 export function registerOrGetPlayer(name) {
