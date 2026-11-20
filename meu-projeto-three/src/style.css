@@ -1493,6 +1493,61 @@ canvas {
   border-color: #ff8a80;
 }
 
+/* Dev Console Button */
+.menu-btn.dev-btn {
+  background: linear-gradient(180deg, #1a237e, #0d47a1);
+  border-color: #42a5f5;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+  box-shadow: 0 0 10px rgba(66, 165, 245, 0.25);
+}
+
+.menu-btn.dev-btn:hover {
+  opacity: 1;
+  background: linear-gradient(180deg, #283593, #1565c0);
+  border-color: #64b5f6;
+  box-shadow: 0 0 16px rgba(66, 165, 245, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Dev Console */
+.dev-console-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #42a5f5;
+  border-radius: 8px;
+  color: #e3f2fd;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dev-console-input:focus {
+  border-color: #64b5f6;
+  box-shadow: 0 0 12px rgba(66, 165, 245, 0.5);
+}
+
+.dev-console-output {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  color: #90caf9;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  box-sizing: border-box;
+  margin-top: 8px;
+}
+
 /* Settings Form */
 .settings-group {
   width: 100%;

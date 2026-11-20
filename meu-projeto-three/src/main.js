@@ -549,6 +549,7 @@ app.innerHTML = `
         <button class="menu-btn" id="btnRestartAct" style="display: none;">🔄 Reiniciar Ato</button>
         <button class="menu-btn" id="btnSaveGame" style="display: none;">💾 Salvar Jogo</button>
         <button class="menu-btn" id="btnSettings">⚙️ Configurações</button>
+        <button class="menu-btn dev-btn" id="btnDevConsole">🔧 Console Dev</button>
         <button class="menu-btn danger" id="btnReturnToMainMenu" style="display: none;">🏠 Menu Principal</button>
       </div>
     </div>
@@ -584,6 +585,26 @@ app.innerHTML = `
 
       <div class="menu-buttons">
         <button class="menu-btn" id="btnBackFromSettings">↩️ Voltar</button>
+      </div>
+    </div>
+
+    <div class="menu-card" id="devConsoleCard" style="display: none;">
+      <div class="menu-title">COMANDOS DEV</div>
+      <div class="menu-subtitle">ÁREA EXCLUSIVA DE DESENVOLVEDOR (PAUSE)</div>
+
+      <div class="settings-group">
+        <div class="setting-row">
+          <div class="setting-label">
+            <span>Digite o código de desenvolvedor:</span>
+          </div>
+          <input type="text" id="devConsoleInput" class="dev-console-input" placeholder="Ex: modoADM" autocomplete="off" />
+        </div>
+        <div class="dev-console-output" id="devConsoleOutput"></div>
+      </div>
+
+      <div class="menu-buttons">
+        <button class="menu-btn primary" id="btnDevExecute">⚡ Executar Comando</button>
+        <button class="menu-btn" id="btnBackFromDevConsole">↩️ Voltar ao Pause</button>
       </div>
     </div>
   </div>
@@ -2968,6 +2989,12 @@ function updateMenuMode() {
     btnRestartActEl.style.display = 'flex';
     btnSaveGameEl.style.display = 'flex';
     btnReturnToMainMenuEl.style.display = 'flex';
+
+    // Lugar de comando no menu de pause só para desenvolvedores
+    if (btnDevConsoleEl) {
+      btnDevConsoleEl.style.display = 'flex';
+      btnDevConsoleEl.textContent = '🔧 Comandos Dev (modoADM)';
+    }
   } else {
     menuTitleEl.textContent = 'CALABOUÇO';
     menuSubtitleEl.textContent = 'MENU PRINCIPAL';
@@ -2980,6 +3007,11 @@ function updateMenuMode() {
     btnSaveGameEl.style.display = 'none';
     btnReturnToMainMenuEl.style.display = 'none';
 
+    // Oculta opção de dev no menu principal (exclusiva do menu de pause)
+    if (btnDevConsoleEl) {
+      btnDevConsoleEl.style.display = 'none';
+    }
+
     checkSaveData();
   }
 }
@@ -2989,6 +3021,7 @@ function openMenu() {
   menuOverlayEl.classList.remove('hidden');
   mainMenuCardEl.style.display = 'flex';
   settingsCardEl.style.display = 'none';
+  if (devConsoleCardEl) devConsoleCardEl.style.display = 'none';
 }
 
 function closeMenu() {
@@ -3108,6 +3141,84 @@ btnBackFromSettingsEl.addEventListener('click', () => {
   settingsCardEl.style.display = 'none';
   mainMenuCardEl.style.display = 'flex';
 });
+
+// Console Dev
+const devConsoleCardEl = document.querySelector('#devConsoleCard');
+const devConsoleInputEl = document.querySelector('#devConsoleInput');
+const devConsoleOutputEl = document.querySelector('#devConsoleOutput');
+const btnDevConsoleEl = document.querySelector('#btnDevConsole');
+const btnDevExecuteEl = document.querySelector('#btnDevExecute');
+const btnBackFromDevConsoleEl = document.querySelector('#btnBackFromDevConsole');
+
+btnDevConsoleEl.addEventListener('click', () => {
+  mainMenuCardEl.style.display = 'none';
+  devConsoleCardEl.style.display = 'flex';
+  devConsoleInputEl.value = '';
+  devConsoleOutputEl.textContent = '';
+  devConsoleInputEl.focus();
+});
+
+btnBackFromDevConsoleEl.addEventListener('click', () => {
+  devConsoleCardEl.style.display = 'none';
+  mainMenuCardEl.style.display = 'flex';
+});
+
+devConsoleInputEl.addEventListener('keydown', (e) => {
+  if (e.code === 'Enter') {
+    e.preventDefault();
+    executeDevCommand();
+  }
+  e.stopPropagation();
+});
+
+btnDevExecuteEl.addEventListener('click', executeDevCommand);
+
+function executeDevCommand() {
+  const raw = (devConsoleInputEl.value || '').trim();
+  if (!raw) {
+    devConsoleOutputEl.textContent = '⚠ Digite um código de desenvolvedor.';
+    devConsoleOutputEl.style.color = '#ffd600';
+    return;
+  }
+
+  if (raw.toLowerCase() === 'modoadm') {
+    // Dá todos os itens do segundo ato!
+    questState.hasBronzeKey = true;
+    questState.hasCthulhuRune = true;
+    questState.hasCultistEmblem = true;
+    questState.gateOpen = true;
+    questState.activePedestals = 3;
+
+    // Se estiver no Ato 2, acende os pedestais no 3D e abre o portão de ferro
+    if (dungeonEnv && dungeonEnv.pedestals) {
+      dungeonEnv.pedestals.forEach((ped) => {
+        ped.active = true;
+        if (ped.light) ped.light.intensity = 2.5;
+      });
+    }
+    if (typeof openEscapeGate === 'function' && currentAct === 2) {
+      openEscapeGate();
+    }
+
+    updateHUD();
+    playSound('pickup');
+    playSound('gate_unlock');
+
+    devConsoleOutputEl.textContent =
+      '✅ MODO ADM ATIVADO COM SUCESSO!\n' +
+      'Todos os itens do Ato 2 foram concedidos ao jogador:\n' +
+      '• 🗝️ Chave de Bronze [Adicionada]\n' +
+      '• 🔮 Runa de Cthulhu [Adicionada]\n' +
+      '• 🔱 Emblema Cultista [Adicionado]\n' +
+      '• 🚪 3 Pedestais Ativados e Portão Aberto!';
+    devConsoleOutputEl.style.color = '#00e676';
+  } else {
+    devConsoleOutputEl.textContent = `❌ Código "${raw}" inválido. Utilize: modoADM`;
+    devConsoleOutputEl.style.color = '#ff1744';
+  }
+
+  devConsoleInputEl.value = '';
+}
 
 // Key Listeners
 const keys = {};
@@ -4264,7 +4375,7 @@ function animate(currentTime) {
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetCamX, 0.08);
       camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetCamZ, 0.08);
 
-      // Check Lava Hazards
+      // Check Lava Hazards (Mata instantaneamente e o jogador cai na lava)
       for (const lh of act3Env.lavaHazards) {
         if (
           player.group.position.x >= lh.minX &&
@@ -4273,48 +4384,30 @@ function animate(currentTime) {
           player.group.position.z <= lh.maxZ
         ) {
           const onBridge = (act3Env.bridge.isRaised || act3Env.bridge.isRaising) && Math.abs(player.group.position.z) <= 2.2;
-          if (!onBridge && !isPlayerDying) {
-            player.hp -= lh.damage * dt;
-            player.noiseLevel = 3;
-            playSound('hit');
+          if (!onBridge && !player.isFalling && !isPlayerDying) {
+            player.hp = 0;
             updateHUD();
-            if (player.hp <= 0) {
-              player.hp = 0;
-              startPlayerDeath('Você caiu no rio de lava ardente e foi consumido pelas chamas!');
-            }
+            playSound('hit');
+            playSound('fall');
+            player.fallReason = 'Você caiu no abismo de lava ardente e foi incinerado instantaneamente!';
+            player.triggerHoleFall();
           }
         }
       }
 
-      // Check Acid Hazard in Chamber 1 (Ácido cobre todo o vão, seguro apenas na trilha preta)
+      // Check Acid Hazard in Chamber 1 (6 piscinas contínuas de 20x18 com caminhos no formato dos desenhos)
       if (
-        player.group.position.x >= -18.0 &&
-        player.group.position.x <= -2.0 &&
+        player.group.position.x >= -20.0 &&
+        player.group.position.x <= 100.0 &&
         player.group.position.z >= -9.0 &&
         player.group.position.z <= 9.0
       ) {
         const px = player.group.position.x;
         const pz = player.group.position.z;
-        let onSafePath = false;
+        const onSafePath = act3Env.isPlayerOnSafePath ? act3Env.isPlayerOnSafePath(px, pz) : false;
 
-        if (px >= -18.0 && px <= -13.0) {
-          // Trilha reta da esquerda
-          if (Math.abs(pz) <= 0.85) onSafePath = true;
-        } else if (px >= -7.0 && px <= -2.0) {
-          // Trilha reta da direita
-          if (Math.abs(pz) <= 0.85) onSafePath = true;
-        } else if (px > -13.0 && px < -7.0) {
-          // Losango central: bifurcação para cima e para baixo
-          const dx = Math.abs(px - (-10.0));
-          const targetZ = 3.5 * (1.0 - dx / 3.0);
-          // Caminho superior (-targetZ) ou caminho inferior (+targetZ)
-          if (Math.abs(pz - (-targetZ)) <= 0.95 || Math.abs(pz - targetZ) <= 0.95) {
-            onSafePath = true;
-          }
-        }
-
-        if (!onSafePath && !isPlayerDying) {
-          player.hp -= 25 * dt;
+        if (!onSafePath && !isPlayerDying && !player.isFalling) {
+          player.hp -= 30 * dt;
           player.noiseLevel = 2;
           playSound('hit');
           updateHUD();
@@ -4354,9 +4447,9 @@ function animate(currentTime) {
         }
       });
 
-      // Anúncio dramático das Escolhas ao cruzar a ponte e pisar no santuário final (X >= 27.5)
+      // Anúncio dramático das Escolhas ao cruzar a ponte e pisar no santuário final (X >= 133.5)
       if (
-        player.group.position.x >= 27.5 &&
+        player.group.position.x >= 133.5 &&
         act3Env.bridge.isRaised &&
         !act3ChoiceDialogShown &&
         !isVictory
