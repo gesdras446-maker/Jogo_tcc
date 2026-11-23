@@ -3019,6 +3019,89 @@ canvas {
   padding-top: 14px;
 }
 
+/* ========================================================
+   RESPOSTAS / ESCOLHAS ACIMA DO DIÁLOGO (RPG STYLE)
+   ======================================================== */
+.dialogue-choices-bar {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 10px;
+  z-index: 10;
+  animation: choiceSlideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dialogue-choices-bar.hidden {
+  display: none !important;
+}
+
+.dialogue-choice-btn {
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.9);
+  border: 2px solid transparent;
+  outline: none;
+}
+
+.dialogue-choice-btn.accept {
+  background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
+  color: #f3e5f5;
+  border-color: #ba68c8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.dialogue-choice-btn.accept:hover {
+  background: linear-gradient(135deg, #6a1b9a 0%, #9c27b0 100%);
+  border-color: #e1bee7;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(186, 104, 200, 0.6);
+}
+
+.dialogue-choice-btn.refuse {
+  background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%);
+  color: #ffebee;
+  border-color: #ef5350;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.dialogue-choice-btn.refuse:hover {
+  background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+  border-color: #ffcdd2;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 83, 80, 0.6);
+}
+
+.dialogue-choice-btn .choice-num {
+  background: rgba(0, 0, 0, 0.45);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #ffd54f;
+  font-weight: 900;
+}
+
+@keyframes choiceSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 
 
 

@@ -6,6 +6,7 @@ import { Npc } from './Npc.js';
 import { Player } from './Player.js';
 import { createStreetEnvironment } from './Street.js';
 import { createAct3Environment } from './Act3.js';
+import { GrandeMonstro } from './GrandeMonstro.js';
 import {
   apiGetPlayers,
   apiRegisterPlayer,
@@ -60,6 +61,16 @@ app.innerHTML = `
 
   <!-- CUSTOM DIALOGUE BOX (MATCHING ATTACHED IMAGE) -->
   <div class="dialogue-box-container hidden" id="dialogueContainer">
+    <!-- RESPOSTAS/ESCOLHAS ACIMA DO DIÁLOGO -->
+    <div class="dialogue-choices-bar hidden" id="dialogueChoicesBar">
+      <button class="dialogue-choice-btn accept" id="btnChoiceAcceptPact">
+        <span class="choice-num">[1]</span> 🐙 ACEITAR O PACTO (VIRAR RECEPTÁCULO DE CTHULHU)
+      </button>
+      <button class="dialogue-choice-btn refuse" id="btnChoiceRefusePact">
+        <span class="choice-num">[2]</span> ⚔️ RECUSAR E FUGIR
+      </button>
+    </div>
+
     <div class="dialogue-speaker-tab" id="dialogueSpeaker">NARRADOR</div>
     <div class="dialogue-content-box" title="Clique para fechar [ESPAÇO]">
       <div class="dialogue-inner-frame"></div>
@@ -1193,6 +1204,12 @@ const btnCloseTargetModalEl = document.querySelector('#btnCloseTargetModal');
 const btnStartQteEl = document.querySelector('#btnStartQte');
 const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
 
+// Cultista Bridge Choice Elements (respostas acima do diálogo)
+const dialogueChoicesBarEl = document.querySelector('#dialogueChoicesBar');
+const btnChoiceAcceptPactEl = document.querySelector('#btnChoiceAcceptPact');
+const btnChoiceRefusePactEl = document.querySelector('#btnChoiceRefusePact');
+let isDialogueChoiceActive = false;
+
 // Master canvas for the authentic Cthulhu Fossil (Ruins of Alph style)
 const masterRelicCanvas = document.createElement('canvas');
 masterRelicCanvas.width = 256;
@@ -1618,6 +1635,88 @@ if (btnSkipRelicEl) {
 btnCloseRelicModalEl.addEventListener('click', () => {
   relicModalEl.classList.add('hidden');
 });
+
+// Funções do Acordo do Cultista na Ponte (Diálogo com escolhas acima)
+function showCultistBridgeDialogue() {
+  isDialogueChoiceActive = true;
+  if (grandeMonstro) {
+    grandeMonstro.pauseChase();
+  }
+
+  if (typewriterTimeout) {
+    clearTimeout(typewriterTimeout);
+    typewriterTimeout = null;
+  }
+  if (dialogueAutoHideTimer) {
+    clearTimeout(dialogueAutoHideTimer);
+    dialogueAutoHideTimer = null;
+  }
+
+  dialogueContainerEl.classList.add('cultist-dialogue-mode');
+  dialogueSpeakerEl.textContent = 'CULTISTA SUPREMO';
+  dialogueTextEl.textContent = '';
+  dialogueContainerEl.classList.remove('hidden');
+
+  if (dialogueChoicesBarEl) {
+    dialogueChoicesBarEl.classList.remove('hidden');
+  }
+
+  const fullText = 'Pare, mortal... O Grande Monstro obedece às minhas ordens. Você provou seu valor sobrevivendo até aqui. Junte-se a mim e torne-se o Receptáculo de Cthulhu... ou recuse e seja devorado pela minha abominação!';
+  let idx = 0;
+  const speed = 25;
+
+  function typeNextChar() {
+    if (idx < fullText.length) {
+      dialogueTextEl.textContent += fullText[idx];
+      idx++;
+      if (idx % 4 === 0 && fullText[idx - 1] !== ' ') {
+        playSound('dialogue_blip');
+      }
+      typewriterTimeout = setTimeout(typeNextChar, speed);
+    } else {
+      typewriterTimeout = null;
+    }
+  }
+  typeNextChar();
+}
+
+function closeCultistChoiceDialogue() {
+  isDialogueChoiceActive = false;
+  if (dialogueChoicesBarEl) {
+    dialogueChoicesBarEl.classList.add('hidden');
+  }
+  hideDialogueBox(true);
+}
+
+function onAcceptCultistPact() {
+  closeCultistChoiceDialogue();
+  playSound('victory');
+  triggerEnding(4);
+}
+
+function onRefuseCultistPact() {
+  closeCultistChoiceDialogue();
+  playSound('demon');
+  typeWriterDialogue(
+    'CULTISTA SUPREMO',
+    '💀 Tolice deplorável! Se recusa a glória eterna do pacto cósmico, então seja devorado pela minha criação! VÁ, GRANDE MONSTRO!'
+  );
+  if (npc) {
+    npc.isVanishing = true;
+    npc.vanishTimer = 1.0;
+  }
+  if (grandeMonstro) {
+    grandeMonstro.resumeChase();
+  }
+}
+
+if (btnChoiceAcceptPactEl) {
+  btnChoiceAcceptPactEl.addEventListener('click', onAcceptCultistPact);
+}
+
+if (btnChoiceRefusePactEl) {
+  btnChoiceRefusePactEl.addEventListener('click', onRefuseCultistPact);
+}
 
 // ========================================================
 // ========================================================
@@ -2221,6 +2320,9 @@ const npc = new Npc(scene, initialSpot.x, initialSpot.z);
 
 let dungeonEnemies = [];
 let act3Enemies = [];
+let grandeMonstro = null;
+let grandeMonstroTriggered = false;
+let cultistBridgeEventTriggered = false;
 
 function spawnDungeonEnemies() {
   if (dungeonEnemies.length === 0) {
@@ -2459,7 +2561,8 @@ let typewriterTimeout = null;
 let dialogueAutoHideTimer = null;
 
 // Esconde a caixa de diálogo
-function hideDialogueBox() {
+function hideDialogueBox(force = false) {
+  if (isDialogueChoiceActive && !force) return;
   if (dialogueAutoHideTimer) {
     clearTimeout(dialogueAutoHideTimer);
     dialogueAutoHideTimer = null;
@@ -2603,6 +2706,8 @@ function setAct(act) {
     dungeonEnemies.forEach((e) => e.destroy());
     dungeonEnemies = [];
     spawnAct3Enemies();
+
+    resetAct3Puzzles();
 
     typeWriterDialogue(
       'ATO 3: O ABISMO DE LAVA',
@@ -2870,7 +2975,7 @@ async function checkSaveData() {
     try {
       const parsed = JSON.parse(localSave);
       btnContinueEl.title = `Continuar progresso de ${currentPlayerName} (Ato ${parsed.currentAct || 1})`;
-    } catch (e) {}
+    } catch (e) { }
   } else {
     btnContinueEl.title = `Nenhum progresso salvo para a conta ${currentPlayerName}`;
   }
@@ -2886,7 +2991,7 @@ async function checkSaveData() {
       btnContinueEl.disabled = true;
       btnContinueEl.title = `Nenhum progresso salvo para a conta ${currentPlayerName}`;
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 async function saveProgress(forceServer = false) {
@@ -3089,22 +3194,7 @@ btnRestartActEl.addEventListener('click', () => {
     questState.activePedestals = 0;
     resetPuzzles(true);
   } else if (currentAct === 3) {
-    act3ChoiceDialogShown = false;
-    if (act3Env && act3Env.bridge) {
-      act3Env.bridge.isRaised = false;
-      act3Env.bridge.isRaising = false;
-      act3Env.bridge.currentY = -2.5;
-      act3Env.bridge.mesh.position.y = -2.5;
-      if (!act3Env.obstacles.includes(act3Env.bridge.obstacle)) {
-        act3Env.obstacles.push(act3Env.bridge.obstacle);
-      }
-    }
-    if (act3Env && act3Env.targets) {
-      act3Env.targets.forEach((t) => {
-        t.hit = false;
-        if (t.orb) t.orb.material.emissiveIntensity = 0.8;
-      });
-    }
+    resetAct3Puzzles();
   }
   isActTransitioning = false;
   isPlayerDying = false;
@@ -3241,6 +3331,20 @@ window.addEventListener('keydown', (e) => {
     } else if (qteCanInput) {
       e.preventDefault();
       handleQteInput(e.key, e.code);
+      return;
+    }
+  }
+
+  // Se escolhas de diálogo com o Cultista estiverem ativas
+  if (isDialogueChoiceActive) {
+    if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
+      e.preventDefault();
+      onAcceptCultistPact();
+      return;
+    }
+    if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
+      e.preventDefault();
+      onRefuseCultistPact();
       return;
     }
   }
@@ -3475,6 +3579,90 @@ function resetBinaryPuzzle() {
   updateBinaryModalUI();
 }
 
+function resetAct3Puzzles() {
+  // 1. Relíquia dos Antigos
+  questState.relicPuzzleSolved = false;
+  relicTiles = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, -1];
+  scrambleRelicTiles();
+  if (relicModalEl) {
+    relicModalEl.classList.add('hidden');
+  }
+
+  // 2. Balista Rúnica e 4 Alvos (QTE)
+  questState.targetPuzzleSolved = false;
+  qteActive = false;
+  qteCanInput = false;
+  qteCurrentIndex = 0;
+  if (qteTimerRaf) {
+    cancelAnimationFrame(qteTimerRaf);
+    qteTimerRaf = null;
+  }
+  if (qteKeyBtnEl) {
+    qteKeyBtnEl.classList.remove('active', 'success', 'fail');
+    qteKeyBtnEl.textContent = 'TECLE OU CLIQUE!';
+  }
+  if (btnStartQteEl) btnStartQteEl.style.display = 'inline-block';
+  if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
+  if (targetFeedbackTextEl) {
+    targetFeedbackTextEl.textContent = 'Pressione [INICIAR DISPAROS] ou tecla [ESPAÇO] para começar!';
+    targetFeedbackTextEl.style.color = '#ffe0b2';
+  }
+  updateQteUI();
+  if (targetModalEl) {
+    targetModalEl.classList.add('hidden');
+  }
+
+  // 3. Objetos 3D do Ambiente do Ato 3 (Alvos e Ponte)
+  if (act3Env) {
+    if (act3Env.targets) {
+      act3Env.targets.forEach((t) => {
+        t.hit = false;
+        if (t.orb && t.orb.material) {
+          t.orb.material.emissiveIntensity = 0.8;
+          t.orb.visible = true;
+        }
+        if (t.light) {
+          t.light.intensity = 2.5;
+        }
+      });
+    }
+
+    if (act3Env.bridge) {
+      act3Env.bridge.isRaised = false;
+      act3Env.bridge.isRaising = false;
+      act3Env.bridge.currentY = -2.5;
+      if (act3Env.bridge.mesh) {
+        act3Env.bridge.mesh.position.y = -2.5;
+      }
+    }
+  }
+
+  // 4. Reset do Grande Monstro
+  grandeMonstroTriggered = false;
+  if (grandeMonstro) {
+    grandeMonstro.destroy();
+    grandeMonstro = null;
+  }
+
+  // 5. Reset do Cultista na Ponte e Diálogo de Escolha
+  cultistBridgeEventTriggered = false;
+  closeCultistChoiceDialogue();
+  if (npc) {
+    if (currentAct === 3) {
+      npc.group.visible = false;
+    }
+    npc.isVanishing = false;
+    npc.mesh.position.y = 1.3;
+    npc.material.opacity = 1.0;
+  }
+
+  // 6. Reset dos Diálogos do Santuário
+  act3ChoiceDialogShown = false;
+
+  // 7. Atualizar HUD
+  updateHUD();
+}
+
 function resetPuzzles(resetAll = true) {
   if (resetAll || !questState.hasBronzeKey) {
     resetBinaryPuzzle();
@@ -3530,6 +3718,9 @@ function resetPuzzles(resetAll = true) {
       }
     });
   }
+
+  // Resetar puzzles do Ato 3
+  resetAct3Puzzles();
 }
 
 // Eventos de clique para alternar os 7 dedos das mãos (0 ou 1)
@@ -4343,7 +4534,14 @@ function animate(currentTime) {
       // Act 3: Volcanic Chasm & Magma River
       act3Env.update(dt, elapsed);
 
-      const activeKeys = (isActTransitioning || isPlayerDying || !targetModalEl.classList.contains('hidden')) ? {} : keys;
+      const isAnyModalActive = (
+        isActTransitioning ||
+        isPlayerDying ||
+        !targetModalEl.classList.contains('hidden') ||
+        !relicModalEl.classList.contains('hidden') ||
+        isDialogueChoiceActive
+      );
+      const activeKeys = isAnyModalActive ? {} : keys;
       const playerUpdateRes = player.update(
         activeKeys,
         dt,
@@ -4351,7 +4549,7 @@ function animate(currentTime) {
         cameraAngle,
         act3Env.obstacles
       );
-      if (isActTransitioning || isPlayerDying || !targetModalEl.classList.contains('hidden')) {
+      if (isAnyModalActive) {
         player.moving = false;
       }
       player.animate(elapsed);
@@ -4418,6 +4616,45 @@ function animate(currentTime) {
         }
       }
 
+      // ── Grande Monstro: gatilho de fusão ao entrar na Piscina 1 (losango) ──
+      if (
+        !grandeMonstroTriggered &&
+        player.group.position.x >= -20.0 &&
+        player.group.position.x <= 2.0 &&
+        player.group.position.z >= -9.0 &&
+        player.group.position.z <= 9.0 &&
+        !isPlayerDying
+      ) {
+        grandeMonstroTriggered = true;
+        // Fusão começa atrás do jogador (zona de spawn dos inimigos, X ≈ -44)
+        grandeMonstro = new GrandeMonstro(scene, -44.0, 0.0);
+        grandeMonstro.startFusion();
+        typeWriterDialogue(
+          'ALERTA CÓSMICO',
+          '🩸 Um rugido abissal ecoa pelas paredes! Vários Blood Monsters se fundem numa forma abominável — O GRANDE MONSTRO acordou! CORRA!'
+        );
+      }
+
+      // ── Atualizar Grande Monstro ────────────────────────────────────────
+      const isAnyPuzzleOrChoiceActive = (
+        !targetModalEl.classList.contains('hidden') ||
+        !relicModalEl.classList.contains('hidden') ||
+        isDialogueChoiceActive
+      );
+      if (grandeMonstro && !isPlayerDying && !isAnyPuzzleOrChoiceActive) {
+        const gmResult = grandeMonstro.update(player.group.position, dt, elapsed);
+        if (gmResult && gmResult.attacked) {
+          player.hp -= gmResult.damage;
+          playSound('hit');
+          typeWriterDialogue('GRANDE MONSTRO', '💀 A criatura colossal te atingiu com força devastadora! FUJA!');
+          updateHUD();
+          if (player.hp <= 0) {
+            player.hp = 0;
+            startPlayerDeath('O Grande Monstro te esmagou! Suas forças se esvairam completamente...');
+          }
+        }
+      }
+
       // Update Act 3 Blind Blood Monsters
       act3Enemies.forEach((enemy) => {
         const res = enemy.updateBlindMonster(
@@ -4447,6 +4684,53 @@ function animate(currentTime) {
         }
       });
 
+      // ── Evento do Cultista na Ponte: confronta o jogador e para o monstro ──
+      if (
+        !cultistBridgeEventTriggered &&
+        act3Env.bridge.isRaised &&
+        player.group.position.x >= 118.0 &&
+        player.group.position.x <= 122.0 &&
+        !isPlayerDying &&
+        !isVictory
+      ) {
+        cultistBridgeEventTriggered = true;
+        // Cultista materializa-se na frente do jogador antes do final da ponte
+        npc.group.position.set(126.5, 0.0, 0.0);
+        npc.group.visible = true;
+        npc.material.opacity = 1.0;
+        npc.cultLight.intensity = 3.2;
+        npc.facing = 'side';
+        npc.direction = -1; // Olhando para o jogador à esquerda
+        npc.isVanishing = false;
+
+        // O Cultista ergue a mão e força o monstro a cessar o ataque
+        if (grandeMonstro) {
+          grandeMonstro.pauseChase();
+        }
+
+        playSound('demon');
+        showCultistBridgeDialogue();
+      }
+
+      // Atualizar Cultista caso esteja visível na ponte no Ato 3
+      if (npc.group.visible) {
+        if (npc.isVanishing) {
+          npc.vanishTimer -= dt;
+          const op = Math.max(0, npc.vanishTimer / 1.0);
+          npc.material.opacity = op;
+          npc.cultLight.intensity = op * 2.5;
+          npc.mesh.position.y += dt * 1.0;
+          if (npc.vanishTimer <= 0) {
+            npc.isVanishing = false;
+            npc.group.visible = false;
+          }
+        }
+        if (cameraAngle) {
+          npc.mesh.rotation.x = cameraAngle.x;
+        }
+        npc.animate(elapsed);
+      }
+
       // Anúncio dramático das Escolhas ao cruzar a ponte e pisar no santuário final (X >= 133.5)
       if (
         player.group.position.x >= 133.5 &&
@@ -4457,7 +4741,7 @@ function animate(currentTime) {
         act3ChoiceDialogShown = true;
         typeWriterDialogue(
           'ENCRUZILHADA DO DESTINO',
-          '🔥 Você atravessou o abismo de chamas! No santuário sagrado você avista a Porta Ancestral à esquerda, o Bueiro Fétido à direita e o Cultista Supremo perante o altar ao centro!'
+          '🔥 Você atravessou o abismo de chamas! No santuário sagrado você avista a Porta Ancestral à esquerda e o Bueiro Fétido à direita! Escolha o seu destino!'
         );
       }
 

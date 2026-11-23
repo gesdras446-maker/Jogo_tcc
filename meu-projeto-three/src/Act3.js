@@ -78,28 +78,100 @@ export function createAct3Environment(scene) {
     metalness: 0.2,
   });
 
-  // B. Rio de Lava Fervente (Brilho intenso amarelo, laranja e vermelho)
+  // B. Rio de Lava Fervente — textura detalhada com base basáltica + canais de magma + hotspots
   const lavaCanvas = document.createElement('canvas');
-  lavaCanvas.width = 256;
-  lavaCanvas.height = 256;
+  lavaCanvas.width = 512;
+  lavaCanvas.height = 512;
   const lctx = lavaCanvas.getContext('2d');
-  const lavaGrad = lctx.createLinearGradient(0, 0, 256, 256);
-  lavaGrad.addColorStop(0, '#ff1a00');
-  lavaGrad.addColorStop(0.3, '#ff6a00');
-  lavaGrad.addColorStop(0.7, '#ffc400');
-  lavaGrad.addColorStop(1, '#ff3700');
-  lctx.fillStyle = lavaGrad;
-  lctx.fillRect(0, 0, 256, 256);
 
-  // Bolhas incandescentes de lava
-  for (let i = 0; i < 40; i++) {
-    const lx = Math.random() * 256;
-    const ly = Math.random() * 256;
-    const lr = 4 + Math.random() * 16;
-    const bGrad = lctx.createRadialGradient(lx, ly, 1, lx, ly, lr);
-    bGrad.addColorStop(0, '#ffffff');
-    bGrad.addColorStop(0.4, '#ffee55');
-    bGrad.addColorStop(1, 'transparent');
+  // 1. Base basáltica escura
+  lctx.fillStyle = '#1a0400';
+  lctx.fillRect(0, 0, 512, 512);
+
+  // 2. Canais de magma fluindo (rachaduras orgânicas com bezier)
+  const lavaCrackData = [
+    { x0: 0, y0: 80, cx1: 120, cy1: 60, cx2: 200, cy2: 160, x1: 260, y1: 120 },
+    { x0: 50, y0: 200, cx1: 140, cy1: 170, cx2: 220, cy2: 260, x1: 310, y1: 220 },
+    { x0: 0, y0: 320, cx1: 100, cy1: 290, cx2: 200, cy2: 360, x1: 280, y1: 310 },
+    { x0: 160, y0: 0, cx1: 180, cy1: 120, cx2: 140, cy2: 200, x1: 170, y1: 300 },
+    { x0: 300, y0: 40, cx1: 340, cy1: 160, cx2: 290, cy2: 280, x1: 330, y1: 400 },
+    { x0: 380, y0: 100, cx1: 420, cy1: 220, cx2: 370, cy2: 340, x1: 400, y1: 480 },
+    { x0: 60, y0: 430, cx1: 170, cy1: 400, cx2: 270, cy2: 450, x1: 360, y1: 420 },
+    { x0: 200, y0: 480, cx1: 280, cy1: 430, cx2: 360, cy2: 470, x1: 460, y1: 440 },
+    { x0: 420, y0: 0, cx1: 450, cy1: 150, cx2: 410, cy2: 260, x1: 460, y1: 350 },
+    { x0: 480, y0: 200, cx1: 510, cy1: 300, cx2: 470, cy2: 380, x1: 500, y1: 480 },
+  ];
+
+  lavaCrackData.forEach((c) => {
+    // Glow externo laranja-vermelho
+    const crackGlow = lctx.createLinearGradient(c.x0, c.y0, c.x1, c.y1);
+    crackGlow.addColorStop(0, '#cc2200');
+    crackGlow.addColorStop(0.5, '#ff5500');
+    crackGlow.addColorStop(1, '#ff8800');
+    lctx.strokeStyle = crackGlow;
+    lctx.lineWidth = 14;
+    lctx.lineCap = 'round';
+    lctx.shadowColor = '#ff4400';
+    lctx.shadowBlur = 18;
+    lctx.beginPath();
+    lctx.moveTo(c.x0, c.y0);
+    lctx.bezierCurveTo(c.cx1, c.cy1, c.cx2, c.cy2, c.x1, c.y1);
+    lctx.stroke();
+
+    // Núcleo brilhante amarelo-branco
+    const crackCore = lctx.createLinearGradient(c.x0, c.y0, c.x1, c.y1);
+    crackCore.addColorStop(0, '#ffdd00');
+    crackCore.addColorStop(0.5, '#ffffff');
+    crackCore.addColorStop(1, '#ffaa00');
+    lctx.strokeStyle = crackCore;
+    lctx.lineWidth = 4;
+    lctx.shadowBlur = 8;
+    lctx.shadowColor = '#ffffff';
+    lctx.beginPath();
+    lctx.moveTo(c.x0, c.y0);
+    lctx.bezierCurveTo(c.cx1, c.cy1, c.cx2, c.cy2, c.x1, c.y1);
+    lctx.stroke();
+  });
+
+  lctx.shadowBlur = 0;
+
+  // 3. Hotspots incandescentes (núcleos super-quentes)
+  const hotspots = [
+    { x: 90, y: 110, r: 28 },
+    { x: 240, y: 190, r: 22 },
+    { x: 170, y: 350, r: 32 },
+    { x: 350, y: 80, r: 20 },
+    { x: 420, y: 300, r: 26 },
+    { x: 60, y: 440, r: 18 },
+    { x: 310, y: 430, r: 24 },
+    { x: 460, y: 150, r: 20 },
+    { x: 500, y: 420, r: 16 },
+    { x: 130, y: 260, r: 14 },
+    { x: 390, y: 490, r: 18 },
+    { x: 480, y: 60, r: 22 },
+  ];
+
+  hotspots.forEach(({ x, y, r }) => {
+    const hGrad = lctx.createRadialGradient(x, y, 1, x, y, r);
+    hGrad.addColorStop(0, '#ffffff');
+    hGrad.addColorStop(0.25, '#ffee88');
+    hGrad.addColorStop(0.6, '#ff7700');
+    hGrad.addColorStop(1, 'rgba(200,30,0,0)');
+    lctx.fillStyle = hGrad;
+    lctx.beginPath();
+    lctx.arc(x, y, r, 0, Math.PI * 2);
+    lctx.fill();
+  });
+
+  // 4. Bolhas pequenas de lava espalhadas
+  for (let i = 0; i < 30; i++) {
+    const lx = Math.random() * 512;
+    const ly = Math.random() * 512;
+    const lr = 2 + Math.random() * 7;
+    const bGrad = lctx.createRadialGradient(lx, ly, 0.5, lx, ly, lr);
+    bGrad.addColorStop(0, '#ffffaa');
+    bGrad.addColorStop(0.5, '#ff9900');
+    bGrad.addColorStop(1, 'rgba(180,20,0,0)');
     lctx.fillStyle = bGrad;
     lctx.beginPath();
     lctx.arc(lx, ly, lr, 0, Math.PI * 2);
@@ -109,11 +181,35 @@ export function createAct3Environment(scene) {
   const lavaTex = new THREE.CanvasTexture(lavaCanvas);
   lavaTex.wrapS = THREE.RepeatWrapping;
   lavaTex.wrapT = THREE.RepeatWrapping;
-  lavaTex.repeat.set(4, 4);
+  lavaTex.repeat.set(3, 3);
 
   const lavaMat = new THREE.MeshBasicMaterial({
     map: lavaTex,
   });
+
+  // Segunda camada emissiva: shimmer de calor (plano ligeiramente acima da lava)
+  const lavaShimmerCanvas = document.createElement('canvas');
+  lavaShimmerCanvas.width = 128;
+  lavaShimmerCanvas.height = 128;
+  const sctx = lavaShimmerCanvas.getContext('2d');
+  sctx.fillStyle = 'rgba(255,80,0,0.18)';
+  sctx.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 12; i++) {
+    const sx = Math.random() * 128;
+    const sy = Math.random() * 128;
+    const sr = 10 + Math.random() * 30;
+    const sg = sctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    sg.addColorStop(0, 'rgba(255,220,100,0.35)');
+    sg.addColorStop(1, 'rgba(255,80,0,0)');
+    sctx.fillStyle = sg;
+    sctx.beginPath();
+    sctx.arc(sx, sy, sr, 0, Math.PI * 2);
+    sctx.fill();
+  }
+  const lavaShimmerTex = new THREE.CanvasTexture(lavaShimmerCanvas);
+  lavaShimmerTex.wrapS = THREE.RepeatWrapping;
+  lavaShimmerTex.wrapT = THREE.RepeatWrapping;
+  lavaShimmerTex.repeat.set(5, 5);
 
   // C. Piscina Original 1: Ácido Verdejante com Bolhas
   const acidCanvas = document.createElement('canvas');
@@ -161,6 +257,19 @@ export function createAct3Environment(scene) {
   lavaChasm.rotation.x = -Math.PI / 2;
   lavaChasm.position.set(120, -0.15, 0);
   act3Group.add(lavaChasm);
+
+  // Shimmer de calor acima da lava (segunda camada animada)
+  const lavaShimmerMat = new THREE.MeshBasicMaterial({
+    map: lavaShimmerTex,
+    transparent: true,
+    opacity: 0.45,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const lavaShimmerMesh = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), lavaShimmerMat);
+  lavaShimmerMesh.rotation.x = -Math.PI / 2;
+  lavaShimmerMesh.position.set(120, 0.0, 0);
+  act3Group.add(lavaShimmerMesh);
 
   // Área de Lava: MATA INSTANTANEAMENTE se o jogador entrar nela
   lavaHazards.push({
@@ -827,71 +936,6 @@ export function createAct3Environment(scene) {
     dialogueText: 'Esse caminho não está disponível nesse momento.',
   });
 
-  // 3. ESCOLHA 3: O CULTISTA SUPREMO & RITUAL DE CTHULHU (Z = 0.0, X = 153.0) -> Final #4
-  const cultistShrineGroup = new THREE.Group();
-  cultistShrineGroup.position.set(153.0, 0, 0);
-
-  const cultistCircle = new THREE.Mesh(
-    new THREE.RingGeometry(1.8, 2.5, 32),
-    new THREE.MeshBasicMaterial({ color: 0xd500f9, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
-  );
-  cultistCircle.rotation.x = -Math.PI / 2;
-  cultistCircle.position.y = 0.04;
-  cultistShrineGroup.add(cultistCircle);
-
-  const cultistPedestal = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2, 1.2, 1.6),
-    new THREE.MeshStandardMaterial({ color: 0x12002b, roughness: 0.5, metalness: 0.6 })
-  );
-  cultistPedestal.position.y = 0.6;
-  cultistShrineGroup.add(cultistPedestal);
-
-  const cultistBody = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.9, 2.4, 12),
-    new THREE.MeshStandardMaterial({ color: 0x240046, roughness: 0.8 })
-  );
-  cultistBody.position.y = 2.4;
-  cultistShrineGroup.add(cultistBody);
-
-  const cultistHood = new THREE.Mesh(
-    new THREE.SphereGeometry(0.55, 12, 12),
-    new THREE.MeshStandardMaterial({ color: 0x3c096c, roughness: 0.8 })
-  );
-  cultistHood.position.set(0, 3.8, 0);
-  cultistShrineGroup.add(cultistHood);
-
-  const cultistEyeL = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xff1744 })
-  );
-  cultistEyeL.position.set(-0.4, 3.75, -0.2);
-  cultistShrineGroup.add(cultistEyeL);
-
-  const cultistEyeR = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 8, 8),
-    new THREE.MeshBasicMaterial({ color: 0xff1744 })
-  );
-  cultistEyeR.position.set(-0.4, 3.75, 0.2);
-  cultistShrineGroup.add(cultistEyeR);
-
-  const cultistLight = new THREE.PointLight(0xd500f9, 4.0, 10);
-  cultistLight.position.set(-0.5, 3.2, 0);
-  cultistShrineGroup.add(cultistLight);
-
-  act3Group.add(cultistShrineGroup);
-  obstacles.push({ minX: 151.8, maxX: 154.2, minZ: -1.2, maxZ: 1.2 });
-
-  interactiveObjects.push({
-    id: 'cultist_choice',
-    type: 'ending_choice',
-    endingId: 4,
-    choiceName: 'O Cultista Supremo',
-    x: 153.0,
-    z: 0.0,
-    radius: 3.5,
-    prompt: '[E] Juntar-se ao Cultista (Virar Receptáculo de Cthulhu)',
-  });
-
   // ========================================================
   // 10. ILUMINAÇÃO AMBIENTE DINÂMICA
   // ========================================================
@@ -961,6 +1005,15 @@ export function createAct3Environment(scene) {
 
     update(dt, elapsed) {
       bridge.update(dt);
+
+      // Animação da lava: scroll UV + shimmer pulsante
+      lavaTex.offset.x = (elapsed * 0.05) % 1;
+      lavaTex.offset.y = (elapsed * 0.025) % 1;
+      lavaTex.needsUpdate = true;
+      lavaShimmerTex.offset.x = (elapsed * -0.07) % 1;
+      lavaShimmerTex.offset.y = (elapsed * 0.04) % 1;
+      lavaShimmerTex.needsUpdate = true;
+      lavaShimmerMat.opacity = 0.3 + 0.2 * Math.sin(elapsed * 2.5);
 
       targetMeshes.forEach((tm, i) => {
         tm.orb.rotation.y += dt * 1.5;
