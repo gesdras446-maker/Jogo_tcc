@@ -2464,22 +2464,27 @@ canvas {
 }
 
 .qte-key-letter {
-  font-size: 38px;
+  font-size: 46px;
   font-weight: 900;
-  color: #ff7043;
+  color: #ffffff;
   letter-spacing: 1px;
   line-height: 1;
-  text-shadow: 0 0 14px rgba(255, 87, 34, 0.8);
+  text-shadow: 0 0 16px rgba(255, 87, 34, 0.9), 0 0 30px rgba(255, 255, 255, 0.6);
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .qte-key-subtext {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   color: #cfd8dc;
   margin-top: 4px;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
 }
 
 .qte-floating-bottom {

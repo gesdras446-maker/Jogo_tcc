@@ -318,7 +318,7 @@ app.innerHTML = `
           <button class="qte-big-key-btn" id="qteKeyBtn" type="button">
             <span class="qte-target-symbol" id="qteTargetIcon"></span>
             <span class="qte-key-letter" id="qteKeyLetter">Q</span>
-            <span class="qte-key-subtext">TECLE OU CLIQUE!</span>
+            <span class="qte-key-subtext" id="qteKeySubtext">TECLE OU CLIQUE!</span>
           </button>
         </div>
       </div>
@@ -1780,7 +1780,26 @@ const QTE_POSITION_POOL = [
 const QTE_NUM_TARGETS = 4;
 let qteGeneratedSteps = [];
 
-// Gera os 4 passos do QTE totalmente aleatórios (sem emojis, mais rápido)
+// Garante que a estrutura interna do botão QTE (letra, ícone e subtexto) nunca seja perdida
+function ensureQteKeyBtnElements() {
+  const btn = document.querySelector('#qteKeyBtn');
+  if (!btn) return { btn: null, letter: null, subtext: null, icon: null };
+  if (!btn.querySelector('#qteKeyLetter')) {
+    btn.innerHTML = `
+      <span class="qte-target-symbol" id="qteTargetIcon"></span>
+      <span class="qte-key-letter" id="qteKeyLetter">▶</span>
+      <span class="qte-key-subtext" id="qteKeySubtext">TECLE OU CLIQUE!</span>
+    `;
+  }
+  return {
+    btn,
+    letter: btn.querySelector('#qteKeyLetter'),
+    subtext: btn.querySelector('#qteKeySubtext'),
+    icon: btn.querySelector('#qteTargetIcon'),
+  };
+}
+
+// Gera os 4 passos do QTE com velocidade rápida e posições dinâmicas
 function generateRandomQteSteps() {
   qteGeneratedSteps = [];
   const usedNames = [];
@@ -1803,15 +1822,17 @@ function generateRandomQteSteps() {
     } while (usedPositions.some(p => p.x === posPick.x && p.y === posPick.y));
     usedPositions.push(posPick);
 
-    // Duração mais rápida: começa em 1600ms e diminui a cada alvo
-    const duration = 1600 - (i * 120) + Math.floor(Math.random() * 100 - 50);
+    // Duração bem mais rápida e dinâmica (aumenta a velocidade do anel QTE):
+    // Começa em ~1000ms e encolhe progressivamente mais rápido (1000ms -> 890ms -> 780ms -> 670ms)
+    const baseDuration = 1000 - (i * 110);
+    const duration = Math.max(650, baseDuration + Math.floor(Math.random() * 40 - 20));
 
     const isLast = i === QTE_NUM_TARGETS - 1;
     qteGeneratedSteps.push({
       id: i + 1,
       name: isLast ? `DISPARO FINAL: ${namePick}!` : `${i + 1}º ALVO: ${namePick}`,
       color: color,
-      duration: Math.max(1000, duration),
+      duration: duration,
       position: posPick,
     });
   }
@@ -1822,7 +1843,7 @@ let qteActive = false;
 let qteCanInput = false;
 let qteTimerRaf = null;
 let qteStartTime = 0;
-let qteMaxDuration = 2200;
+let qteMaxDuration = 1800;
 let currentQteKey = QTE_KEY_POOL[0];
 let currentRingScale = 2.8;
 let lastKeyDisplay = '';
@@ -1858,16 +1879,14 @@ function openQteModal() {
   if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = 'Pressione [INICIAR DISPAROS] ou tecle [ESPAÇO] para começar!';
+    targetFeedbackTextEl.innerHTML = 'Pressione <strong style="color:#00e676;">[INICIAR DISPAROS]</strong> ou tecle <strong style="color:#00e676;">[ESPAÇO]</strong> para começar!';
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
 
   const qteTargetNameEl = document.querySelector('#qteTargetName');
-  const qteTargetIconEl = document.querySelector('#qteTargetIcon');
-  const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
   const qtePulseRingEl = document.querySelector('#qtePulseRing');
-  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
   const qteCircleWrapperEl = document.querySelector('#qteCircleWrapper');
+  const { btn: qteKeyBtnEl, letter: qteKeyLetterEl, subtext: qteKeySubtextEl, icon: qteTargetIconEl } = ensureQteKeyBtnElements();
 
   if (qteTargetNameEl) {
     qteTargetNameEl.textContent = 'PRONTO PARA MIRAR?';
@@ -1877,6 +1896,12 @@ function openQteModal() {
   if (qteKeyLetterEl) {
     qteKeyLetterEl.textContent = '▶';
     qteKeyLetterEl.style.color = '#ff7043';
+    qteKeyLetterEl.style.fontSize = '44px';
+    qteKeyLetterEl.style.textShadow = '0 0 14px rgba(255, 87, 34, 0.8)';
+  }
+  if (qteKeySubtextEl) {
+    qteKeySubtextEl.textContent = 'CLIQUE OU [ESPAÇO]';
+    qteKeySubtextEl.style.color = '#cfd8dc';
   }
   if (qtePulseRingEl) {
     qtePulseRingEl.classList.add('idle');
@@ -1888,8 +1913,9 @@ function openQteModal() {
     qteKeyBtnEl.classList.remove('sweet-spot', 'hit-success', 'miss-error');
     qteKeyBtnEl.style.borderColor = '#ff7043';
   }
-  // Reseta posição do wrapper para o centro
+  // Reseta posição e visibilidade do wrapper para o centro
   if (qteCircleWrapperEl) {
+    qteCircleWrapperEl.style.opacity = '1';
     qteCircleWrapperEl.style.transform = 'translate(0px, 0px)';
   }
 }
@@ -1921,27 +1947,31 @@ function promptNextQteTarget() {
   currentQteKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
   lastKeyDisplay = currentQteKey.display;
 
-  const qteTargetIconEl = document.querySelector('#qteTargetIcon');
   const qteTargetNameEl = document.querySelector('#qteTargetName');
-  const qteKeyLetterEl = document.querySelector('#qteKeyLetter');
-  const qteKeyBtnEl = document.querySelector('#qteKeyBtn');
   const qtePulseRingEl = document.querySelector('#qtePulseRing');
   const qteCircleWrapperEl = document.querySelector('#qteCircleWrapper');
+  const { btn: qteKeyBtnEl, letter: qteKeyLetterEl, subtext: qteKeySubtextEl, icon: qteTargetIconEl } = ensureQteKeyBtnElements();
 
-  // Esconde o círculo antes de reposicionar
+  // Esconde brevemente o círculo antes de reposicionar
   if (qteCircleWrapperEl) {
     qteCircleWrapperEl.style.opacity = '0';
-    qteCircleWrapperEl.style.transition = 'opacity 0.15s ease';
+    qteCircleWrapperEl.style.transition = 'opacity 0.08s ease';
   }
 
   if (qteTargetIconEl) qteTargetIconEl.textContent = '';
   if (qteTargetNameEl) {
-    qteTargetNameEl.textContent = `${qteCurrentIndex + 1}/${QTE_NUM_TARGETS} - ${step.name}`;
-    qteTargetNameEl.style.color = step.color;
+    qteTargetNameEl.innerHTML = `<span style="color:#ffffff;">ALVO ${qteCurrentIndex + 1}/${QTE_NUM_TARGETS}:</span> <span style="color:${step.color};">${step.name}</span> &nbsp;|&nbsp; <span style="background:rgba(255,255,255,0.15); padding:2px 10px; border-radius:8px; border:1px solid ${step.color};">TECLA: <strong style="color:#ffffff; font-size:22px;">[ ${currentQteKey.display} ]</strong></span>`;
   }
   if (qteKeyLetterEl) {
     qteKeyLetterEl.textContent = currentQteKey.display;
-    qteKeyLetterEl.style.color = step.color;
+    qteKeyLetterEl.style.color = '#ffffff';
+    // Se for 'ESPAÇO' ou texto maior, ajusta tamanho da fonte para encaixe perfeito
+    qteKeyLetterEl.style.fontSize = currentQteKey.display.length > 2 ? '22px' : '46px';
+    qteKeyLetterEl.style.textShadow = `0 0 16px ${step.color}, 0 0 32px #ffffff`;
+  }
+  if (qteKeySubtextEl) {
+    qteKeySubtextEl.textContent = `TECLE [ ${currentQteKey.display} ]`;
+    qteKeySubtextEl.style.color = step.color;
   }
   if (qteKeyBtnEl) {
     qteKeyBtnEl.classList.remove('sweet-spot', 'hit-success', 'miss-error');
@@ -1953,27 +1983,27 @@ function promptNextQteTarget() {
     qtePulseRingEl.style.transform = 'scale(2.8)';
   }
 
-  // Após sumir, reposiciona e reaparece
+  // Reposiciona o círculo com transição rápida e sem pausas mortas
   setTimeout(() => {
     if (qteCircleWrapperEl && step.position) {
       qteCircleWrapperEl.style.transition = 'none';
       qteCircleWrapperEl.style.transform = `translate(${step.position.x}px, ${step.position.y}px)`;
     }
-    // Reaparece com fade-in
+    // Reaparece com fade-in ágil
     setTimeout(() => {
       if (qteCircleWrapperEl) {
-        qteCircleWrapperEl.style.transition = 'opacity 0.15s ease';
+        qteCircleWrapperEl.style.transition = 'opacity 0.08s ease';
         qteCircleWrapperEl.style.opacity = '1';
       }
-      // Libera input e começa o timer após aparecer
+      // Libera input e inicia o temporizador de encolhimento
       qteCanInput = true;
       qteStartTime = performance.now();
       runQteTimerLoop();
-    }, 80);
-  }, 200);
+    }, 40);
+  }, 60);
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `Pressione [${currentQteKey.display}] quando o anel encostar no círculo!`;
+    targetFeedbackTextEl.innerHTML = `Mire com precisão! Aperte <strong style="font-size:20px; color:${step.color}; background:rgba(0,0,0,0.55); padding:2px 10px; border-radius:6px; border:1px solid ${step.color};">[ ${currentQteKey.display} ]</strong> quando o anel encostar no círculo!`;
     targetFeedbackTextEl.style.color = '#ffe0b2';
   }
 }
@@ -1987,7 +2017,7 @@ function runQteTimerLoop() {
     const elapsed = now - qteStartTime;
     const progress = Math.min(1.0, elapsed / qteMaxDuration);
 
-    // O anel externo começa em scale 2.8 e encolhe até 0.8
+    // O anel externo começa em scale 2.8 e encolhe rapidamente até 0.8
     currentRingScale = 2.8 - progress * 2.0;
 
     const qtePulseRingEl = document.querySelector('#qtePulseRing');
@@ -1997,7 +2027,7 @@ function runQteTimerLoop() {
       qtePulseRingEl.style.transform = `scale(${currentRingScale})`;
 
       // Zona de acerto perfeito (sweet spot): anel externo coincidindo com o círculo do botão
-      const inSweetSpot = currentRingScale >= 0.82 && currentRingScale <= 1.25;
+      const inSweetSpot = currentRingScale >= 0.76 && currentRingScale <= 1.34;
       if (inSweetSpot) {
         qtePulseRingEl.classList.add('sweet-spot');
         if (qteKeyBtnEl) qteKeyBtnEl.classList.add('sweet-spot');
@@ -2039,11 +2069,11 @@ function handleQteInput(inputKey, inputCode = '', isMouseClick = false) {
   }
 
   // Validação do timing do círculo que encolhe (deve acertar quando os anéis se encontram!)
-  if (currentRingScale > 1.25) {
+  if (currentRingScale > 1.34) {
     onQteMissError('too_early');
     return;
   }
-  if (currentRingScale < 0.82) {
+  if (currentRingScale < 0.76) {
     onQteMissError('too_late');
     return;
   }
@@ -2074,11 +2104,11 @@ function onQteHitSuccess() {
   if (qteKeyBtnEl) {
     qteKeyBtnEl.classList.remove('sweet-spot');
     qteKeyBtnEl.classList.add('hit-success');
-    setTimeout(() => qteKeyBtnEl.classList.remove('hit-success'), 400);
+    setTimeout(() => qteKeyBtnEl.classList.remove('hit-success'), 350);
   }
 
   if (targetFeedbackTextEl) {
-    targetFeedbackTextEl.textContent = `ACERTO PERFEITO! ${step.name} destruído!`;
+    targetFeedbackTextEl.innerHTML = `<span style="color:#00e676; font-weight:900;">✓ ACERTO PERFEITO!</span> ${step.name} destruído!`;
     targetFeedbackTextEl.style.color = '#00e676';
   }
 
@@ -2086,9 +2116,9 @@ function onQteHitSuccess() {
   updateQteUI();
 
   if (qteCurrentIndex >= QTE_NUM_TARGETS) {
-    setTimeout(onQteCompleteSuccess, 500);
+    setTimeout(onQteCompleteSuccess, 400);
   } else {
-    setTimeout(promptNextQteTarget, 550);
+    setTimeout(promptNextQteTarget, 280);
   }
 }
 
@@ -2131,7 +2161,7 @@ function onQteMissError(reason = 'wrong_key') {
   if (btnStartQteEl) btnStartQteEl.style.display = 'none';
   if (btnResetTargetsEl) {
     btnResetTargetsEl.style.display = 'inline-block';
-    btnResetTargetsEl.textContent = 'Tentar Novamente';
+    btnResetTargetsEl.textContent = '🔄 Tentar Novamente';
   }
 }
 
@@ -3597,9 +3627,19 @@ function resetAct3Puzzles() {
     cancelAnimationFrame(qteTimerRaf);
     qteTimerRaf = null;
   }
-  if (qteKeyBtnEl) {
-    qteKeyBtnEl.classList.remove('active', 'success', 'fail');
-    qteKeyBtnEl.textContent = 'TECLE OU CLIQUE!';
+  const { btn: kBtn, letter: kLetter, subtext: kSubtext } = ensureQteKeyBtnElements();
+  if (kBtn) {
+    kBtn.classList.remove('active', 'success', 'fail', 'sweet-spot', 'hit-success', 'miss-error');
+    kBtn.style.borderColor = '#ff7043';
+  }
+  if (kLetter) {
+    kLetter.textContent = '▶';
+    kLetter.style.color = '#ff7043';
+    kLetter.style.fontSize = '44px';
+  }
+  if (kSubtext) {
+    kSubtext.textContent = 'TECLE OU CLIQUE!';
+    kSubtext.style.color = '#cfd8dc';
   }
   if (btnStartQteEl) btnStartQteEl.style.display = 'inline-block';
   if (btnResetTargetsEl) btnResetTargetsEl.style.display = 'none';
